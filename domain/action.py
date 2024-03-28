@@ -11,7 +11,7 @@ class ActionType(Enum):
 
 @unique
 class Action(Enum):
-    NoOp = ("NoOp", ActionType.NoOp, 0, 0, 0, 0)
+    NoOp = ("NoOp", ActionType.NoOp, Position(0,0), Position(0,0))
 
     MoveN = ("Move(N)", ActionType.Move, Position(-1, 0), Position(0, 0))
     MoveS = ("Move(S)", ActionType.Move, Position(1, 0),  Position(0, 0))
