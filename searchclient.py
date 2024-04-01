@@ -10,11 +10,13 @@ from state import State
 from domain.agent import Agent
 from domain.box import Box
 from domain.goal import Goal
+from domain.wall import Wall
 
 # data structure for agent, box, goal
 AgentConfig = namedtuple('AgentConfig', ['position', 'id', 'color'])
 BoxConfig = namedtuple('BoxConfig', ['position', 'letter', 'color'])
 GoalConfig = namedtuple('GoalConfig', ['position', 'letter'])
+WallConfig = namedtuple('WallConfig', ['position'])
 
 class LevelParser:
     @staticmethod
@@ -99,17 +101,25 @@ class SearchClient:
             for col_idx, char in enumerate(row):
                 if char in box_colors:  # Assuming goals are only for boxes
                     goals.append(GoalConfig(Position(row_idx, col_idx), char))
-
+                    
+        # read position of walls
+        walls = []
+        for row_idx, row in enumerate(initial_layout):
+            for col_idx, char in enumerate(row):
+                position = Position(row_idx, col_idx)
+                if char == '+':
+                    walls.append(WallConfig(position))
         # debug print
-        # print(agents, boxes, goals)
+        # print(agents, boxes, goals, walls)
                     
         # Convert configs to actual objects
         agent_objs = [Agent(position, id_, color) for position, id_, color in agents]
         box_objs = [Box(position, letter, color) for position, letter, color in boxes]
         goal_objs = [Goal(position, letter) for position, letter in goals]
+        wall_objs = [Wall(position) for position in walls]
 
         # after implementing goal, uncomment the line below
-        # return State(agent_objs, box_objs, goal_objs)
+        # return State(agent_objs, box_objs, goal_objs, wall_objs)
         return State(agent_objs, box_objs)
 
     @staticmethod
