@@ -6,15 +6,18 @@ from domain.box import Box
 from domain.color import Color
 from domain.goal import Goal
 from domain.position import Position
+from domain.wall import Wall
 
 class State:
     _RNG = random.Random(1)
 
     # agents: list of Agents
     # boxes: list of Boxes
-    def __init__(self, agents, boxes):
+    def __init__(self, agents, boxes, goals, walls):
         self.agents = agents
         self.boxes = boxes
+        self.goals = goals
+        self.walls = walls
         self.parent = None
         self.joint_action = None
         self.g = 0
@@ -192,7 +195,7 @@ class State:
         return False
 
     def is_free(self, position) -> 'bool':
-        return not State.walls[position.x][position.y] and self.box_at(position) is None and self.agent_at(position) is None
+        return not self.walls[position.x][position.y] and self.box_at(position) is None and self.agent_at(position) is None
 
     def agent_at(self, position: 'Position') -> 'Agent':
         for agent in self.agents:
@@ -223,7 +226,7 @@ class State:
             _hash = _hash * prime + hash(tuple(box.pos for box in self.boxes))
             _hash = _hash * prime + hash(tuple(box.color for box in self.boxes))
             _hash = _hash * prime + hash(tuple((goal.pos, goal.id) for goal in State.goals))
-            _hash = _hash * prime + hash(tuple(tuple(row) for row in State.walls))
+            _hash = _hash * prime + hash(tuple(wall.pos for wall in State.walls))
             self._hash = _hash
         return self._hash
 
@@ -236,29 +239,30 @@ class State:
             return False
         if any(b1.pos != b2.pos or b1.color != b2.color for b1, b2 in zip(self.boxes, other.boxes)):
             return False
-        if State.walls != other.walls:
+        if any(w1.pos != w2.pos for w1, w2 in zip(State.walls, other.walls)):
             return False
         if any(g1.pos != g2.pos or g1.id != g2.id for g1, g2 in zip(State.goals, other.goals)):
             return False
         return True
 
     def __repr__(self):
-            max_row = max(max(agent.pos.x for agent in self.agents), max(box.pos.x for box in self.boxes), len(State.walls))
-            max_col = max(max(agent.pos.y for agent in self.agents), max(box.pos.y for box in self.boxes), max(len(row) for row in State.walls))
-            lines = []
-            for row in range(max_row + 1):
-                line = []
-                for col in range(max_col + 1):
-                    pos = Position(row, col)
-                    agent = self.agent_at(pos)
-                    box = self.box_at(pos)
-                    if box is not None:
-                        line.append(box.getRealBoxId())
-                    elif State.walls[row][col]:
-                        line.append('+')
-                    elif agent is not None:
-                        line.append(str(agent.id))
-                    else:
-                        line.append(' ')
-                lines.append(''.join(line))
-            return '\n'.join(lines)
+        max_row = max(max(agent.pos.x for agent in self.agents), max(box.pos.x for box in self.boxes), max(wall.pos.x for wall in State.walls))  # Modified line
+        max_col = max(max(agent.pos.y for agent in self.agents), max(box.pos.y for box in self.boxes), max(wall.pos.y for wall in State.walls))  # Modified line
+        lines = []
+        for row in range(max_row + 1):
+            line = []
+            for col in range(max_col + 1):
+                pos = Position(row, col)
+                agent = self.agent_at(pos)
+                box = self.box_at(pos)
+                wall = next((wall for wall in State.walls if wall.pos == pos), None)  # Added line
+                if box is not None:
+                    line.append(box.getRealBoxId())
+                elif wall is not None:
+                    line.append('+')
+                elif agent is not None:
+                    line.append(str(agent.id))
+                else:
+                    line.append(' ')
+            lines.append(''.join(line))
+        return '\n'.join(lines)
