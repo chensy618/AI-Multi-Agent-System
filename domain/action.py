@@ -45,8 +45,8 @@ class Action(Enum):
     PullWN = ("Pull(W,N)", ActionType.Pull, Position(0, -1), Position(-1, 0))
     PullWS = ("Pull(W,S)", ActionType.Pull, Position(0, -1), Position(1, 0))
     
-    def __init__(self, name, type, aRPos, bRPos):
+    def __init__(self, name, type, agent_rel_pos, box_rel_pos):
         self.name_ = name
         self.type = type
-        self.aRPos = aRPos # displacement of agent by position
-        self.bRPos = bRPos # displacement of box by position
+        self.agent_rel_pos = agent_rel_pos # displacement of agent by position
+        self.box_rel_pos = box_rel_pos # displacement of box by position

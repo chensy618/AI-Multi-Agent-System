@@ -1,76 +1,103 @@
 import random
 
 from domain.action import Action, ActionType
+from domain.agent import Agent
+from domain.box import Box
+from domain.color import Color
+from domain.goal import Goal
+from domain.position import Position
+from domain.wall import Wall
 
 class State:
     _RNG = random.Random(1)
-    
+
     # agents: list of Agents
     # boxes: list of Boxes
-    def __init__(self, agents, boxes):
+    def __init__(self, agents, boxes, goals, walls):
         self.agents = agents
         self.boxes = boxes
+        self.goals = goals
+        self.walls = walls
         self.parent = None
         self.joint_action = None
         self.g = 0
         self._hash = None
-    
-    def result(self, joint_action) -> 'State':
+
+    def result(self, joint_action: list[Action]) -> 'State':
         '''
         Returns the state resulting from applying joint_action in this state.
         Precondition: Joint action must be applicable and non-conflicting in this state.
         '''
-        
-        # Copy this state.
-        copy_agent_rows = self.agent_rows[:]
-        copy_agent_cols = self.agent_cols[:]
-        copy_boxes = [row[:] for row in self.boxes]
-        
-        # Apply each action.
-        for agent, action in enumerate(joint_action):
-            if action.type is ActionType.NoOp:
-                pass
-            
-            elif action.type is ActionType.Move:
-                copy_agent_rows[agent] += action.agent_row_delta
-                copy_agent_cols[agent] += action.agent_col_delta
-            
-        copy_state = State(copy_agent_rows, copy_agent_cols, copy_boxes)
-        
+        copy_agents = [Agent(agent.pos, agent.id, agent.color) for agent in self.agents]
+        copy_boxes = [Box(box.pos, box.id, box.color) for box in self.boxes]
+        for agent_index, action in enumerate(joint_action):
+            copied_agent = copy_agents[agent_index]
+            if action.type == ActionType.Move:
+                # Update the agent's position
+                copied_agent.pos += action.agent_rel_pos
+            elif action.type in [ActionType.Push, ActionType.Pull]:
+                box_pos = Position(-1, -1)
+                if action.type == ActionType.Push:
+                    box_pos = copied_agent.pos + action.agent_rel_pos
+                else:  # ActionType.Pull
+                    box_pos = copied_agent.pos - action.box_rel_pos
+
+                # Find the box object with the matching position
+                copied_box = next(box for box in copy_boxes if box.pos == box_pos)
+
+                # Update the box's position
+                copied_box.pos += action.box_rel_pos
+                copied_agent.pos += action.agent_rel_pos
+
+        # Create a new state with the updated agents and boxes
+        copy_state = State(copy_agents, copy_boxes)
         copy_state.parent = self
         copy_state.joint_action = joint_action[:]
         copy_state.g = self.g + 1
-        
         return copy_state
-    
-    def is_goal_state(self) -> 'bool':
-        for row in range(len(State.goals)):
-            for col in range(len(State.goals[row])):
-                goal = State.goals[row][col]
-                
-                if 'A' <= goal <= 'Z' and self.boxes[row][col] != goal:
+
+    def is_goal_state(self) -> bool:
+        '''
+        Checks if this state is a goal state.
+        '''
+        # Create a mapping of box positions to their corresponding IDs
+        box_positions = {box.pos: box.id for box in self.boxes}
+        # Create a mapping of agent positions to their corresponding IDs
+        agent_positions = {agent.pos: agent.id for agent in self.agents}
+
+        # Check if all goals are satisfied by boxes and agents
+        for goal in self.goals:
+            if 'A' <= goal.id <= 'Z':
+                # Check if there's a box at the goal position with the matching ID
+                if box_positions.get(goal.pos) != goal.id:
                     return False
-                elif '0' <= goal <= '9' and not (self.agent_rows[ord(goal) - ord('0')] == row and self.agent_cols[ord(goal) - ord('0')] == col):
+            elif '0' <= goal.id <= '9':
+                # Check if there's an agent at the goal position with the matching ID
+                if agent_positions.get(goal.pos) != goal.id:
                     return False
+            else:
+                # If the goal ID is not recognized as a box or agent, return False
+                print('There is something wrong with the goal id set up, please')
+                return False
         return True
-    
-    def get_expanded_states(self) -> '[State, ...]':
-        num_agents = len(self.agent_rows)
-        
+
+    def get_expanded_states(self) -> 'list[State]':
+        num_agents = len(self.agents)
+
         # Determine list of applicable action for each individual agent.
-        applicable_actions = [[action for action in Action if self.is_applicable(agent, action)] for agent in range(num_agents)]
-        
+        applicable_actions = [[action for action in Action if self.is_applicable(agentIdx, action)] for agentIdx in range(num_agents)]
+
         # Iterate over joint actions, check conflict and generate child states.
         joint_action = [None for _ in range(num_agents)]
         actions_permutation = [0 for _ in range(num_agents)]
         expanded_states = []
         while True:
-            for agent in range(num_agents):
-                joint_action[agent] = applicable_actions[agent][actions_permutation[agent]]
-            
+            for agentIdx in range(num_agents):
+                joint_action[agentIdx] = applicable_actions[agentIdx][actions_permutation[agentIdx]]
+
             if not self.is_conflicting(joint_action):
                 expanded_states.append(self.result(joint_action))
-            
+
             # Advance permutation.
             done = False
             for agent in range(num_agents):
@@ -81,115 +108,158 @@ class State:
                     actions_permutation[agent] = 0
                     if agent == num_agents - 1:
                         done = True
-            
             # Last permutation?
             if done:
                 break
-        
         State._RNG.shuffle(expanded_states)
         return expanded_states
-    
-    def is_applicable(self, agent: 'int', action: 'Action') -> 'bool':
-        agent_row = self.agent_rows[agent]
-        agent_col = self.agent_cols[agent]
-        agent_color = State.agent_colors[agent]
-        
+
+    def is_applicable(self, agent: int, action: Action) -> bool:
+        agent = self.agents[agent]
+        agent_destination = agent.pos + action.agent_rel_pos
+
         if action.type is ActionType.NoOp:
             return True
-            
+
         elif action.type is ActionType.Move:
-            destination_row = agent_row + action.agent_row_delta
-            destination_col = agent_col + action.agent_col_delta
-            return self.is_free(destination_row, destination_col)
-                
-    def is_conflicting(self, joint_action: '[Action, ...]') -> 'bool':
-        num_agents = len(self.agent_rows)
-        
-        destination_rows = [None for _ in range(num_agents)] # row of new cell to become occupied by action
-        destination_cols = [None for _ in range(num_agents)] # column of new cell to become occupied by action
-        box_rows = [None for _ in range(num_agents)] # current row of box moved by action
-        box_cols = [None for _ in range(num_agents)] # current column of box moved by action
-        
+            return self.is_free(agent_destination)
+
+        elif action.type is ActionType.Push:
+            # Check if there is a box at the agent's destination to push
+            box_to_push = next((box for box in self.boxes if box.pos == agent_destination), None)
+            if box_to_push and box_to_push.color == agent.color:
+                # Calculate the box's destination position
+                box_destination = agent_destination + action.box_rel_pos
+                # Check if the box's destination is free
+                return self.is_free(box_destination)
+            else:
+                return False
+
+        elif action.type is ActionType.Pull:
+            # Calculate the box's current position that the agent wants to pull
+            box_position = agent.pos - action.box_rel_pos
+            # Check if there is a box to pull at the calculated position
+            box_to_pull = next((box for box in self.boxes if box.pos == box_position), None)
+            if box_to_pull and box_to_pull.color == agent.color:
+                # Check if the agent's destination is free to move into
+                return self.is_free(agent_destination)
+            else:
+                return False
+
+        return False
+
+    def is_conflicting(self, joint_action: 'list[Action]') -> 'bool':
+        num_agents = len(self.agents)
+
+        destination_positions = [None for _ in range(num_agents)] # Position of new cell to become occupied by action
+        box_positions = [None for _ in range(num_agents)] # current Position of box moved by action
+
         # Collect cells to be occupied and boxes to be moved.
-        for agent in range(num_agents):
-            action = joint_action[agent]
-            agent_row = self.agent_rows[agent]
-            agent_col = self.agent_cols[agent]
-            
+        for agent_idx, action in enumerate(joint_action):
+            agent_pos = self.agents[agent_idx].pos
+            box_pos = None
             if action.type is ActionType.NoOp:
                 pass
-            
             elif action.type is ActionType.Move:
-                destination_rows[agent] = agent_row + action.agent_row_delta
-                destination_cols[agent] = agent_col + action.agent_col_delta
-                box_rows[agent] = agent_row # Distinct dummy value.
-                box_cols[agent] = agent_col # Distinct dummy value.
-                    
+                destination_positions[agent_idx] = agent_pos + action.agent_rel_pos
+                box_positions[agent_idx] = Position(agent_pos.x, agent_pos.y) # Distinct dummy value.
+            if action.type in [ActionType.Push, ActionType.Pull]:
+                # Calculate box's current and destination positions for Push/Pull
+                if action.type == ActionType.Push:
+                    box_pos = agent_pos + action.agent_rel_pos
+                    box_destination_pos = box_pos + action.box_rel_pos
+                else:  # ActionType.Pull
+                    box_pos = agent_pos - action.box_rel_pos
+                    box_destination_pos = agent_pos
+
+            # Update the box positions to be checked for conflicts
+            box_positions[agent_idx] = box_pos
+            destination_positions[agent_idx] = box_destination_pos if action.type == ActionType.Push else agent_pos + action.agent_rel_pos
+
         for a1 in range(num_agents):
-            if joint_action[a1] is Action.NoOp:
+            if joint_action[a1].type is ActionType.NoOp:
                 continue
-            
+
             for a2 in range(a1 + 1, num_agents):
-                if joint_action[a2] is Action.NoOp:
+                if joint_action[a2].type is ActionType.NoOp:
                     continue
-                
+
                 # Moving into same cell?
-                if destination_rows[a1] == destination_rows[a2] and destination_cols[a1] == destination_cols[a2]:
+                if (destination_positions[a1] is not None and destination_positions[a2] is not None and
+                    destination_positions[a1] == destination_positions[a2]):
                     return True
-                        
+
         return False
-    
-    def is_free(self, row: 'int', col: 'int') -> 'bool':
-        return not State.walls[row][col] and self.boxes[row][col] == '' and self.agent_at(row, col) is None
-    
-    def agent_at(self, row: 'int', col: 'int') -> 'char':
-        for agent in range(len(self.agent_rows)):
-            if self.agent_rows[agent] == row and self.agent_cols[agent] == col:
-                return chr(agent + ord('0'))
+
+    def is_free(self, position) -> bool:
+        return not self.walls[position.x][position.y] and self.box_at(position) is None and self.agent_at(position) is None
+
+    def agent_at(self, position: Position) -> Agent:
+        for agent in self.agents:
+            if agent.pos.x == position.x and agent.pos.y == position.y:
+                return agent
         return None
-    
-    def extract_plan(self) -> '[Action, ...]':
+
+    def box_at(self, position: Position) -> Box:
+        for box in self.boxes:
+            if box.pos.x == position.x and box.pos.y == position.y:
+                return box
+        return None
+
+    def extract_plan(self) -> list[Action]:
         plan = [None for _ in range(self.g)]
         state = self
         while state.joint_action is not None:
             plan[state.g - 1] = state.joint_action
             state = state.parent
         return plan
-    
+
     def __hash__(self):
         if self._hash is None:
             prime = 31
             _hash = 1
-            _hash = _hash * prime + hash(tuple(self.agent_rows))
-            _hash = _hash * prime + hash(tuple(self.agent_cols))
-            _hash = _hash * prime + hash(tuple(State.agent_colors))
-            _hash = _hash * prime + hash(tuple(tuple(row) for row in self.boxes))
-            _hash = _hash * prime + hash(tuple(State.box_colors))
-            _hash = _hash * prime + hash(tuple(tuple(row) for row in State.goals))
-            _hash = _hash * prime + hash(tuple(tuple(row) for row in State.walls))
+            _hash = _hash * prime + hash(tuple(agent.pos for agent in self.agents))
+            _hash = _hash * prime + hash(tuple(agent.color for agent in self.agents))
+            _hash = _hash * prime + hash(tuple(box.pos for box in self.boxes))
+            _hash = _hash * prime + hash(tuple(box.color for box in self.boxes))
+            _hash = _hash * prime + hash(tuple((goal.pos, goal.id) for goal in State.goals))
+            _hash = _hash * prime + hash(tuple(wall.pos for wall in State.walls))
             self._hash = _hash
         return self._hash
-    
+
     def __eq__(self, other):
-        if self is other: return True
-        if not isinstance(other, State): return False
-        if self.agent_rows != other.agent_rows: return False
-        if self.agent_cols != other.agent_cols: return False
-        if State.agent_colors != other.agent_colors: return False
-        if State.walls != other.walls: return False
-        if self.boxes != other.boxes: return False
-        if State.box_colors != other.box_colors: return False
-        if State.goals != other.goals: return False
+        if self is other:
+            return True
+        if not isinstance(other, State):
+            return False
+        if any(a1.pos != a2.pos or a1.color != a2.color for a1, a2 in zip(self.agents, other.agents)):
+            return False
+        if any(b1.pos != b2.pos or b1.color != b2.color for b1, b2 in zip(self.boxes, other.boxes)):
+            return False
+        if any(w1.pos != w2.pos for w1, w2 in zip(State.walls, other.walls)):
+            return False
+        if any(g1.pos != g2.pos or g1.id != g2.id for g1, g2 in zip(State.goals, other.goals)):
+            return False
         return True
-    
+
     def __repr__(self):
+        max_row = max(max(agent.pos.x for agent in self.agents), max(box.pos.x for box in self.boxes), max(wall.pos.x for wall in State.walls))  # Modified line
+        max_col = max(max(agent.pos.y for agent in self.agents), max(box.pos.y for box in self.boxes), max(wall.pos.y for wall in State.walls))  # Modified line
         lines = []
-        for row in range(len(self.boxes)):
+        for row in range(max_row + 1):
             line = []
-            for col in range(len(self.boxes[row])):
-                if self.boxes[row][col] != '': line.append(self.boxes[row][col])
-                elif State.walls[row][col] is not None: line.append('+')
-                elif self.agent_at(row, col) is not None: line.append(self.agent_at(row, col))
-                else: line.append(' ')
+            for col in range(max_col + 1):
+                pos = Position(row, col)
+                agent = self.agent_at(pos)
+                box = self.box_at(pos)
+                wall = next((wall for wall in State.walls if wall.pos == pos), None)  # Added line
+                if box is not None:
+                    line.append(box.getRealBoxId())
+                elif wall is not None:
+                    line.append('+')
+                elif agent is not None:
+                    line.append(str(agent.id))
+                else:
+                    line.append(' ')
             lines.append(''.join(line))
         return '\n'.join(lines)
