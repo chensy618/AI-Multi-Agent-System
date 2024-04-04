@@ -2,10 +2,20 @@ import heapq
 from abc import ABCMeta, abstractmethod
 from collections import deque
 from state import State
+from domain.position import Position
+from domain.action import Action, ActionType
+
+globals().update(Action.__members__)
 
 def astar(problem_state, conflicts):
+    # return [
+    #         [MoveE],
+    #         [MoveE],
+    #         [MoveS],
+    #     ]
     initial_state = problem_state
-    goal_position = problem_state.goals
+    goal_position = problem_state.goals[0]
+    print(f"---goal_position--- {goal_position.pos}")
     frontier = FrontierBestFirst(HeuristicAStar(initial_state))
     frontier.add(initial_state)
     
@@ -13,11 +23,13 @@ def astar(problem_state, conflicts):
 
     while True:
         if frontier.is_empty():
+            print("No solution found")
             return None  # No solution found
 
-        current_state : State = frontier.pop()
+        current_state = frontier.pop()
+        print(f"---current_state--- {current_state.agents[0].pos}")
 
-        if current_state == goal_position:
+        if current_state.is_goal_state():
             return current_state.extract_plan()  # Return the plan to reach the goal state
 
         explored.add(current_state)
@@ -25,7 +37,6 @@ def astar(problem_state, conflicts):
         for state in current_state.get_expanded_states():
             if state not in explored and not frontier.contains(state):
                 frontier.add(state)
-
 
 class Frontier(metaclass=ABCMeta):
     @abstractmethod

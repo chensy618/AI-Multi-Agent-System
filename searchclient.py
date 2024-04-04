@@ -126,11 +126,9 @@ class SearchClient:
         server_messages = io.TextIOWrapper(sys.stdin.buffer, encoding='ASCII')
         initial_state = SearchClient.parse_level(server_messages)
         print(f"---initial_state--{initial_state.agents,initial_state.boxes,initial_state.goals}")
-        # TODO: Search for a plan., we need to initiate our plan to start here
+        # Search for a plan
         conflict = None
-        # Example plan - replace with actual search logic
         print('Starting.', file=sys.stderr, flush=True)
-        #plan = ['NoOp']
         plan = astar(initial_state, conflict)
         print(f"Plan:{plan}")
         if plan is None:
@@ -138,11 +136,11 @@ class SearchClient:
             sys.exit(0)
         else:
             print('Found solution of length {}.'.format(len(plan)), file=sys.stderr, flush=True)  
-        for joint_action in plan:
-            print(joint_action, flush=True)
-            #print("|".join(a.name_ + "@" + a.name_ for a in joint_action), flush=True)
-            #We must read the server's response to not fill up the stdin buffer and block the server.
-            response = server_messages.readline()
+            for joint_action in plan:
+                print("|".join(a.name_ + "@" + a.name_ for a in joint_action), flush=True)
+                #We must read the server's response to not fill up the stdin buffer and block the server.
+                response = server_messages.readline()
+                print(f"---response--{response}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Simple client based on state-space graph search.')

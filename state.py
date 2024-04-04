@@ -71,11 +71,11 @@ class State:
         for goal in self.goals:
             if 'A' <= goal.id <= 'Z':
                 # Check if there's a box at the goal position with the matching ID
-                if box_positions.get(goal.pos) != goal.id:
+                if box_positions.get(goal.pos) != int(goal.id):
                     return False
             elif '0' <= goal.id <= '9':
                 # Check if there's an agent at the goal position with the matching ID
-                if agent_positions.get(goal.pos) != goal.id:
+                if agent_positions.get(goal.pos) != int(goal.id):
                     return False
             else:
                 # If the goal ID is not recognized as a box or agent, return False
@@ -216,7 +216,7 @@ class State:
     def goal_at(self, position: Position) -> Goal:
         for goal in self.goals:
             #if goal.pos.x == position.x and goal.pos.y == position.y:
-            if goal.pos == position:
+            if goal.pos.postion == position:
                 return goal
         return None
     
@@ -224,7 +224,7 @@ class State:
         for wall in self.walls:
             #print(f"---wall---{wall}")
             #if wall.pos.x == position.x and wall.pos.y == position.y:
-            if wall.pos == position:
+            if wall.pos.position == position:
                 return wall
         return None
 
