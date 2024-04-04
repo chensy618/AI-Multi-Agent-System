@@ -2,23 +2,34 @@ import heapq
 from abc import ABCMeta, abstractmethod
 from collections import deque
 from state import State
+from domain.position import Position
+from domain.action import Action, ActionType
+
+globals().update(Action.__members__)
 
 def astar(problem_state, conflicts):
-    #problem_state = State()
+    # return [
+    #         [MoveE],
+    #         [MoveE],
+    #         [MoveS],
+    #     ]
     initial_state = problem_state
-    goal_position = problem_state.goals
+    goal_position = problem_state.goals[0]
+    print(f"---goal_position--- {goal_position.pos}")
     frontier = FrontierBestFirst(HeuristicAStar(initial_state))
     frontier.add(initial_state)
-
+    
     explored = set()
 
     while True:
         if frontier.is_empty():
+            print("No solution found")
             return None  # No solution found
 
-        current_state : State = frontier.pop()
+        current_state = frontier.pop()
+        print(f"---current_state--- {current_state.agents[0].pos}")
 
-        if current_state == goal_position:
+        if current_state.is_goal_state():
             return current_state.extract_plan()  # Return the plan to reach the goal state
 
         explored.add(current_state)
@@ -26,7 +37,6 @@ def astar(problem_state, conflicts):
         for state in current_state.get_expanded_states():
             if state not in explored and not frontier.contains(state):
                 frontier.add(state)
-
 
 class Frontier(metaclass=ABCMeta):
     @abstractmethod
@@ -100,6 +110,7 @@ class PriorityQueue:
 class Heuristic(metaclass=ABCMeta):
     def __init__(self, initial_state: 'State'):
         self.agent_goal_position = initial_state.goals[0].pos
+        print(f"---agent_goal_position--- {self.agent_goal_position}")
         #self.box_goal_position = {}
         
 
@@ -116,13 +127,13 @@ class Heuristic(metaclass=ABCMeta):
         
         #where is the agent
         agent = state.agents[0].pos
-                   
+        print(f"-----where is the agent----- {agent}")           
         #Get the goal position of the agent
         goal = self.agent_goal_position
             
         # Calculate Manhattan distance if goal position is found
-        distance = abs(agent.pos.x - goal.pos.x) + abs(agent.pos.y - goal.pos.y)
-        
+        distance = abs(agent.x - goal.x) + abs(agent.y - goal.y)
+        print(f"---distance--- {distance}")
         return distance
 
     @abstractmethod
