@@ -4,12 +4,11 @@ from collections import deque
 from state import State
 
 def astar(problem_state, conflicts):
-    problem_state = State()
     initial_state = problem_state
     goal_position = problem_state.goals
     frontier = FrontierBestFirst(HeuristicAStar(initial_state))
     frontier.add(initial_state)
-
+    
     explored = set()
 
     while True:
@@ -99,7 +98,8 @@ class PriorityQueue:
     
 class Heuristic(metaclass=ABCMeta):
     def __init__(self, initial_state: 'State'):
-        self.agent_goal_position = initial_state.goals.pos
+        self.agent_goal_position = initial_state.goals[0].pos
+        print(f"---agent_goal_position--- {self.agent_goal_position}")
         #self.box_goal_position = {}
         
 
@@ -115,14 +115,14 @@ class Heuristic(metaclass=ABCMeta):
         """
         
         #where is the agent
-        agent = state.agents.pos
-                   
+        agent = state.agents[0].pos
+        print(f"-----where is the agent----- {agent}")           
         #Get the goal position of the agent
         goal = self.agent_goal_position
             
         # Calculate Manhattan distance if goal position is found
-        distance = abs(agent.pos.x - goal.pos.x) + abs(agent.pos.y - goal.pos.y)
-        
+        distance = abs(agent.x - goal.x) + abs(agent.y - goal.y)
+        print(f"---distance--- {distance}")
         return distance
 
     @abstractmethod
