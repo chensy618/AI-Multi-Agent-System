@@ -13,6 +13,10 @@ from domain.goal import Goal
 from domain.wall import Wall
 from astar import astar
 
+# import debugpy
+# debugpy.listen(("localhost", 1234)) # Open a debugging server at localhost:1234
+# debugpy.wait_for_client() # Wait for the debugger to connect
+# debugpy.breakpoint() # Ensure the program starts paused
 
 # data structure for agent, box, goal
 AgentConfig = namedtuple('AgentConfig', ['position', 'id', 'color'])
@@ -65,7 +69,7 @@ class LevelParser:
         goal_layout, _ = LevelParser.parse_layout(server_messages, '#end')
         # print(f"parse_initial and goal--{initial_layout,goal_layout}")
         return initial_layout, goal_layout
-    
+
     @staticmethod
     # get the initial state
     def parse_initial(server_messages):
@@ -104,10 +108,10 @@ class SearchClient:
 
         # read position of goals
         for row_idx, row in enumerate(goal_layout):
-            for col_idx, char in enumerate(row): 
+            for col_idx, char in enumerate(row):
                 if char.isdigit() or char.isupper():
                     goals.append(GoalConfig(Position(row_idx, col_idx), char))
-        
+
         # Convert configs to actual objects
         agent_objs = [Agent(position, id_, color) for position, id_, color in agents]
         box_objs = [Box(position, letter, color) for position, letter, color in boxes]
@@ -135,7 +139,7 @@ class SearchClient:
             print('Unable to solve level.', file=sys.stderr, flush=True)
             sys.exit(0)
         else:
-            print('Found solution of length {}.'.format(len(plan)), file=sys.stderr, flush=True)  
+            print('Found solution of length {}.'.format(len(plan)), file=sys.stderr, flush=True)
             for joint_action in plan:
                 print("|".join(a.name_ + "@" + a.name_ for a in joint_action), flush=True)
                 #We must read the server's response to not fill up the stdin buffer and block the server.
