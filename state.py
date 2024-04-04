@@ -85,6 +85,7 @@ class State:
 
     def get_expanded_states(self) -> 'list[State]':
         num_agents = len(self.agents)
+        #print(f"---num_agents---{num_agents}")
 
         # Determine list of applicable action for each individual agent.
         applicable_actions = [[action for action in Action if self.is_applicable(agentIdx, action)] for agentIdx in range(num_agents)]
@@ -118,8 +119,9 @@ class State:
 
     def is_applicable(self, agent: int, action: Action) -> bool:
         agent = self.agents[agent]
+        #print(f"---agent---{agent}")
         agent_destination = agent.pos + action.agent_rel_pos
-
+        #print(f"---agent_destination---{agent_destination}")
         if action.type is ActionType.NoOp:
             return True
 
@@ -194,19 +196,36 @@ class State:
         return False
 
     def is_free(self, position) -> bool:
-        pass
-        #return not self.walls[position.x][position.y] and self.box_at(position) is None and self.agent_at(position) is None
+        #print(f"---walls---{self.walls}")
+        return not self.wall_at(position) and self.box_at(position) is None and self.agent_at(position) is None
 
     def agent_at(self, position: Position) -> Agent:
         for agent in self.agents:
-            if agent.pos.x == position.x and agent.pos.y == position.y:
+            #if agent.pos.x == position.x and agent.pos.y == position.y:
+            if agent.pos == position:
                 return agent
         return None
 
     def box_at(self, position: Position) -> Box:
         for box in self.boxes:
-            if box.pos.x == position.x and box.pos.y == position.y:
+            #if box.pos.x == position.x and box.pos.y == position.y:
+            if box.pos == position:
                 return box
+        return None
+
+    def goal_at(self, position: Position) -> Goal:
+        for goal in self.goals:
+            #if goal.pos.x == position.x and goal.pos.y == position.y:
+            if goal.pos == position:
+                return goal
+        return None
+    
+    def wall_at(self, position: Position) -> Wall:
+        for wall in self.walls:
+            #print(f"---wall---{wall}")
+            #if wall.pos.x == position.x and wall.pos.y == position.y:
+            if wall.pos == position:
+                return wall
         return None
 
     def extract_plan(self) -> list[Action]:
