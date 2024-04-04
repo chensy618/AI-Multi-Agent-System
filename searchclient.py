@@ -128,7 +128,6 @@ class SearchClient:
         print(f"---initial_state--{initial_state.agents,initial_state.boxes,initial_state.goals}")
         # TODO: Search for a plan., we need to initiate our plan to start here
         conflict = None
-        plan = astar(initial_state, conflict)
         # Example plan - replace with actual search logic
         print('Starting.', file=sys.stderr, flush=True)
         #plan = ['NoOp']
