@@ -11,6 +11,8 @@ from domain.agent import Agent
 from domain.box import Box
 from domain.goal import Goal
 from domain.wall import Wall
+from astar import astar
+
 
 # data structure for agent, box, goal
 AgentConfig = namedtuple('AgentConfig', ['position', 'id', 'color'])
@@ -82,45 +84,37 @@ class SearchClient:
             server_messages.readline()
 
         agent_colors, box_colors = LevelParser.parse_colors(server_messages)
-        print(f"---agent_colors, box_colors--{agent_colors, box_colors}")
+        #print(f"---agent_colors, box_colors--{agent_colors, box_colors}")
         initial_layout, goal_layout = LevelParser.parse_initial_and_goal_states(server_messages)
-        print(f"---initial_layout, goal_layout--{initial_layout, goal_layout}")
+        #print(f"---initial_layout, goal_layout--{initial_layout, goal_layout}")
 
-        # agents, boxes, goals initialization : empty lists
+        # agents, boxes, goals, walls initialization : empty lists
         # iterate through the initial_layout and goal_layout
-        agents, boxes, goals = [], [], []
+        agents, boxes, goals, walls = [], [], [], []
         for row_idx, row in enumerate(initial_layout):
             for col_idx, char in enumerate(row):
                 position = Position(row_idx, col_idx)
                 if char.isdigit():
                     agents.append(AgentConfig(position, int(char), agent_colors.get(int(char))))
-                elif char.isalpha() and char.isupper():
+                elif char.isupper():
                     boxes.append(BoxConfig(position, char, box_colors.get(char)))
+                else:
+                    if char == '+':
+                        walls.append(WallConfig(position))
 
+        # read position of goals
         for row_idx, row in enumerate(goal_layout):
-            for col_idx, char in enumerate(row):
-                if char in box_colors:  # Assuming goals are only for boxes
+            for col_idx, char in enumerate(row): 
+                if char.isdigit() or char.isupper():
                     goals.append(GoalConfig(Position(row_idx, col_idx), char))
-                    
-        # read position of walls
-        walls = []
-        for row_idx, row in enumerate(initial_layout):
-            for col_idx, char in enumerate(row):
-                position = Position(row_idx, col_idx)
-                if char == '+':
-                    walls.append(WallConfig(position))
-        # debug print
-        # print(agents, boxes, goals, walls)
-                    
+        
         # Convert configs to actual objects
         agent_objs = [Agent(position, id_, color) for position, id_, color in agents]
         box_objs = [Box(position, letter, color) for position, letter, color in boxes]
         goal_objs = [Goal(position, letter) for position, letter in goals]
         wall_objs = [Wall(position) for position in walls]
 
-        # after implementing goal, uncomment the line below
-        # return State(agent_objs, box_objs, goal_objs, wall_objs)
-        return State(agent_objs, box_objs)
+        return State(agent_objs, box_objs, goal_objs, wall_objs)
 
     @staticmethod
     def main(args) -> None:
@@ -131,11 +125,14 @@ class SearchClient:
 
         server_messages = io.TextIOWrapper(sys.stdin.buffer, encoding='ASCII')
         initial_state = SearchClient.parse_level(server_messages)
-        
+        print(f"---initial_state--{initial_state.agents,initial_state.boxes,initial_state.goals}")
         # TODO: Search for a plan., we need to initiate our plan to start here
+        conflict = None
+        plan = astar(initial_state, conflict)
         # Example plan - replace with actual search logic
         print('Starting.', file=sys.stderr, flush=True)
-        plan = ['NoOp']
+        #plan = ['NoOp']
+        plan = astar(initial_state, conflict)
         if plan is None:
             print('Unable to solve level.', file=sys.stderr, flush=True)
             sys.exit(0)
