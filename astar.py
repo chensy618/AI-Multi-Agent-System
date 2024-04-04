@@ -113,9 +113,6 @@ class Heuristic(metaclass=ABCMeta):
             Tis function only calculate the manatthan distances for each of the agents from its destination and sums it up
             lower the number that this returned, closer are the agents from their destination
         """
-
-        distances = [] #this will store all of the distances, distances[0] = how far is the agent 0 from its destination and go on...
-        
         
         #where is the agent
         agent = state.agents.pos
@@ -127,52 +124,6 @@ class Heuristic(metaclass=ABCMeta):
         distance = abs(agent.pos.x - goal.pos.x) + abs(agent.pos.y - goal.pos.y)
         
         return distance
-
-    def heuristic_prime_boxes(self, state: "State") -> int:
-
-        box_positions = {}
-        #Iterate over self.boxes and estract the position of the boxes, then put in a dictionary where the keys are the letter of the boxes and the value are the position of the boxes with that letter
-        for i, row in enumerate(state.boxes):
-            for j, box in enumerate(row):
-                if 'A' <= box <= 'Z':
-                    if box not in box_positions:
-                        box_positions[box] = [] 
-                    box_positions[box].append((i, j))
-
-        total_distance = 0
-
-        # Iterate over the keys of self.boxes_goal_position that would be uppercase letters 'A', 'B' etc etc
-        for box_key in self.boxes_goal_position:
-            # Get the goal positions for the boxes with the current letter
-            goal_positions_for_box_key = self.boxes_goal_position[box_key]
-            # Get the current positions for the boxes with the current letter
-            current_positions_for_box_key = box_positions[box_key]
-
-            closest_mapping_for_key_boxes = self.find_closest_tuples_manhattan(goal_positions_for_box_key,current_positions_for_box_key)
-
-            for point1, point2 in closest_mapping_for_key_boxes.items():
-                distance = abs(point2[0] - point1[0]) + abs(point2[1] - point1[1])
-                total_distance += distance
-
-        return total_distance
-
-
-
-    def find_closest_tuples_manhattan(self, curr_positions_boxes, desired_positions_boxes):
-        closest_mapping = {}
-        array2_copy = desired_positions_boxes.copy()
-        for point1 in curr_positions_boxes:
-            closest_point = None
-            min_distance = float('inf')
-            for point2 in array2_copy:
-                distance = abs(point2[0] - point1[0]) + abs(point2[1] - point1[1])
-                if distance < min_distance:
-                    min_distance = distance
-                    closest_point = point2
-            closest_mapping[point1] = closest_point
-            curr_positions_boxes.remove(point1)
-            array2_copy.remove(closest_point)
-        return closest_mapping
 
     @abstractmethod
     def f(self, state: 'State') -> 'int': pass
