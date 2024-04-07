@@ -117,7 +117,10 @@ class SearchClient:
         box_objs = [Box(position, letter, color) for position, letter, color in boxes]
         goal_objs = [Goal(position, letter) for position, letter in goals]
         wall_objs = [Wall(position) for position in walls]
-
+        # print(f"---agent_objs is--{agent_objs}")
+        # print(f"---box_objs is--{box_objs}")
+        # print(f"---goal_objs is--{goal_objs}")
+        # print(f"---wall_objs is--{wall_objs}")
         return State(agent_objs, box_objs, goal_objs, wall_objs)
 
     @staticmethod
@@ -144,7 +147,7 @@ class SearchClient:
                 print("|".join(a.name_ + "@" + a.name_ for a in joint_action), flush=True)
                 #We must read the server's response to not fill up the stdin buffer and block the server.
                 response = server_messages.readline()
-                print(f"---response--{response}")
+                # print(f"---response--{response}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Simple client based on state-space graph search.')

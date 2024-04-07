@@ -14,11 +14,10 @@ def astar(problem_state, conflicts):
     #         [MoveS],
     #     ]
     initial_state = problem_state
-    goal_position = problem_state.goals[0]
-    print(f"---goal_position--- {goal_position.pos}")
+    goal_position = problem_state.goals
     frontier = FrontierBestFirst(HeuristicAStar(initial_state))
     frontier.add(initial_state)
-    
+
     explored = set()
 
     while True:
@@ -41,19 +40,19 @@ def astar(problem_state, conflicts):
 class Frontier(metaclass=ABCMeta):
     @abstractmethod
     def add(self, state: 'State'): raise NotImplementedError
-    
+
     @abstractmethod
     def pop(self) -> 'State': raise NotImplementedError
-    
+
     @abstractmethod
     def is_empty(self) -> 'bool': raise NotImplementedError
-    
+
     @abstractmethod
     def size(self) -> 'int': raise NotImplementedError
-    
+
     @abstractmethod
     def contains(self, state: 'State') -> 'bool': raise NotImplementedError
-    
+
     @abstractmethod
     def get_name(self): raise NotImplementedError
 
@@ -62,22 +61,22 @@ class FrontierBestFirst(Frontier):
         super().__init__()
         self.heuristic = heuristic
         self.priority_queue = PriorityQueue()
-    
+
     def add(self, state: 'State'):
        self.priority_queue.push(state, self.heuristic.f(state))
-    
+
     def pop(self) -> 'State':
         return self.priority_queue.pop()
-    
+
     def is_empty(self) -> 'bool':
         return self.priority_queue.is_empty()
-    
+
     def size(self) -> 'int':
         return len(self.priority_queue)
-    
+
     def contains(self, state: 'State') -> 'bool':
         return  state in self.priority_queue
-    
+
     def get_name(self):
         return 'best-first search using {}'.format(self.heuristic)
 
@@ -100,19 +99,19 @@ class PriorityQueue:
 
     def is_empty(self):
         return len(self._queue) == 0
-    
+
     def __len__(self):
         return len(self._queue)
 
     def __contains__(self, item):
         return item in self._set
-    
+
 class Heuristic(metaclass=ABCMeta):
     def __init__(self, initial_state: 'State'):
         self.agent_goal_position = initial_state.goals[0].pos
         print(f"---agent_goal_position--- {self.agent_goal_position}")
         #self.box_goal_position = {}
-        
+
 
     def h(self, state: 'State') -> 'int':
         #return self.goal_count_heuristic(state)
@@ -124,13 +123,14 @@ class Heuristic(metaclass=ABCMeta):
             Tis function only calculate the manatthan distances for each of the agents from its destination and sums it up
             lower the number that this returned, closer are the agents from their destination
         """
-        
+
         #where is the agent
         agent = state.agents[0].pos
-        print(f"-----where is the agent----- {agent}")           
+        print(f"-----state.agents id----- {state.agents[0].id}")
+        print(f"-----where is the agent----- {agent}")
         #Get the goal position of the agent
         goal = self.agent_goal_position
-            
+
         # Calculate Manhattan distance if goal position is found
         distance = abs(agent.x - goal.x) + abs(agent.y - goal.y)
         print(f"---distance--- {distance}")
@@ -138,19 +138,19 @@ class Heuristic(metaclass=ABCMeta):
 
     @abstractmethod
     def f(self, state: 'State') -> 'int': pass
-    
+
     @abstractmethod
     def __repr__(self): raise NotImplementedError
 
 class HeuristicAStar(Heuristic):
     def __init__(self, initial_state: 'State'):
         super().__init__(initial_state)
-    
+
     def f(self, state: 'State') -> 'int':
         g = state.g
         h = self.h(state)
         return g + h
-    
+
     def __repr__(self):
         return 'A* evaluation'
 
@@ -158,9 +158,9 @@ class HeuristicWeightedAStar(Heuristic):
     def __init__(self, initial_state: 'State', w: 'int'):
         super().__init__(initial_state)
         self.w = w
-    
+
     def f(self, state: 'State') -> 'int':
         return state.g + self.w * self.h(state)
-    
+
     def __repr__(self):
         return 'WA*({}) evaluation'.format(self.w)
