@@ -22,7 +22,7 @@ class State:
         self.joint_action = None
         self.g = 0
         self._hash = None
-        
+
     def result(self, joint_action: list[Action]) -> 'State':
         '''
         Returns the state resulting from applying joint_action in this state.
@@ -71,7 +71,7 @@ class State:
         for goal in self.goals:
             if 'A' <= goal.id <= 'Z':
                 # Check if there's a box at the goal position with the matching ID
-                if box_positions.get(goal.pos) != int(goal.id):
+                if box_positions.get(goal.pos) != goal.id:
                     return False
             elif '0' <= goal.id <= '9':
                 # Check if there's an agent at the goal position with the matching ID
@@ -219,7 +219,7 @@ class State:
             if goal.pos.postion == position:
                 return goal
         return None
-    
+
     def wall_at(self, position: Position) -> Wall:
         for wall in self.walls:
             #print(f"---wall---{wall}")
