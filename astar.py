@@ -38,6 +38,7 @@ def astar(problem_state, conflicts):
             if state not in explored and not frontier.contains(state):
                 frontier.add(state)
 
+
 class Frontier(metaclass=ABCMeta):
     @abstractmethod
     def add(self, state: 'State'): raise NotImplementedError

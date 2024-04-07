@@ -13,6 +13,10 @@ from domain.goal import Goal
 from domain.wall import Wall
 from astar import astar
 
+import debugpy
+debugpy.listen(("localhost", 12345)) # Open a debugging server at localhost:1234
+debugpy.wait_for_client() # Wait for the debugger to connect
+debugpy.breakpoint() # Ensure the program starts paused
 
 # data structure for agent, box, goal
 AgentConfig = namedtuple('AgentConfig', ['position', 'id', 'color'])
@@ -140,7 +144,7 @@ class SearchClient:
                 print("|".join(a.name_ + "@" + a.name_ for a in joint_action), flush=True)
                 #We must read the server's response to not fill up the stdin buffer and block the server.
                 response = server_messages.readline()
-                print(f"---response--{response}")
+                #print(f"---response--{response}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Simple client based on state-space graph search.')
