@@ -219,7 +219,7 @@ class State:
             if goal.pos.postion == position:
                 return goal
         return None
-    
+
     def wall_at(self, position: Position) -> Wall:
         for wall in self.walls:
             #print(f"---wall---{wall}")
