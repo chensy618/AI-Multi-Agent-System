@@ -160,7 +160,7 @@ class Heuristic(metaclass=ABCMeta):
                 box_id = goal[0] # get the box value
                 print(f'#####box_id is {box_id}#######')
                 closest_box_distance = float('inf')
-                print(f'------------closest_box_distance is {closest_box_distance}-------------------')
+                # print(f'------------closest_box_distance is {closest_box_distance}-------------------')
                 goal_pos = goal[1] # get the position
                 print(f'#####goal_pos is {goal_pos}#######')
                 box = next((b for b in state.boxes if b.id == box_id), None)
@@ -169,7 +169,7 @@ class Heuristic(metaclass=ABCMeta):
                     print(f'#####box_pos is {box_pos}#######')
                     distance = abs(box_pos.x - goal_pos.x) + abs(box_pos.y - goal_pos.y)
                     closest_box_distance = min(closest_box_distance, distance)
-                    print(f'------------closest_box_distance in for loop is {closest_box_distance}-------------------')
+                    # print(f'------------closest_box_distance in for loop is {closest_box_distance}-------------------')
                     if closest_box_distance != float('inf'):
                         box_to_goal_distance += closest_box_distance
                 else:
