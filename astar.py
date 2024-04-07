@@ -108,10 +108,29 @@ class PriorityQueue:
 
 class Heuristic(metaclass=ABCMeta):
     def __init__(self, initial_state: 'State'):
-        self.agent_goal_position = initial_state.goals[0].pos
-        print(f"---agent_goal_position--- {self.agent_goal_position}")
-        #self.box_goal_position = {}
+        # Initiate the value for parameters
+        # create list to store the goal agent parameters
+        self.goal_name_agent = []
+        self.goal_position_agent = []
+        # create list to store the goal box parameters
+        self.goal_name_box = []
+        self.goal_position_box = []
 
+        # save the goal positions and the agent names
+        for goal in range(len(initial_state.goals)):
+            goal_id = initial_state.goals[goal].id
+            position = initial_state.goals[goal].pos
+            if goal_id.isdigit():
+                self.goal_name_agent.append(goal_id)
+                self.goal_position_agent.append(position)
+            elif goal_id.isupper():
+                self.goal_name_box.append(goal_id)
+                self.goal_position_box.append(position)
+
+        self.goal_agents = list(zip(self.goal_name_agent, self.goal_position_agent))
+        self.goal_boxes = list(zip(self.goal_name_box, self.goal_position_box))
+        print(f"---goal_agents--- {self.goal_agents}")
+        print(f"---goal_boxes--- {self.goal_boxes}")
 
     def h(self, state: 'State') -> 'int':
         #return self.goal_count_heuristic(state)
@@ -123,18 +142,43 @@ class Heuristic(metaclass=ABCMeta):
             Tis function only calculate the manatthan distances for each of the agents from its destination and sums it up
             lower the number that this returned, closer are the agents from their destination
         """
-
-        #where is the agent
-        agent = state.agents[0].pos
-        print(f"-----state.agents id----- {state.agents[0].id}")
-        print(f"-----where is the agent----- {agent}")
-        #Get the goal position of the agent
-        goal = self.agent_goal_position
-
-        # Calculate Manhattan distance if goal position is found
-        distance = abs(agent.x - goal.x) + abs(agent.y - goal.y)
-        print(f"---distance--- {distance}")
-        return distance
+        total_distance = 0
+        agent_to_goal_distance = 0
+        box_to_goal_distance = 0
+        if self.goal_agents != []:
+            for goal in self.goal_agents: # loop in the goal agent list (agent_id, goal_row, goal_col)
+                agent_id = int(goal[0]) # get the agent_id
+                goal_pos = goal[1] # get the position
+                print(f'#####agent_id is {agent_id}#######')
+                print(f'#####goal_pos is {goal_pos}#######')
+                agent_pos = state.agents[agent_id].pos
+                distance = abs(agent_pos.x - goal_pos.x) + abs(agent_pos.y - goal_pos.y)
+                agent_to_goal_distance += distance
+                print(f'------------agent_to_goal_distance is {agent_to_goal_distance}-------------------')
+        elif self.goal_boxes != []:
+            for goal in self.goal_boxes: # loop in the goal box list (box_id, goal_row, goal_col)
+                box_id = goal[0] # get the box value
+                print(f'#####box_id is {box_id}#######')
+                closest_box_distance = float('inf')
+                print(f'------------closest_box_distance is {closest_box_distance}-------------------')
+                goal_pos = goal[1] # get the position
+                print(f'#####goal_pos is {goal_pos}#######')
+                box = next((b for b in state.boxes if b.id == box_id), None)
+                if box:
+                    box_pos = box.pos
+                    print(f'#####box_pos is {box_pos}#######')
+                    distance = abs(box_pos.x - goal_pos.x) + abs(box_pos.y - goal_pos.y)
+                    closest_box_distance = min(closest_box_distance, distance)
+                    print(f'------------closest_box_distance in for loop is {closest_box_distance}-------------------')
+                    if closest_box_distance != float('inf'):
+                        box_to_goal_distance += closest_box_distance
+                else:
+                    print(f'No box found with ID {box_id}')
+                    box_to_goal_distance += 0
+            print(f'------------box_to_goal_distance in for loop is {box_to_goal_distance}-------------------')
+        total_distance = agent_to_goal_distance + box_to_goal_distance
+        print(f'------------total_distance is {total_distance}-------------------')
+        return total_distance
 
     @abstractmethod
     def f(self, state: 'State') -> 'int': pass

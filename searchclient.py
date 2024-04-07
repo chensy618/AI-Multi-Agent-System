@@ -40,6 +40,7 @@ class LevelParser:
             color = Color.from_string(color_name)
             # print(f"----Color---: {color,color_name}, entities: {entities}")
             for entity in entities.split(','):
+                entity = entity.strip()  # Strip spaces from the entity
                 if entity.isdigit():
                     agent_colors[int(entity)] = color
                 else:
@@ -88,7 +89,7 @@ class SearchClient:
             server_messages.readline()
 
         agent_colors, box_colors = LevelParser.parse_colors(server_messages)
-        #print(f"---agent_colors, box_colors--{agent_colors, box_colors}")
+        # print(f"---agent_colors, box_colors--{agent_colors, box_colors}")
         initial_layout, goal_layout = LevelParser.parse_initial_and_goal_states(server_messages)
         #print(f"---initial_layout, goal_layout--{initial_layout, goal_layout}")
 
