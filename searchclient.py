@@ -11,6 +11,12 @@ from domain.agent import Agent
 from domain.box import Box
 from domain.goal import Goal
 from domain.wall import Wall
+from astar import astar
+
+# import debugpy
+# debugpy.listen(("localhost", 1234)) # Open a debugging server at localhost:1234
+# debugpy.wait_for_client() # Wait for the debugger to connect
+# debugpy.breakpoint() # Ensure the program starts paused
 
 # data structure for agent, box, goal
 AgentConfig = namedtuple('AgentConfig', ['position', 'id', 'color'])
@@ -34,6 +40,7 @@ class LevelParser:
             color = Color.from_string(color_name)
             # print(f"----Color---: {color,color_name}, entities: {entities}")
             for entity in entities.split(','):
+                entity = entity.strip()  # Strip spaces from the entity
                 if entity.isdigit():
                     agent_colors[int(entity)] = color
                 else:
@@ -63,7 +70,7 @@ class LevelParser:
         goal_layout, _ = LevelParser.parse_layout(server_messages, '#end')
         # print(f"parse_initial and goal--{initial_layout,goal_layout}")
         return initial_layout, goal_layout
-    
+
     @staticmethod
     # get the initial state
     def parse_initial(server_messages):
@@ -82,45 +89,40 @@ class SearchClient:
             server_messages.readline()
 
         agent_colors, box_colors = LevelParser.parse_colors(server_messages)
-        print(f"---agent_colors, box_colors--{agent_colors, box_colors}")
+        # print(f"---agent_colors, box_colors--{agent_colors, box_colors}")
         initial_layout, goal_layout = LevelParser.parse_initial_and_goal_states(server_messages)
-        print(f"---initial_layout, goal_layout--{initial_layout, goal_layout}")
+        #print(f"---initial_layout, goal_layout--{initial_layout, goal_layout}")
 
-        # agents, boxes, goals initialization : empty lists
+        # agents, boxes, goals, walls initialization : empty lists
         # iterate through the initial_layout and goal_layout
-        agents, boxes, goals = [], [], []
+        agents, boxes, goals, walls = [], [], [], []
         for row_idx, row in enumerate(initial_layout):
             for col_idx, char in enumerate(row):
                 position = Position(row_idx, col_idx)
                 if char.isdigit():
                     agents.append(AgentConfig(position, int(char), agent_colors.get(int(char))))
-                elif char.isalpha() and char.isupper():
+                elif char.isupper():
                     boxes.append(BoxConfig(position, char, box_colors.get(char)))
+                else:
+                    if char == '+':
+                        walls.append(WallConfig(position))
 
+        # read position of goals
         for row_idx, row in enumerate(goal_layout):
             for col_idx, char in enumerate(row):
-                if char in box_colors:  # Assuming goals are only for boxes
+                if char.isdigit() or char.isupper():
                     goals.append(GoalConfig(Position(row_idx, col_idx), char))
-                    
-        # read position of walls
-        walls = []
-        for row_idx, row in enumerate(initial_layout):
-            for col_idx, char in enumerate(row):
-                position = Position(row_idx, col_idx)
-                if char == '+':
-                    walls.append(WallConfig(position))
-        # debug print
-        # print(agents, boxes, goals, walls)
-                    
+
         # Convert configs to actual objects
         agent_objs = [Agent(position, id_, color) for position, id_, color in agents]
         box_objs = [Box(position, letter, color) for position, letter, color in boxes]
         goal_objs = [Goal(position, letter) for position, letter in goals]
         wall_objs = [Wall(position) for position in walls]
-
-        # after implementing goal, uncomment the line below
-        # return State(agent_objs, box_objs, goal_objs, wall_objs)
-        return State(agent_objs, box_objs)
+        # print(f"---agent_objs is--{agent_objs}")
+        # print(f"---box_objs is--{box_objs}")
+        # print(f"---goal_objs is--{goal_objs}")
+        # print(f"---wall_objs is--{wall_objs}")
+        return State(agent_objs, box_objs, goal_objs, wall_objs)
 
     @staticmethod
     def main(args) -> None:
@@ -131,21 +133,22 @@ class SearchClient:
 
         server_messages = io.TextIOWrapper(sys.stdin.buffer, encoding='ASCII')
         initial_state = SearchClient.parse_level(server_messages)
-        
-        # TODO: Search for a plan., we need to initiate our plan to start here
-        # Example plan - replace with actual search logic
+        print(f"---initial_state--{initial_state.agents,initial_state.boxes,initial_state.goals}")
+        # Search for a plan
+        conflict = None
         print('Starting.', file=sys.stderr, flush=True)
-        plan = ['NoOp']
+        plan = astar(initial_state, conflict)
+        print(f"Plan:{plan}")
         if plan is None:
             print('Unable to solve level.', file=sys.stderr, flush=True)
             sys.exit(0)
         else:
-            print('Found solution of length {}.'.format(len(plan)), file=sys.stderr, flush=True)  
-        for joint_action in plan:
-            print(joint_action, flush=True)
-            #print("|".join(a.name_ + "@" + a.name_ for a in joint_action), flush=True)
-            #We must read the server's response to not fill up the stdin buffer and block the server.
-            response = server_messages.readline()
+            print('Found solution of length {}.'.format(len(plan)), file=sys.stderr, flush=True)
+            for joint_action in plan:
+                print("|".join(a.name_ + "@" + a.name_ for a in joint_action), flush=True)
+                #We must read the server's response to not fill up the stdin buffer and block the server.
+                response = server_messages.readline()
+                # print(f"---response--{response}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Simple client based on state-space graph search.')

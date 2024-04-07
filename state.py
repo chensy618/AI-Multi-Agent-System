@@ -30,6 +30,8 @@ class State:
         '''
         copy_agents = [Agent(agent.pos, agent.id, agent.color) for agent in self.agents]
         copy_boxes = [Box(box.pos, box.id, box.color) for box in self.boxes]
+        copy_goals = [Goal(goal.pos, goal.id) for goal in self.goals]
+        copy_walls = [Wall(wall.pos) for wall in self.walls]
         for agent_index, action in enumerate(joint_action):
             copied_agent = copy_agents[agent_index]
             if action.type == ActionType.Move:
@@ -50,7 +52,7 @@ class State:
                 copied_agent.pos += action.agent_rel_pos
 
         # Create a new state with the updated agents and boxes
-        copy_state = State(copy_agents, copy_boxes)
+        copy_state = State(copy_agents, copy_boxes,copy_goals, copy_walls)
         copy_state.parent = self
         copy_state.joint_action = joint_action[:]
         copy_state.g = self.g + 1
@@ -73,7 +75,7 @@ class State:
                     return False
             elif '0' <= goal.id <= '9':
                 # Check if there's an agent at the goal position with the matching ID
-                if agent_positions.get(goal.pos) != goal.id:
+                if agent_positions.get(goal.pos) != int(goal.id):
                     return False
             else:
                 # If the goal ID is not recognized as a box or agent, return False
@@ -83,6 +85,7 @@ class State:
 
     def get_expanded_states(self) -> 'list[State]':
         num_agents = len(self.agents)
+        #print(f"---num_agents---{num_agents}")
 
         # Determine list of applicable action for each individual agent.
         applicable_actions = [[action for action in Action if self.is_applicable(agentIdx, action)] for agentIdx in range(num_agents)]
@@ -116,8 +119,9 @@ class State:
 
     def is_applicable(self, agent: int, action: Action) -> bool:
         agent = self.agents[agent]
+        #print(f"---agent---{agent}")
         agent_destination = agent.pos + action.agent_rel_pos
-
+        #print(f"---agent_destination---{agent_destination}")
         if action.type is ActionType.NoOp:
             return True
 
@@ -192,18 +196,36 @@ class State:
         return False
 
     def is_free(self, position) -> bool:
-        return not self.walls[position.x][position.y] and self.box_at(position) is None and self.agent_at(position) is None
+        #print(f"---walls---{self.walls}")
+        return not self.wall_at(position) and self.box_at(position) is None and self.agent_at(position) is None
 
     def agent_at(self, position: Position) -> Agent:
         for agent in self.agents:
-            if agent.pos.x == position.x and agent.pos.y == position.y:
+            #if agent.pos.x == position.x and agent.pos.y == position.y:
+            if agent.pos == position:
                 return agent
         return None
 
     def box_at(self, position: Position) -> Box:
         for box in self.boxes:
-            if box.pos.x == position.x and box.pos.y == position.y:
+            #if box.pos.x == position.x and box.pos.y == position.y:
+            if box.pos == position:
                 return box
+        return None
+
+    def goal_at(self, position: Position) -> Goal:
+        for goal in self.goals:
+            #if goal.pos.x == position.x and goal.pos.y == position.y:
+            if goal.pos.postion == position:
+                return goal
+        return None
+
+    def wall_at(self, position: Position) -> Wall:
+        for wall in self.walls:
+            #print(f"---wall---{wall}")
+            #if wall.pos.x == position.x and wall.pos.y == position.y:
+            if wall.pos.position == position:
+                return wall
         return None
 
     def extract_plan(self) -> list[Action]:
@@ -222,8 +244,8 @@ class State:
             _hash = _hash * prime + hash(tuple(agent.color for agent in self.agents))
             _hash = _hash * prime + hash(tuple(box.pos for box in self.boxes))
             _hash = _hash * prime + hash(tuple(box.color for box in self.boxes))
-            _hash = _hash * prime + hash(tuple((goal.pos, goal.id) for goal in State.goals))
-            _hash = _hash * prime + hash(tuple(wall.pos for wall in State.walls))
+            _hash = _hash * prime + hash(tuple((goal.pos, goal.id) for goal in self.goals))
+            _hash = _hash * prime + hash(tuple(wall.pos for wall in self.walls))
             self._hash = _hash
         return self._hash
 
@@ -236,9 +258,9 @@ class State:
             return False
         if any(b1.pos != b2.pos or b1.color != b2.color for b1, b2 in zip(self.boxes, other.boxes)):
             return False
-        if any(w1.pos != w2.pos for w1, w2 in zip(State.walls, other.walls)):
+        if any(w1.pos != w2.pos for w1, w2 in zip(self.walls, other.walls)):
             return False
-        if any(g1.pos != g2.pos or g1.id != g2.id for g1, g2 in zip(State.goals, other.goals)):
+        if any(g1.pos != g2.pos or g1.id != g2.id for g1, g2 in zip(self.goals, other.goals)):
             return False
         return True
 
@@ -252,7 +274,7 @@ class State:
                 pos = Position(row, col)
                 agent = self.agent_at(pos)
                 box = self.box_at(pos)
-                wall = next((wall for wall in State.walls if wall.pos == pos), None)  # Added line
+                wall = next((wall for wall in self.walls if wall.pos == pos), None)  # Added line
                 if box is not None:
                     line.append(box.getRealBoxId())
                 elif wall is not None:
