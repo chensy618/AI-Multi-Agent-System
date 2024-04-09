@@ -1,19 +1,24 @@
-class POPPlan:
-    def __init__(self):
-        self.action = []    # list of actions in the plan
-        self.orderings = [] #  List of tuples (action_a, action_b) indicating action_a must come before action_b
-        self.causal_links = [] # List of tuples (action_a, condition, action_b) indicating action_a achieves a condition for action_b
+from planning import *
 
-    def add_action(self, action):
-        self.action.append(action)
-    
-    def add_ordering(self, action_a, action_b):
-        self.orderings.append((action_a, action_b))
+# ac = air_cargo()
+# print(ac.goal_test())
+# ac.act(expr('Load(C2, P2, JFK)'))
+# ac.act(expr('Load(C1, P1, SFO)'))
+# ac.act(expr('Fly(P1, SFO, JFK)'))
+# ac.act(expr('Fly(P2, JFK, SFO)'))
+# ac.act(expr('Unload(C2, P2, SFO)'))
+# print(ac.goal_test())
+# ac.act(expr('Unload(C1, P1, JFK)'))
+# print(ac.goal_test())
+# for action in ac.actions:
+#     print(action)
 
-    def add_causal_link(self, action_a, condition, action_b):
-        self.causal_links.append((action_a, condition, action_b))
-    
-    def is_consistent(self):
-        # Check if the plan is consistent
-        return True
-    
+mw = mavis_world()
+print(mw.goal_test())
+mw.act(expr('Move(0,L3,L2)'))
+print(mw.goal_test())
+mw.act(expr('Pull(0,L2,L3,B1,L4)'))
+mw.act(expr('Push(0,L3,B1,L2,L1)'))
+print(mw.goal_test())
+for action in mw.actions:
+    print(action)
