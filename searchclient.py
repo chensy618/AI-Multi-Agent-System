@@ -12,6 +12,7 @@ from domain.box import Box
 from domain.goal import Goal
 from domain.wall import Wall
 from astar import astar
+from pop.action_schema import StateTranslator
 
 import debugpy
 debugpy.listen(("localhost", 12345)) # Open a debugging server at localhost:1234
@@ -64,7 +65,7 @@ class LevelParser:
         while not line.startswith(marker):
             layout.append(line.rstrip('\n'))
             line = server_messages.readline()
-        # print(f"parse_layout-marker-{layout,line,marker}")
+            #print(f"parse_layout-marker-{layout,line,marker}")
         return layout, line
 
     @staticmethod
@@ -85,7 +86,7 @@ class LevelParser:
     def parse_goal(server_messages):
         goal_layout, line = LevelParser.parse_layout(server_messages, '#end')
         return goal_layout
-
+    
 class SearchClient:
     @staticmethod
     def parse_level(server_messages) -> 'State':
@@ -96,7 +97,6 @@ class SearchClient:
         # print(f"---agent_colors, box_colors--{agent_colors, box_colors}")
         initial_layout, goal_layout = LevelParser.parse_initial_and_goal_states(server_messages)
         #print(f"---initial_layout, goal_layout--{initial_layout, goal_layout}")
-
         # agents, boxes, goals, walls initialization : empty lists
         # iterate through the initial_layout and goal_layout
         agents, boxes, goals, walls = [], [], [], []
@@ -117,6 +117,11 @@ class SearchClient:
                 if char.isdigit() or char.isupper():
                     goals.append(GoalConfig(Position(row_idx, col_idx), char))
 
+        # Calculate the dimensions of the level
+        layout_rows = len(initial_layout)
+        layout_cols = max(len(row) for row in initial_layout)
+        print(f"---num_rows, num_cols--{layout_rows, layout_cols}")
+
         # Convert configs to actual objects
         agent_objs = [Agent(position, id_, color) for position, id_, color in agents]
         box_objs = [Box(position, letter, color) for position, letter, color in boxes]
@@ -126,6 +131,13 @@ class SearchClient:
         # print(f"---box_objs is--{box_objs}")
         # print(f"---goal_objs is--{goal_objs}")
         # print(f"---wall_objs is--{wall_objs}")
+        schema = StateTranslator(agent_objs, box_objs, goal_objs, wall_objs, layout_rows, layout_cols)
+        original_state = schema.construct_init_statements()
+        goal_state = schema.construct_goal_statements()
+        wall_state = schema.construct_wall_statements()
+        print(f"---original schema--{original_state}")
+        print(f"---goal schema--{goal_state}")
+        print(f"---wall schema--{wall_state}")
         return State(agent_objs, box_objs, goal_objs, wall_objs)
 
     @staticmethod

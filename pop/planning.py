@@ -315,8 +315,24 @@ def air_cargo():
                            domain='Cargo(C1) & Cargo(C2) & Plane(P1) & Plane(P2) & Airport(SFO) & Airport(JFK)')
 
 
+# def mavis_world():
+#     return PlanningProblem(initial = 'AgentAt(0,L3) & BoxAt(B1,L4) & Free(L2) & Free(L1) & Neighbour(L2,L1) & Neighbour(L1,L2) & Neighbour(L3,L2) & Neighbour(L2,L3) & Neighbour(L2,L4) & Neighbour(L4,L2) ',
+#                            goals = 'BoxAt(B1,L1)',
+#                            actions = [Action('Move(agt, agtfrom, agtto)',
+#                                             precond = 'AgentAt(agt, agtfrom) & Free(agtto) & Neighbour(agtfrom, agtto)',
+#                                             effect = 'AgentAt(agt, agtto) & Free(agtfrom) & ~AgentAt(agt, agtfrom) & ~Free(agtto)'),
+                                            
+#                                       Action('Push(agt, agtfrom, box, boxfrom,boxto)',
+#                                              precond = 'AgentAt(agt, agtfrom) & BoxAt(box, boxfrom) & Free(boxto) & Neighbour(agtfrom, boxfrom) ',
+#                                              effect = 'AgentAt(agt, boxfrom) & BoxAt(box, boxto) & ~AgentAt(agt, agtfrom) & ~BoxAt(box, boxfrom) & Free(agtfrom) & ~Free(boxto)'),
+                                             
+#                                       Action('Pull(agt, agtfrom, agtto, box, boxfrom)',
+#                                              precond = 'AgentAt(agt, agtfrom) & BoxAt(box, boxfrom) & Free(agtto) & Neighbour(agtfrom, agtto) & Neighbour(agtfrom, boxfrom)',
+#                                              effect = 'AgentAt(agt, agtto) & BoxAt(box, agtfrom) & ~AgentAt(agt, agtfrom) & ~BoxAt(box, boxfrom) & ~Free(agtto) & Free(boxfrom)')])
+                                             
+                          
 def mavis_world():
-    return PlanningProblem(initial = 'AgentAt(0,L3) & BoxAt(B1,L4) & Free(L2) & Free(L1) & Neighbour(L2,L1) & Neighbour(L1,L2) & Neighbour(L3,L2) & Neighbour(L2,L3) & Neighbour(L2,L4) & Neighbour(L4,L2) ',
+    return PlanningProblem(initial = 'AgentAt(0,L3) & BoxAt(B1,L4) & Free(L2) & Free(L1)',
                            goals = 'BoxAt(B1,L1)',
                            actions = [Action('Move(agt, agtfrom, agtto)',
                                             precond = 'AgentAt(agt, agtfrom) & Free(agtto) & Neighbour(agtfrom, agtto)',
@@ -328,10 +344,9 @@ def mavis_world():
                                              
                                       Action('Pull(agt, agtfrom, agtto, box, boxfrom)',
                                              precond = 'AgentAt(agt, agtfrom) & BoxAt(box, boxfrom) & Free(agtto) & Neighbour(agtfrom, agtto) & Neighbour(agtfrom, boxfrom)',
-                                             effect = 'AgentAt(agt, agtto) & BoxAt(box, agtfrom) & ~AgentAt(agt, agtfrom) & ~BoxAt(box, boxfrom) & ~Free(agtto) & Free(boxfrom)')])
+                                             effect = 'AgentAt(agt, agtto) & BoxAt(box, agtfrom) & ~AgentAt(agt, agtfrom) & ~BoxAt(box, boxfrom) & ~Free(agtto) & Free(boxfrom)')],
                                              
-                          
-                                             
+                           domain ='Neighbour(L2,L1) & Neighbour(L1,L2) & Neighbour(L3,L2) & Neighbour(L2,L3) & Neighbour(L2,L4) & Neighbour(L4,L2)')                  
 
 def spare_tire():
     """
