@@ -8,3 +8,8 @@ class STPosition(Position):
 
     def __repr__(self):
         return f"STPosition(x={self.x}, y={self.y}, t={self.t})"
+
+    def __eq__(self, other):
+        if isinstance(other, STPosition):
+            return self.x == other.x and self.y == other.y and self.t == other.t
+        return False
