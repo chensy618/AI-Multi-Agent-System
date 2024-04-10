@@ -1,6 +1,9 @@
+from domain.constraint import Constraint
+
+
 class Node:
     # A 'state' in the CT tree
-    def __init__(self, root, constraints, solution, cost):
+    def __init__(self, root, constraints : list[Constraint], solution, cost):
         self.root = root
         self.constraints = constraints
         self.solution = solution
