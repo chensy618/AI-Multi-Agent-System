@@ -2,8 +2,8 @@ import io
 import argparse
 import sys
 import memory
+from pathfinding import SpaceTimeAstar
 from collections import namedtuple
-
 from domain.position import Position
 from domain.color import Color
 from state import State
@@ -14,10 +14,10 @@ from domain.wall import Wall
 from astar import astar
 from pop.action_schema import StateTranslator
 
-import debugpy
-debugpy.listen(("localhost", 12345)) # Open a debugging server at localhost:1234
-debugpy.wait_for_client() # Wait for the debugger to connect
-debugpy.breakpoint() # Ensure the program starts paused
+# import debugpy
+# debugpy.listen(("localhost", 12345)) # Open a debugging server at localhost:1234
+# debugpy.wait_for_client() # Wait for the debugger to connect
+# debugpy.breakpoint() # Ensure the program starts paused
 # import debugpy
 # debugpy.listen(("localhost", 1234)) # Open a debugging server at localhost:1234
 # debugpy.wait_for_client() # Wait for the debugger to connect
@@ -28,7 +28,8 @@ AgentConfig = namedtuple('AgentConfig', ['position', 'id', 'color'])
 BoxConfig = namedtuple('BoxConfig', ['position', 'letter', 'color'])
 GoalConfig = namedtuple('GoalConfig', ['position', 'letter'])
 WallConfig = namedtuple('WallConfig', ['position'])
-
+layout_rows = 0
+layout_cols = 0
 class LevelParser:
     @staticmethod
     def parse_colors(server_messages):
@@ -117,7 +118,8 @@ class SearchClient:
                 if char.isdigit() or char.isupper():
                     goals.append(GoalConfig(Position(row_idx, col_idx), char))
 
-        # Calculate the dimensions of the level
+        # Calculate the dimensions of the level\
+        global layout_rows, layout_cols
         layout_rows = len(initial_layout)
         layout_cols = max(len(row) for row in initial_layout)
         print(f"---num_rows, num_cols--{layout_rows, layout_cols}")
@@ -131,13 +133,13 @@ class SearchClient:
         # print(f"---box_objs is--{box_objs}")
         # print(f"---goal_objs is--{goal_objs}")
         # print(f"---wall_objs is--{wall_objs}")
-        schema = StateTranslator(agent_objs, box_objs, goal_objs, wall_objs, layout_rows, layout_cols)
-        original_state = schema.construct_init_statements()
-        goal_state = schema.construct_goal_statements()
-        wall_state = schema.construct_wall_statements()
-        print(f"---original schema--{original_state}")
-        print(f"---goal schema--{goal_state}")
-        print(f"---wall schema--{wall_state}")
+        # schema = StateTranslator(agent_objs, box_objs, goal_objs, wall_objs, layout_rows, layout_cols)
+        # original_state = schema.construct_init_statements()
+        # goal_state = schema.construct_goal_statements()
+        # wall_state = schema.construct_wall_statements()
+        # print(f"---original schema--{original_state}")
+        # print(f"---goal schema--{goal_state}")
+        # print(f"---wall schema--{wall_state}")
         return State(agent_objs, box_objs, goal_objs, wall_objs)
 
     @staticmethod
@@ -149,11 +151,16 @@ class SearchClient:
 
         server_messages = io.TextIOWrapper(sys.stdin.buffer, encoding='ASCII')
         initial_state = SearchClient.parse_level(server_messages)
-        print(f"---initial_state--{initial_state.agents,initial_state.boxes,initial_state.goals}")
+        print(f"---initial_state--{initial_state.agents,initial_state.boxes,initial_state.goals,initial_state.walls}")
         # Search for a plan
         conflict = None
         print('Starting.', file=sys.stderr, flush=True)
-        plan = astar(initial_state, conflict)
+        grid = [[None for _ in range(layout_cols)] for _ in range(layout_rows)]
+        st_astar = SpaceTimeAstar(grid, initial_state.agents, initial_state.boxes, initial_state.goals, initial_state.walls)
+        max_time = 0
+        st_astar.initialize_grid(layout_rows, layout_cols, max_time)
+        plan = st_astar.st_astar_search(initial_state.agents[0], initial_state.goals[0])
+        # plan = astar(initial_state, conflict)
         print(f"Plan:{plan}")
         if plan is None:
             print('Unable to solve level.', file=sys.stderr, flush=True)
