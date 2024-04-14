@@ -1,8 +1,12 @@
 import heapq
+import time
+import sys
+import memory
 from abc import ABCMeta, abstractmethod
 from collections import deque
 from state import State
 from domain.position import Position
+from domain.st_position import STPosition
 from domain.action import Action, ActionType
 
 globals().update(Action.__members__)
@@ -209,3 +213,4 @@ class HeuristicWeightedAStar(Heuristic):
 
     def __repr__(self):
         return 'WA*({}) evaluation'.format(self.w)
+    

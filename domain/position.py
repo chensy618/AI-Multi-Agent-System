@@ -23,4 +23,20 @@ class Position:
     def __sub__(self, other):
         if isinstance(other, Position):
             return Position(self.x - other.x, self.y - other.y)
+    
+    def __lt__(self, other):
+        return (self.x, self.y) < (other.x, other.y)
+    
+    def __le__(self, other):
+        return (self.x, self.y) <= (other.x, other.y)
+    
+    def __gt__(self, other):
+        return (self.x, self.y) > (other.x, other.y)
+    
+    def __ge__(self, other):
+        return (self.x, self.y) >= (other.x, other.y)
+    
+    def __ne__(self, other):
+        return not self.__eq__(other)   
+        
 

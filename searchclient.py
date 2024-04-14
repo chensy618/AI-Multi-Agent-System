@@ -2,7 +2,6 @@ import io
 import argparse
 import sys
 import memory
-from pathfinding import SpaceTimeAstar
 from collections import namedtuple
 from domain.position import Position
 from domain.color import Color
@@ -11,7 +10,7 @@ from domain.agent import Agent
 from domain.box import Box
 from domain.goal import Goal
 from domain.wall import Wall
-from astar import astar
+from pathfinding import SpaceTimeAstar
 from pop.action_schema import StateTranslator
 
 # import debugpy
@@ -140,7 +139,7 @@ class SearchClient:
         # print(f"---original schema--{original_state}")
         # print(f"---goal schema--{goal_state}")
         # print(f"---wall schema--{wall_state}")
-        return State(agent_objs, box_objs, goal_objs, wall_objs)
+        return State(agent_objs, box_objs, goal_objs, wall_objs, layout_rows, layout_cols)
 
     @staticmethod
     def main(args) -> None:
@@ -156,11 +155,14 @@ class SearchClient:
         conflict = None
         print('Starting.', file=sys.stderr, flush=True)
         grid = [[None for _ in range(layout_cols)] for _ in range(layout_rows)]
-        st_astar = SpaceTimeAstar(grid, initial_state.agents, initial_state.boxes, initial_state.goals, initial_state.walls)
-        max_time = 0
-        st_astar.initialize_grid(layout_rows, layout_cols, max_time)
-        plan = st_astar.st_astar_search(initial_state.agents[0], initial_state.goals[0])
-        # plan = astar(initial_state, conflict)
+        st_astar = SpaceTimeAstar(grid, initial_state.agents, initial_state.boxes, initial_state.goals, initial_state.walls, layout_rows, layout_cols)
+        # st_astar.initialize_grid(layout_rows, layout_cols, max_time)
+        plan, time_path = st_astar.st_astar(initial_state)
+        # st_astar = SpaceTimeAstar(initial_state,initial_state.goals)
+        # plan = st_astar.st_astar_search()
+        # reservations = st_astar.get_reservation_table()
+        # print(f"---reservations--{reservations}")
+        print(f"time-path{time_path}")
         print(f"Plan:{plan}")
         if plan is None:
             print('Unable to solve level.', file=sys.stderr, flush=True)

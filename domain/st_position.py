@@ -13,3 +13,29 @@ class STPosition(Position):
         if isinstance(other, STPosition):
             return self.x == other.x and self.y == other.y and self.t == other.t
         return False
+    
+    def __lt__(self, other):
+        if isinstance(other, STPosition):
+            return (self.x, self.y, self.t) < (other.x, other.y, other.t)
+        return False
+    
+    def __le__(self, other):
+        if isinstance(other, STPosition):
+            return (self.x, self.y, self.t) <= (other.x, other.y, other.t)
+        return False
+    
+    def __gt__(self, other):
+        if isinstance(other, STPosition):
+            return (self.x, self.y, self.t) > (other.x, other.y, other.t)
+        return False
+    
+    def __ge__(self, other):
+        if isinstance(other, STPosition):
+            return (self.x, self.y, self.t) >= (other.x, other.y, other.t)
+        return False
+    
+    def __ne__(self, other):
+        return not self.__eq__(other)
+    
+    def __hash__(self):
+        return super().__hash__()
