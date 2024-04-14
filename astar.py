@@ -4,8 +4,12 @@ from collections import deque
 from state import State
 from domain.position import Position
 from domain.action import Action, ActionType
+import time
+import sys
+import memory
 
 globals().update(Action.__members__)
+start_time = time.perf_counter()
 
 def astar(problem_state, conflicts):
     # return [
@@ -26,7 +30,7 @@ def astar(problem_state, conflicts):
             return None  # No solution found
 
         current_state = frontier.pop()
-        print(f"---current_state--- {current_state.agents[0].pos}")
+        # print(f"---current_state--- {current_state.agents[0].pos}")
 
         if current_state.is_goal_state():
             return current_state.extract_plan()  # Return the plan to reach the goal state
@@ -36,6 +40,14 @@ def astar(problem_state, conflicts):
         for state in current_state.get_expanded_states():
             if state not in explored and not frontier.contains(state):
                 frontier.add(state)
+
+        if len(explored) % 1000 == 0:
+            print_search_status(explored, frontier)
+
+        if memory.get_usage() > memory.max_usage:
+            print_search_status(explored, frontier)
+            print('Maximum memory usage exceeded.', file=sys.stderr, flush=True)
+            return None
 
 class Frontier(metaclass=ABCMeta):
     @abstractmethod
@@ -63,7 +75,7 @@ class FrontierBestFirst(Frontier):
         self.priority_queue = PriorityQueue()
 
     def add(self, state: 'State'):
-       self.priority_queue.push(state, self.heuristic.f(state))
+        self.priority_queue.push(state, self.heuristic.f(state))
 
     def pop(self) -> 'State':
         return self.priority_queue.pop()
@@ -149,35 +161,35 @@ class Heuristic(metaclass=ABCMeta):
             for goal in self.goal_agents: # loop in the goal agent list (agent_id, goal_row, goal_col)
                 agent_id = int(goal[0]) # get the agent_id
                 goal_pos = goal[1] # get the position
-                print(f'#####agent_id is {agent_id}#######')
-                print(f'#####goal_pos is {goal_pos}#######')
+                # print(f'#####agent_id is {agent_id}#######')
+                # print(f'#####goal_pos is {goal_pos}#######')
                 agent_pos = state.agents[agent_id].pos
                 distance = abs(agent_pos.x - goal_pos.x) + abs(agent_pos.y - goal_pos.y)
                 agent_to_goal_distance += distance
-                print(f'------------agent_to_goal_distance is {agent_to_goal_distance}-------------------')
+                # print(f'------------agent_to_goal_distance is {agent_to_goal_distance}-------------------')
         elif self.goal_boxes != []:
             for goal in self.goal_boxes: # loop in the goal box list (box_id, goal_row, goal_col)
                 box_id = goal[0] # get the box value
-                print(f'#####box_id is {box_id}#######')
+                # print(f'#####box_id is {box_id}#######')
                 closest_box_distance = float('inf')
                 # print(f'------------closest_box_distance is {closest_box_distance}-------------------')
                 goal_pos = goal[1] # get the position
-                print(f'#####goal_pos is {goal_pos}#######')
+                # print(f'#####goal_pos is {goal_pos}#######')
                 box = next((b for b in state.boxes if b.id == box_id), None)
                 if box:
                     box_pos = box.pos
-                    print(f'#####box_pos is {box_pos}#######')
+                    # print(f'#####box_pos is {box_pos}#######')
                     distance = abs(box_pos.x - goal_pos.x) + abs(box_pos.y - goal_pos.y)
                     closest_box_distance = min(closest_box_distance, distance)
                     # print(f'------------closest_box_distance in for loop is {closest_box_distance}-------------------')
                     if closest_box_distance != float('inf'):
                         box_to_goal_distance += closest_box_distance
                 else:
-                    print(f'No box found with ID {box_id}')
+                    # print(f'No box found with ID {box_id}')
                     box_to_goal_distance += 0
-            print(f'------------box_to_goal_distance in for loop is {box_to_goal_distance}-------------------')
+            # print(f'------------box_to_goal_distance in for loop is {box_to_goal_distance}-------------------')
         total_distance = agent_to_goal_distance + box_to_goal_distance
-        print(f'------------total_distance is {total_distance}-------------------')
+        # print(f'------------total_distance is {total_distance}-------------------')
         return total_distance
 
     @abstractmethod
@@ -208,3 +220,9 @@ class HeuristicWeightedAStar(Heuristic):
 
     def __repr__(self):
         return 'WA*({}) evaluation'.format(self.w)
+
+
+def print_search_status(explored, frontier):
+    status_template = '#Expanded: {:8,}, #Frontier: {:8,}, #Generated: {:8,}, Time: {:3.3f} s\n[Alloc: {:4.2f} MB, MaxAlloc: {:4.2f} MB]'
+    elapsed_time = time.perf_counter() - start_time
+    print(status_template.format(len(explored), frontier.size(), len(explored) + frontier.size(), elapsed_time, memory.get_usage(), memory.max_usage), file=sys.stderr, flush=True)
