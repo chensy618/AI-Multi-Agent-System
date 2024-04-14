@@ -75,7 +75,7 @@ class FrontierBestFirst(Frontier):
         self.priority_queue = PriorityQueue()
 
     def add(self, state: 'State'):
-       self.priority_queue.push(state, self.heuristic.f(state))
+        self.priority_queue.push(state, self.heuristic.f(state))
 
     def pop(self) -> 'State':
         return self.priority_queue.pop()
@@ -185,7 +185,7 @@ class Heuristic(metaclass=ABCMeta):
                     if closest_box_distance != float('inf'):
                         box_to_goal_distance += closest_box_distance
                 else:
-                    print(f'No box found with ID {box_id}')
+                    # print(f'No box found with ID {box_id}')
                     box_to_goal_distance += 0
             # print(f'------------box_to_goal_distance in for loop is {box_to_goal_distance}-------------------')
         total_distance = agent_to_goal_distance + box_to_goal_distance
