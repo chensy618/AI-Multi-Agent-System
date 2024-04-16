@@ -1,8 +1,12 @@
 import heapq
+import time
+import sys
+import memory
 from abc import ABCMeta, abstractmethod
 from collections import deque
 from state import State
 from domain.position import Position
+from domain.st_position import STPosition
 from domain.action import Action, ActionType
 import time
 import sys
@@ -18,10 +22,11 @@ def astar(problem_state, conflicts):
     #         [MoveS],
     #     ]
     initial_state = problem_state
-    goal_position = problem_state.goals
+    goal_position = problem_state.goals[0]
+    print(f"---goal_position--- {goal_position.pos}")
     frontier = FrontierBestFirst(HeuristicAStar(initial_state))
     frontier.add(initial_state)
-
+    
     explored = set()
 
     while True:
