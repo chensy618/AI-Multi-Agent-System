@@ -12,7 +12,7 @@ class HTNResolver:
     # Stores list of (agentId, boxId) tuples for each agent
     agent_tasks = {}
     
-    # Stores current assigned plan for an agent
+    # Stores current assigned task for an agent
     assigned_tasks = {}
     
     @staticmethod
@@ -37,6 +37,8 @@ class HTNResolver:
                 agent_index = i % len(color_agents)
                 agent = color_agents[agent_index]
 
+
+                
                 # TODO Check if generating plan for agent -> box, is possible (not blocked)
 
                 # Create agent_tasks for each agent

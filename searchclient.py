@@ -1,6 +1,8 @@
 import io
 import argparse
 import sys
+from cbs.cbs import conflict_based_search
+from htn.htn_resolver import HTNResolver
 import memory
 from collections import namedtuple
 from domain.position import Position
@@ -99,23 +101,28 @@ class SearchClient:
         #print(f"---initial_layout, goal_layout--{initial_layout, goal_layout}")
         # agents, boxes, goals, walls initialization : empty lists
         # iterate through the initial_layout and goal_layout
-        agents, boxes, goals, walls = [], [], [], []
+        agents, boxes, goals = [], [], []
+
+        nrows = len(initial_layout)
+        ncols = len(initial_layout[0]) if nrows > 0 else 0
+
+        walls = [[False] * ncols for _ in range(nrows)]
         for row_idx, row in enumerate(initial_layout):
             for col_idx, char in enumerate(row):
-                position = Position(row_idx, col_idx)
+                position = Position(col_idx, row_idx)
                 if char.isdigit():
                     agents.append(AgentConfig(position, int(char), agent_colors.get(int(char))))
                 elif char.isupper():
                     boxes.append(BoxConfig(position, char, box_colors.get(char)))
                 else:
                     if char == '+':
-                        walls.append(WallConfig(position))
+                        walls[row_idx][col_idx] = True
 
         # read position of goals
         for row_idx, row in enumerate(goal_layout):
             for col_idx, char in enumerate(row):
                 if char.isdigit() or char.isupper():
-                    goals.append(GoalConfig(Position(row_idx, col_idx), char))
+                    goals.append(GoalConfig(Position(col_idx, row_idx), char))
 
         # Calculate the dimensions of the level\
         global layout_rows, layout_cols
@@ -127,30 +134,25 @@ class SearchClient:
         agent_objs = [Agent(position, id_, color) for position, id_, color in agents]
         box_objs = [Box(position, letter, color) for position, letter, color in boxes]
         goal_objs = [Goal(position, letter) for position, letter in goals]
-        wall_objs = [Wall(position) for position in walls]
+
         # print(f"---agent_objs is--{agent_objs}")
         # print(f"---box_objs is--{box_objs}")
         # print(f"---goal_objs is--{goal_objs}")
         # print(f"---wall_objs is--{wall_objs}")
-        # schema = StateTranslator(agent_objs, box_objs, goal_objs, wall_objs, layout_rows, layout_cols)
-        # original_state = schema.construct_init_statements()
-        # goal_state = schema.construct_goal_statements()
-        # wall_state = schema.construct_wall_statements()
-        # print(f"---original schema--{original_state}")
-        # print(f"---goal schema--{goal_state}")
-        # print(f"---wall schema--{wall_state}")
-        return State(agent_objs, box_objs, goal_objs, wall_objs, layout_rows, layout_cols)
+
+        return State(agent_objs, box_objs, goal_objs, walls)
 
     @staticmethod
     def main(args) -> None:
         print('SearchClient initializing. I am sending this using the error output stream.', file=sys.stderr)
 
         print('SearchClient', flush=True)
-        print('#This is a comment.', flush=True)
+        # print('#This is a comment.', flush=True)
 
         server_messages = io.TextIOWrapper(sys.stdin.buffer, encoding='ASCII')
         initial_state = SearchClient.parse_level(server_messages)
-        print(f"---initial_state--{initial_state.agents,initial_state.boxes,initial_state.goals,initial_state.walls}")
+
+        print(f"---initial_state--{initial_state.agents,initial_state.boxes,initial_state.goals}")
         # Search for a plan
         conflict = None
         print('Starting.', file=sys.stderr, flush=True)

@@ -2,7 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+*.pyc
 # C extensions
 *.so
 
@@ -10,6 +10,7 @@ __pycache__/
 .Python
 build/
 develop-eggs/
+__pycache__
 dist/
 downloads/
 eggs/
