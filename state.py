@@ -13,7 +13,7 @@ class State:
 
     # agents: list of Agents
     # boxes: list of Boxes
-    def __init__(self, agents, boxes, goals, walls):
+    def __init__(self, agents, boxes, goals, walls, width, height):
         self.agents = agents
         self.boxes = boxes
         self.goals = goals
@@ -22,7 +22,9 @@ class State:
         self.joint_action = None
         self.g = 0
         self._hash = None
-
+        self.width = width
+        self.height = height
+        
     def result(self, joint_action: list[Action]) -> 'State':
         '''
         Returns the state resulting from applying joint_action in this state.
@@ -52,7 +54,7 @@ class State:
                 copied_agent.pos += action.agent_rel_pos
 
         # Create a new state with the updated agents and boxes
-        copy_state = State(copy_agents, copy_boxes,copy_goals, copy_walls)
+        copy_state = State(copy_agents, copy_boxes,copy_goals, copy_walls, self.width, self.height)
         copy_state.parent = self
         copy_state.joint_action = joint_action[:]
         copy_state.g = self.g + 1
@@ -265,9 +267,9 @@ class State:
         return True
 
     def __repr__(self):
-        max_row = max(max(agent.pos.x for agent in self.agents), max(box.pos.x for box in self.boxes), max(wall.pos.x for wall in State.walls))  # Modified line
-        max_col = max(max(agent.pos.y for agent in self.agents), max(box.pos.y for box in self.boxes), max(wall.pos.y for wall in State.walls))  # Modified line
         lines = []
+        max_row = self.width
+        max_col = self.height
         for row in range(max_row + 1):
             line = []
             for col in range(max_col + 1):
