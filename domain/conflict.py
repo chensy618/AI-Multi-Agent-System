@@ -1,10 +1,9 @@
 class Conflict:
     # ai and aj are the two agents who have conflict at (pos, t)
-    def __init__(self, ai, aj, pos, t):
-        self.pos = pos
+    def __init__(self, ai, aj, st_position):
         self.ai = ai
         self.aj = aj
-        self.t = t
+        self.st_position = st_position
 
     def __repr__(self):
-        return f"Conflict(ai={self.ai}, aj={self.ai}, pos={self.pos}, t={self.t})"
+        return f"Conflict(ai={self.ai}, aj={self.aj}, st_position={self.st_position})"
