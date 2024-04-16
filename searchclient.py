@@ -3,7 +3,6 @@ import argparse
 import sys
 import memory
 from collections import namedtuple
-
 from domain.position import Position
 from domain.color import Color
 from state import State
@@ -11,8 +10,13 @@ from domain.agent import Agent
 from domain.box import Box
 from domain.goal import Goal
 from domain.wall import Wall
-from astar import astar
+from pathfinding import SpaceTimeAstar
+from pop.action_schema import StateTranslator
 
+# import debugpy
+# debugpy.listen(("localhost", 12345)) # Open a debugging server at localhost:1234
+# debugpy.wait_for_client() # Wait for the debugger to connect
+# debugpy.breakpoint() # Ensure the program starts paused
 # import debugpy
 # debugpy.listen(("localhost", 1234)) # Open a debugging server at localhost:1234
 # debugpy.wait_for_client() # Wait for the debugger to connect
@@ -23,7 +27,8 @@ AgentConfig = namedtuple('AgentConfig', ['position', 'id', 'color'])
 BoxConfig = namedtuple('BoxConfig', ['position', 'letter', 'color'])
 GoalConfig = namedtuple('GoalConfig', ['position', 'letter'])
 WallConfig = namedtuple('WallConfig', ['position'])
-
+layout_rows = 0
+layout_cols = 0
 class LevelParser:
     @staticmethod
     def parse_colors(server_messages):
@@ -60,7 +65,7 @@ class LevelParser:
         while not line.startswith(marker):
             layout.append(line.rstrip('\n'))
             line = server_messages.readline()
-        # print(f"parse_layout-marker-{layout,line,marker}")
+            #print(f"parse_layout-marker-{layout,line,marker}")
         return layout, line
 
     @staticmethod
@@ -81,7 +86,7 @@ class LevelParser:
     def parse_goal(server_messages):
         goal_layout, line = LevelParser.parse_layout(server_messages, '#end')
         return goal_layout
-
+    
 class SearchClient:
     @staticmethod
     def parse_level(server_messages) -> 'State':
@@ -92,7 +97,6 @@ class SearchClient:
         # print(f"---agent_colors, box_colors--{agent_colors, box_colors}")
         initial_layout, goal_layout = LevelParser.parse_initial_and_goal_states(server_messages)
         #print(f"---initial_layout, goal_layout--{initial_layout, goal_layout}")
-
         # agents, boxes, goals, walls initialization : empty lists
         # iterate through the initial_layout and goal_layout
         agents, boxes, goals, walls = [], [], [], []
@@ -113,6 +117,12 @@ class SearchClient:
                 if char.isdigit() or char.isupper():
                     goals.append(GoalConfig(Position(row_idx, col_idx), char))
 
+        # Calculate the dimensions of the level\
+        global layout_rows, layout_cols
+        layout_rows = len(initial_layout)
+        layout_cols = max(len(row) for row in initial_layout)
+        print(f"---num_rows, num_cols--{layout_rows, layout_cols}")
+
         # Convert configs to actual objects
         agent_objs = [Agent(position, id_, color) for position, id_, color in agents]
         box_objs = [Box(position, letter, color) for position, letter, color in boxes]
@@ -122,7 +132,14 @@ class SearchClient:
         # print(f"---box_objs is--{box_objs}")
         # print(f"---goal_objs is--{goal_objs}")
         # print(f"---wall_objs is--{wall_objs}")
-        return State(agent_objs, box_objs, goal_objs, wall_objs)
+        # schema = StateTranslator(agent_objs, box_objs, goal_objs, wall_objs, layout_rows, layout_cols)
+        # original_state = schema.construct_init_statements()
+        # goal_state = schema.construct_goal_statements()
+        # wall_state = schema.construct_wall_statements()
+        # print(f"---original schema--{original_state}")
+        # print(f"---goal schema--{goal_state}")
+        # print(f"---wall schema--{wall_state}")
+        return State(agent_objs, box_objs, goal_objs, wall_objs, layout_rows, layout_cols)
 
     @staticmethod
     def main(args) -> None:
@@ -133,11 +150,19 @@ class SearchClient:
 
         server_messages = io.TextIOWrapper(sys.stdin.buffer, encoding='ASCII')
         initial_state = SearchClient.parse_level(server_messages)
-        print(f"---initial_state--{initial_state.agents,initial_state.boxes,initial_state.goals}")
+        print(f"---initial_state--{initial_state.agents,initial_state.boxes,initial_state.goals,initial_state.walls}")
         # Search for a plan
         conflict = None
         print('Starting.', file=sys.stderr, flush=True)
-        plan = astar(initial_state, conflict)
+        grid = [[None for _ in range(layout_cols)] for _ in range(layout_rows)]
+        st_astar = SpaceTimeAstar(grid, initial_state.agents, initial_state.boxes, initial_state.goals, initial_state.walls, layout_rows, layout_cols)
+        # st_astar.initialize_grid(layout_rows, layout_cols, max_time)
+        plan, time_path = st_astar.st_astar(initial_state)
+        # st_astar = SpaceTimeAstar(initial_state,initial_state.goals)
+        # plan = st_astar.st_astar_search()
+        # reservations = st_astar.get_reservation_table()
+        # print(f"---reservations--{reservations}")
+        print(f"time-path{time_path}")
         print(f"Plan:{plan}")
         if plan is None:
             print('Unable to solve level.', file=sys.stderr, flush=True)
