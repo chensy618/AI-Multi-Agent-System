@@ -153,6 +153,39 @@ class SearchClient:
         initial_state = SearchClient.parse_level(server_messages)
 
         print(f"---initial_state--{initial_state.agents,initial_state.boxes,initial_state.goals}")
+
+
+        ### PSEUDO CODE for integrating CBS and HTN
+
+        # Initialize problems for each agent
+        # - Get same colored agents and boxes
+        # - Distribute the boxes between those agents
+        # - Store all tasks in a Map<agentId -> deque<Task>>
+        # - calculate BFS_from_goal / BFS_from_box for each goal / box: goal_map and box_map Map<goalId -> [][]>, Map<boxId -> [][]>
+        #   -> it has to be run in a state with only walls and free cells
+
+        # Prioritize tasks based on plausability and factor of blocking
+        # - the tasks whose goal doesn't block any goal should be given more priority (priority + 100)
+        # - If A* can solve a task it should be prioritized over the tasks that can't be solved (priority + 10)
+        # - the closest box to the agent should be given priority, if we can't choose between multiple boxes (priority + x, where x is based on the number of tasks with the same priority) 
+
+        # Heuristic function should change according to task priority
+        # - h(n) = w1 * (distance_of_agent_to_box + distance_of_box_to_goal), (this is for the box, which is on priority)
+        #   -> w1 should be set based on priority (e.g.: if an agent is blocking other agents it should be given high priority w1 = 100, w2 = 10, w3 = 1...)
+        #   distance_of_agent_to_box is based on whether box has moved away, if it has moved we return manhattan_distance otherwise perfect heuristic from box_map
+        
+        # Integrate CBS with HTN
+        # - initialize agent_current_tasks
+        # - current_state = initial_state
+        # - While loop: (current_tasks is empty)
+            # - If an agent has a task left, assign priority task to agent
+            # - Create the plans for each agent
+            # - solution = run_CBS(current_state, agents),
+            # - joint_actions.append(solution)
+            # - current_state = state_after_executing_the_solution
+
+        # Create the problem solution from the joint_actions
+
         # Search for a plan
         conflict = None
         print('Starting.', file=sys.stderr, flush=True)
