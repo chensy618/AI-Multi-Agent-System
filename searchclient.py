@@ -151,8 +151,52 @@ class SearchClient:
 
         server_messages = io.TextIOWrapper(sys.stdin.buffer, encoding='ASCII')
         initial_state = SearchClient.parse_level(server_messages)
-
         print(f"---initial_state--{initial_state.agents,initial_state.boxes,initial_state.goals}")
+
+        # -------------------------------------------------------------
+        # pseudo code for integrating HTN and CBS
+        # call HTNResolver.initialize_problems(initial_state)
+
+        # initialize problems for each agent
+
+        # according to the color of the agent and the box, distribute the boxes between the agents
+
+        # loop through the agents and assign the tasks to the agents
+        # - first case : one particular color has only one agent, which may have multiple same colored boxes or one box
+        #   assign all the boxes to the agent, starting from the closest box to the agent
+        #   mark the tasks for the agent
+        # - second case : one particular color has multiple agents, which may have same colored multiple boxes or one box
+        #   assign the tasks to the agents based on the distance between the agent and the box
+        #   mark the tasks for the agents
+        # - consider mulitple agent or multiple boxes situations, maybe the number of agents is more than that of the boxes, or the number of boxes is more than that of the agents
+        # rules: the closest box to the agent should be given priority, if we can't choose between multiple boxes, the box which is closest to the goal should be given priority
+        
+        # store all the tasks of each agent in a queue, where contains agent_id : agent_position, box_id0: box_position, goal_id0: goal_position, box_id1: box_position, goal_id1: goal_position...
+        
+        # round robin search:
+        # get one task from all the agent queues
+        
+        # use A* to explore the path from the agent to the box, and from the box to the goal
+        # heuristic function: the distance between the agent and the box, the distance between the box and the goal, other agents and boxes could be obstacles
+        # when the agent is moving to the box, we only consider the "Move" action. 
+        # when the box is moving the goal, we consider the "Push" and "Pull" action. 
+        # if the agent can't reach the box, or the box can't reach the goal, put the task back to the queue and get another task
+        # if the agent can reach the box and the box can reach the goal, merge the paths and get the joint path
+
+        # call CBS to solve the joint path for all the agents when there are conflicts
+        
+        # if the joint path is valid without conflicts, send the joint actions to the server
+
+        # else get the constraints from the CBS, and put the constraints and joint path with conflicts into the space-time A* algorithm
+        
+        # get the final path with joint actions
+        
+        # send the joint actions to the server
+
+        # repeat the process until all the tasks are done
+         
+        # -------------------------------------------------------------
+
         # Search for a plan
         conflict = None
         print('Starting.', file=sys.stderr, flush=True)
