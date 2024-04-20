@@ -11,7 +11,7 @@ import memory
 globals().update(Action.__members__)
 start_time = time.perf_counter()
 
-def astar(problem_state, conflicts):
+def astar(problem_state):
     # return [
     #         [MoveE],
     #         [MoveE],

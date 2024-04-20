@@ -2,8 +2,9 @@ import io
 import argparse
 import sys
 import memory
-from collections import namedtuple
 
+from cbs_wen import conflict_based_search
+from collections import namedtuple
 from domain.position import Position
 from domain.color import Color
 from state import State
@@ -12,11 +13,12 @@ from domain.box import Box
 from domain.goal import Goal
 from domain.wall import Wall
 from astar import astar
+from htn import htn
 
-# import debugpy
-# debugpy.listen(("localhost", 1234)) # Open a debugging server at localhost:1234
-# debugpy.wait_for_client() # Wait for the debugger to connect
-# debugpy.breakpoint() # Ensure the program starts paused
+import debugpy
+debugpy.listen(("localhost", 1234)) # Open a debugging server at localhost:1234
+debugpy.wait_for_client() # Wait for the debugger to connect
+debugpy.breakpoint() # Ensure the program starts paused
 
 # data structure for agent, box, goal
 AgentConfig = namedtuple('AgentConfig', ['position', 'id', 'color'])
@@ -117,12 +119,12 @@ class SearchClient:
         agent_objs = [Agent(position, id_, color) for position, id_, color in agents]
         box_objs = [Box(position, letter, color) for position, letter, color in boxes]
         goal_objs = [Goal(position, letter) for position, letter in goals]
-        wall_objs = [Wall(position) for position in walls]
+        State.walls = [Wall(position) for position in walls]
         # print(f"---agent_objs is--{agent_objs}")
         # print(f"---box_objs is--{box_objs}")
         # print(f"---goal_objs is--{goal_objs}")
-        # print(f"---wall_objs is--{wall_objs}")
-        return State(agent_objs, box_objs, goal_objs, wall_objs)
+        # print(f"---State.walls  is--{State.walls}")
+        return State(agent_objs, box_objs, goal_objs)
 
     @staticmethod
     def main(args) -> None:
@@ -137,8 +139,24 @@ class SearchClient:
         # Search for a plan
         conflict = None
         print('Starting.', file=sys.stderr, flush=True)
-        plan = astar(initial_state, conflict)
-        print(f"Plan:{plan}")
+
+        ########### HTN and CBS ###########
+        problem_list = htn(initial_state)
+        print(f"---problem_list--{problem_list}")
+        # Need to change here to call HTN to split problems firstly
+            # HTN returns a list of problems
+        # Loop in the list of problems and call CBS for each problem list
+        plan_list = []
+        # ########### Add rounds later ###########
+        # for problem in problem_list:
+        #     plan = conflict_based_search(problem)
+        #     print(f"---plan--{plan}")
+        #     plan_list.append(plan)
+        plan_list = conflict_based_search(problem_list)
+        print(f"---plan_list--{plan_list}")
+        # ########### original code ###########
+        # plan = astar(initial_state, conflict)
+        # print(f"---plan--{plan}")
         if plan is None:
             print('Unable to solve level.', file=sys.stderr, flush=True)
             sys.exit(0)
