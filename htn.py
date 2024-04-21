@@ -1,4 +1,6 @@
 # Use 2 aganet 2 boxes firstly
+# Doesn't work for agents only yet
+
 from state import State
 
 
@@ -12,14 +14,16 @@ def htn(initial_state):
         # Find the box that matches the agent's color
         agent_box = next((box for box in initial_state.boxes if box.color == agent.color), None)
         print(f"---agent_box--{agent_box}")
-        # Find the goal that matches the box's ID
-        agent_goal = next((goal for goal in initial_state.goals if goal.id == agent_box.id), None)
-        print(f"---agent_goal--{agent_goal}")
-        # Create a new state with only the current agent, the matching box, and the matching goal
-        individual_state = State([agent], [agent_box], [agent_goal])
-        print(f"---individual_state--{individual_state}")
+        if agent_box:
+            agent_goal = next((goal for goal in initial_state.goals if goal.id == agent_box.id), None)
+            print(f"---agent_goal--{agent_goal}")
+            individual_state = State([agent], [agent_box], [agent_goal])
+        else:
+            print(f"---initial_state.goals--{initial_state.goals}")
+            agent_goal = next((goal for goal in initial_state.goals if int(goal.id) == int(agent.id)), None)
+            print(f"---agent_goal--{agent_goal}")
+            individual_state = State([agent], [], [agent_goal])
         problems_list.append(individual_state)
-
     return problems_list
 
 

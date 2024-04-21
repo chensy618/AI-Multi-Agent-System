@@ -7,4 +7,4 @@ class Conflict:
         self.t = t
 
     def __repr__(self):
-        return f"Conflict(ai={self.ai}, aj={self.ai}, pos={self.pos}, t={self.t})"
+        return f"Conflict(ai={self.ai}, aj={self.aj}, pos={self.pos}, t={self.t})"
