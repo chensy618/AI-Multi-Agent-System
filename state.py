@@ -282,13 +282,119 @@ class State:
 
 
 class SpaceTimeState(State):
-    def __init__(self, agents, boxes, goals, time):
+    def __init__(self, agents, boxes, goals, time, constraints):
         super().__init__(agents, boxes, goals)
         self.time = time  # Add a time component to the state
+        self.constraints = constraints
+
+    # Modify is_applicable function to include constraints judgement
+    def is_applicable(self, agent: int, action: Action) -> bool:
+        agent = self.agents[agent]
+        #print(f"---agent---{agent}")
+        agent_destination = agent.pos + action.agent_rel_pos
+        #print(f"---agent_destination---{agent_destination}")
+        if action.type is ActionType.NoOp:
+            return True
+
+        elif action.type is ActionType.Move:
+            # Check if the agent's destination is free and not constrained
+            return self.is_free(agent_destination) and not self.is_constrained(agent, agent_destination, self.time + 1)
+
+        elif action.type is ActionType.Push:
+            # Check if there is a box at the agent's destination to push
+            box_to_push = next((box for box in self.boxes if box.pos == agent_destination), None)
+            if box_to_push and box_to_push.color == agent.color:
+                # Calculate the box's destination position
+                box_destination = agent_destination + action.box_rel_pos
+                # Check if both the agent's and the box's destinations are free and not constrained
+                return (self.is_free(agent_destination) and
+                        self.is_free(box_destination) and
+                        not self.is_constrained(agent, agent_destination, self.time + 1) and
+                        not self.is_constrained(agent, box_destination, self.time + 1))
+            else:
+                return False
+
+        elif action.type is ActionType.Pull:
+            # Calculate the box's current position that the agent wants to pull
+            box_position = agent.pos - action.box_rel_pos
+            # Check if there is a box to pull at the calculated position
+            box_to_pull = next((box for box in self.boxes if box.pos == box_position), None)
+            if box_to_pull and box_to_pull.color == agent.color:
+                # Check if the agent's destination is free and not constrained
+                return self.is_free(agent_destination) and not self.is_constrained(agent, agent_destination, self.time + 1)
+            else:
+                return False
+
+        return False
+
 
     def result(self, joint_action: list[Action]) -> 'SpaceTimeState':
         # Add the time dimension to the new state
         new_state = super().result(joint_action)
         return SpaceTimeState(new_state.agents, new_state.boxes, new_state.goals, self.time + 1)
 
-    # Override other methods as necessary to consider the time dimension
+
+    def get_expanded_states(self) -> 'list[SpaceTimeState]':
+        num_agents = len(self.agents)
+        #print(f"---num_agents---{num_agents}")
+
+        # Determine list of applicable action for each individual agent.
+        applicable_actions = [[action for action in Action if self.is_applicable(agentIdx, action)] for agentIdx in range(num_agents)]
+        # print(f"---applicable_actions---{applicable_actions}")
+        # Iterate over joint actions, check conflict and generate child states.
+        joint_action = [None for _ in range(num_agents)]
+        actions_permutation = [0 for _ in range(num_agents)]
+        expanded_states = []
+        while True:
+            for agentIdx in range(num_agents):
+                joint_action[agentIdx] = applicable_actions[agentIdx][actions_permutation[agentIdx]]
+                # print(f'---agentIdx---{agentIdx}')
+                # print(f"---joint_action---{joint_action}")
+            # if not self.is_conflicting(joint_action):
+
+            # Generate the resulting state from the joint action.
+            child_state = self.result(joint_action)
+            # Increment the time for the child state.
+            child_state.time = self.time + 1
+            expanded_states.append(child_state)
+
+            # Advance permutation.
+            done = False
+            for agent in range(num_agents):
+                if actions_permutation[agent] < len(applicable_actions[agent]) - 1:
+                    actions_permutation[agent] += 1
+                    break
+                else:
+                    actions_permutation[agent] = 0
+                    if agent == num_agents - 1:
+                        done = True
+            # Last permutation?
+            if done:
+                break
+        State._RNG.shuffle(expanded_states)
+        return expanded_states
+
+
+    def is_constrained(self, agent_index, position, time):
+        # Check if there is a constraint for the given agent at the given position and time
+        return any(constraint.agent_id == agent_index and
+                   constraint.position == position and
+                   constraint.time_step == time
+                   for constraint in self.constraints)
+
+
+
+    def __eq__(self, other):
+        return (self.agents == other.agents and
+                self.boxes == other.boxes and
+                self.goals == other.goals and
+                self.time == other.time)
+
+
+    def __hash__(self):
+        if self._hash is None:
+            self._hash = (hash(tuple(self.agents)) ^
+                          hash(tuple(self.boxes)) ^
+                          hash(tuple(self.goals)) ^
+                          hash(self.time))
+        return self._hash
