@@ -9,6 +9,7 @@ from domain.constraint import Constraint
 from domain.position import Position
 from domain.st_position import STPosition
 from queue import PriorityQueue
+from st_astar import space_time_a_star
 
 # Create a counter that will serve as a tiebreaker
 tiebreaker = itertools.count()
@@ -165,5 +166,4 @@ def find_first_conflict(solution, initial_positions):
 #     return None
 
 
-def space_time_a_star(problem, constraints):
-    pass
+

@@ -279,3 +279,16 @@ class State:
                     line.append(' ')
             lines.append(''.join(line))
         return '\n'.join(lines)
+
+
+class SpaceTimeState(State):
+    def __init__(self, agents, boxes, goals, time):
+        super().__init__(agents, boxes, goals)
+        self.time = time  # Add a time component to the state
+
+    def result(self, joint_action: list[Action]) -> 'SpaceTimeState':
+        # Add the time dimension to the new state
+        new_state = super().result(joint_action)
+        return SpaceTimeState(new_state.agents, new_state.boxes, new_state.goals, self.time + 1)
+
+    # Override other methods as necessary to consider the time dimension
