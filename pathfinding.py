@@ -1,5 +1,5 @@
 from math import sqrt
-from collections import namedtuple
+from collections import namedtuple, deque
 from domain.position import Position
 from domain.st_position import STPosition
 from domain.agent import Agent
@@ -95,7 +95,7 @@ class SpaceTimeAstar:
         return self.reservation_table
 
     def st_astar(self,initial_state):
-        frontier = AStarFrontier(HeuristicAStar(initial_state))
+        frontier = AStarFrontier(HeuristicAStar(initial_state, self.grid))
         frontier.add(initial_state)
         
         explored = set()
@@ -126,9 +126,10 @@ class SpaceTimeAstar:
                 print_search_status(explored, frontier)
                 print('Maximum memory usage exceeded.', file=sys.stderr, flush=True)
                 return None
+    
 
 class Heuristic(metaclass=ABCMeta):
-    def __init__(self, initial_state: 'State'):
+    def __init__(self, initial_state: 'State', grid):
         # Initiate the value for parameters
         # create list to store the goal agent parameters
         self.goal_name_agent = []
@@ -136,6 +137,9 @@ class Heuristic(metaclass=ABCMeta):
         # create list to store the goal box parameters
         self.goal_name_box = []
         self.goal_position_box = []
+
+        self.grid = grid
+        self.temp_grid = grid
 
         # save the goal positions and the agent names
         for goal in range(len(initial_state.goals)):
@@ -153,8 +157,68 @@ class Heuristic(metaclass=ABCMeta):
         # print(f"---goal_agents--- {self.goal_agents}")
         # print(f"---goal_boxes--- {self.goal_boxes}")
 
+    # Function to calculate exact step count heuristic using BFS
+    def calculate_step_counts(self, grid, goal):
+        queue = deque([(goal, 0)])  # (position, steps)
+        visited = set()
+        # Define movements (up, down, left, right)
+        movements = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+
+        while queue:
+            (x, y), steps = queue.popleft()
+
+            if (x, y) in visited or grid[x][y] == '+':
+                continue
+
+            visited.add((x, y))
+            grid[x][y] = steps
+
+            for dx, dy in movements:
+                new_x, new_y = x + dx, y + dy
+
+                if 0 <= new_x < len(grid) and 0 <= new_y < len(grid[0]) and (new_x, new_y) not in visited:
+                    queue.append(((new_x, new_y), steps + 1))
+        
+        self.temp_grid = grid
+
     def h(self, state: 'State') -> 'int':
-        return self.calculate_distance(state)
+        return self.calculate_exact_distance(state)
+
+    def calculate_exact_distance(self, state) -> 'int':
+        total_distance = 0
+        agent_to_goal_distance = 0
+        box_to_goal_distance = 0
+        if self.goal_agents != []:
+            for goal in self.goal_agents: # loop in the goal agent list (agent_id, goal_row, goal_col)
+                agent_id = int(goal[0]) # get the agent_id
+                goal_pos = goal[1] # get the position
+                # print(f'#####agent_id is {agent_id}#######')
+                # print(f'#####goal_pos is {goal_pos}#######')
+                agent_pos = state.agents[agent_id].pos
+                self.calculate_step_counts(self.grid, (goal_pos.x,goal_pos.y))
+                distance = self.temp_grid[agent_pos.x][agent_pos.y]
+                agent_to_goal_distance += distance
+                # print(f'------------agent_to_goal_distance is {agent_to_goal_distance}-------------------')
+        elif self.goal_boxes != []:
+            for goal in self.goal_boxes: # loop in the goal box list (box_id, goal_row, goal_col)
+                box_id = goal[0] # get the box value
+                # print(f'#####box_id is {box_id}#######')
+                goal_pos = goal[1] # get the position
+                # print(f'#####goal_pos is {goal_pos}#######')
+                box = next((b for b in state.boxes if b.id == box_id), None)
+                if box:
+                    box_pos = box.pos
+                    # print(f'#####box_pos is {box_pos}#######')
+                    self.calculate_step_counts(self.grid, (goal_pos.x,goal_pos.y))
+                    box_distance = self.temp_grid[box_pos.x][box_pos.y]
+                    box_to_goal_distance += box_distance
+                else:
+                    print(f'No box found with ID {box_id}')
+                    box_to_goal_distance += 0
+            # print(f'------------box_to_goal_distance in for loop is {box_to_goal_distance}-------------------')
+        total_distance = agent_to_goal_distance + box_to_goal_distance
+        # print(f'------------total_distance is {total_distance}-------------------')
+        return total_distance
 
     def calculate_distance(self, state) -> 'int':
         total_distance = 0
@@ -202,8 +266,8 @@ class Heuristic(metaclass=ABCMeta):
     def __repr__(self): raise NotImplementedError
 
 class HeuristicAStar(Heuristic):
-    def __init__(self, initial_state: 'State'):
-        super().__init__(initial_state)
+    def __init__(self, initial_state: 'State', grid):
+        super().__init__(initial_state, grid)
 
     def f(self, state: 'State') -> 'int':
         g = state.g
