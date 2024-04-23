@@ -7,17 +7,17 @@ from domain.color import Color
 from domain.goal import Goal
 from domain.position import Position
 from domain.wall import Wall
+from domain.st_position import STPosition
 
 class State:
     _RNG = random.Random(1)
 
     # agents: list of Agents
     # boxes: list of Boxes
-    def __init__(self, agents: list[Agent], boxes: list[Box], goals: list[Goal], walls):
+    def __init__(self, agents, boxes, goals):
         self.agents = agents
         self.boxes = boxes
         self.goals = goals
-        self.walls = walls
         self.parent = None
         self.joint_action = None
         self.g = 0
@@ -76,7 +76,7 @@ class State:
                 copied_agent.pos += action.agent_rel_pos
 
         # Create a new state with the updated agents and boxes
-        copy_state = State(copy_agents, copy_boxes, copy_goals, self.walls)
+        copy_state = State(copy_agents, copy_boxes,copy_goals)
         copy_state.parent = self
         copy_state.joint_action = joint_action[:]
         copy_state.g = self.g + 1
@@ -113,7 +113,7 @@ class State:
 
         # Determine list of applicable action for each individual agent.
         applicable_actions = [[action for action in Action if self.is_applicable(agentIdx, action)] for agentIdx in range(num_agents)]
-
+        # print(f"---applicable_actions---{applicable_actions}")
         # Iterate over joint actions, check conflict and generate child states.
         joint_action = [None for _ in range(num_agents)]
         actions_permutation = [0 for _ in range(num_agents)]
@@ -121,9 +121,10 @@ class State:
         while True:
             for agentIdx in range(num_agents):
                 joint_action[agentIdx] = applicable_actions[agentIdx][actions_permutation[agentIdx]]
-            
-            if not self.is_conflicting(joint_action):
-                expanded_states.append(self.result(joint_action))
+                # print(f'---agentIdx---{agentIdx}')
+                # print(f"---joint_action---{joint_action}")
+            # if not self.is_conflicting(joint_action):
+            expanded_states.append(self.result(joint_action))
 
             # Advance permutation.
             done = False    
@@ -176,52 +177,54 @@ class State:
 
         return False
 
-    def is_conflicting(self, joint_action: 'list[Action]') -> 'bool':
-        num_agents = len(self.agents)
+    # def is_conflicting(self, joint_action: 'list[Action]') -> 'bool':
+    #     num_agents = len(self.agents)
 
-        destination_positions = [None for _ in range(num_agents)] # Position of new cell to become occupied by action
-        box_positions = [None for _ in range(num_agents)] # current Position of box moved by action
+    #     destination_positions = [None for _ in range(num_agents)] # Position of new cell to become occupied by action
+    #     box_positions = [None for _ in range(num_agents)] # current Position of box moved by action
 
-        # Collect cells to be occupied and boxes to be moved.
-        for agent_idx, action in enumerate(joint_action):
-            agent_pos = self.agents[agent_idx].pos
-            box_pos = None
-            if action.type is ActionType.NoOp:
-                pass
-            elif action.type is ActionType.Move:
-                destination_positions[agent_idx] = agent_pos + action.agent_rel_pos
-                box_positions[agent_idx] = Position(agent_pos.x, agent_pos.y) # Distinct dummy value.
-            if action.type in [ActionType.Push, ActionType.Pull]:
-                # Calculate box's current and destination positions for Push/Pull
-                if action.type == ActionType.Push:
-                    box_pos = agent_pos + action.agent_rel_pos
-                    box_destination_pos = box_pos + action.box_rel_pos
-                else:  # ActionType.Pull
-                    box_pos = agent_pos - action.box_rel_pos
-                    box_destination_pos = agent_pos
+    #     # Collect cells to be occupied and boxes to be moved.
+    #     for agent_idx, action in enumerate(joint_action):
+    #         agent_pos = self.agents[agent_idx].pos
+    #         box_pos = None
+    #         if action.type is ActionType.NoOp:
+    #             pass
+    #         elif action.type is ActionType.Move:
+    #             destination_positions[agent_idx] = agent_pos + action.agent_rel_pos
+    #             box_positions[agent_idx] = Position(agent_pos.x, agent_pos.y) # Distinct dummy value.
+    #         if action.type in [ActionType.Push, ActionType.Pull]:
+    #             # Calculate box's current and destination positions for Push/Pull
+    #             if action.type == ActionType.Push:
+    #                 box_pos = agent_pos + action.agent_rel_pos
+    #                 box_destination_pos = box_pos + action.box_rel_pos
+    #             else:  # ActionType.Pull
+    #                 box_pos = agent_pos - action.box_rel_pos
+    #                 box_destination_pos = agent_pos
 
-            # Update the box positions to be checked for conflicts
-            box_positions[agent_idx] = box_pos
-            destination_positions[agent_idx] = box_destination_pos if action.type == ActionType.Push else agent_pos + action.agent_rel_pos
+    #         # Update the box positions to be checked for conflicts
+    #         box_positions[agent_idx] = box_pos
+    #         destination_positions[agent_idx] = box_destination_pos if action.type == ActionType.Push else agent_pos + action.agent_rel_pos
 
-        for a1 in range(num_agents):
-            if joint_action[a1].type is ActionType.NoOp:
-                continue
+    #     for a1 in range(num_agents):
+    #         if joint_action[a1].type is ActionType.NoOp:
+    #             continue
 
-            for a2 in range(a1 + 1, num_agents):
-                if joint_action[a2].type is ActionType.NoOp:
-                    continue
+    #         for a2 in range(a1 + 1, num_agents):
+    #             if joint_action[a2].type is ActionType.NoOp:
+    #                 continue
 
-                # Moving into same cell?
-                if (destination_positions[a1] is not None and destination_positions[a2] is not None and
-                    destination_positions[a1] == destination_positions[a2]):
-                    return True
+    #             # Moving into same cell?
+    #             if (destination_positions[a1] is not None and destination_positions[a2] is not None and
+    #                 destination_positions[a1] == destination_positions[a2]):
+    #                 return True
 
-        return False
+    #     return False
 
     def is_free(self, position) -> bool:
-        # print(f"---walls---{self.walls}")
-        return not self.walls[position.y][position.x] and self.box_at(position) is None and self.agent_at(position) is None
+        #print(f"---walls---{self.walls}")
+        # Check if the position is occupied by a wall
+        is_wall = any(wall.pos.position == position for wall in self.walls)
+        return not is_wall and self.box_at(position) is None and self.agent_at(position) is None
 
     def agent_at(self, position: Position) -> Agent:
         for agent in self.agents:
@@ -261,8 +264,8 @@ class State:
             _hash = _hash * prime + hash(tuple(box.pos for box in self.boxes))
             _hash = _hash * prime + hash(tuple(box.color for box in self.boxes))
             _hash = _hash * prime + hash(tuple((goal.pos, goal.id) for goal in self.goals))
-            flattened_walls = tuple(tuple(row) for row in self.walls)
-            _hash = _hash * prime + hash(flattened_walls)
+            walls_hash = hash(tuple(wall.pos for wall in self.walls))
+            _hash = _hash * prime + walls_hash
             self._hash = _hash
         return self._hash
 
@@ -275,13 +278,15 @@ class State:
             return False
         if any(b1.pos != b2.pos or b1.color != b2.color for b1, b2 in zip(self.boxes, other.boxes)):
             return False
+        if State.walls != other.walls:
+            return False
         if any(g1.pos != g2.pos or g1.id != g2.id for g1, g2 in zip(self.goals, other.goals)):
             return False
         return True
 
     def __repr__(self):
-        max_row = max(max(agent.pos.x for agent in self.agents), max(box.pos.x for box in self.boxes), len(self.walls) - 1)  # Modified line
-        max_col = max(max(agent.pos.y for agent in self.agents), max(box.pos.y for box in self.boxes), len(self.walls[0]) - 1 if self.walls else 0)  # Modified line
+        max_row = max(max(agent.pos.x for agent in self.agents), max(box.pos.x for box in self.boxes), max(wall.pos.position.x for wall in State.walls))
+        max_col = max(max(agent.pos.y for agent in self.agents), max(box.pos.y for box in self.boxes), max(wall.pos.position.y for wall in State.walls))
         lines = []
         max_row = self.width
         max_col = self.height
@@ -302,3 +307,128 @@ class State:
                     line.append(' ')
             lines.append(''.join(line))
         return '\n'.join(lines)
+
+
+class SpaceTimeState(State):
+    def __init__(self, agents, boxes, goals, time, constraints):
+        super().__init__(agents, boxes, goals)
+        self.time = time  # Add a time component to the state
+        self.constraints = constraints
+
+    # Modify is_applicable function to include constraints judgement
+    def is_applicable(self, agent: int, action: Action) -> bool:
+        agent = self.agents[agent]
+        #print(f"---agent---{agent}")
+        print(f"--is applicable-action---{action}")
+        agent_destination = agent.pos + action.agent_rel_pos
+        #print(f"---agent_destination---{agent_destination}")
+        if action.type is ActionType.NoOp:
+            return True
+
+        elif action.type is ActionType.Move:
+            # Check if the agent's destination is free and not constrained
+            return self.is_free(agent_destination) and not self.is_constrained(agent, agent_destination, self.time + 1)
+
+        elif action.type is ActionType.Push:
+            # Check if there is a box at the agent's destination to push
+            box_to_push = next((box for box in self.boxes if box.pos == agent_destination), None)
+            if box_to_push and box_to_push.color == agent.color:
+                # Calculate the box's destination position with time component
+                box_destination = agent_destination + action.box_rel_pos
+                # Check if both the agent's and the box's destinations are free and not constrained
+                return (self.is_free(agent_destination) and
+                        self.is_free(box_destination) and
+                        not self.is_constrained(agent, agent_destination, self.time + 1) and
+                        not self.is_constrained(agent, box_destination, self.time + 1))
+            else:
+                return False
+
+        elif action.type is ActionType.Pull:
+            # Calculate the box's current position that the agent wants to pull
+            box_position = agent.pos - action.box_rel_pos
+            # Check if there is a box to pull at the calculated position
+            box_to_pull = next((box for box in self.boxes if box.pos == box_position), None)
+            if box_to_pull and box_to_pull.color == agent.color:
+                # Check if the agent's destination is free and not constrained
+                return self.is_free(agent_destination) and not self.is_constrained(agent, agent_destination, self.time + 1)
+            else:
+                return False
+
+        return False
+
+
+    def result(self, joint_action: list[Action]) -> 'SpaceTimeState':
+        # Add the time dimension to the new state
+        new_state = super().result(joint_action)
+        print(f"constraints--{self.constraints}")
+        return SpaceTimeState(new_state.agents, new_state.boxes, new_state.goals, self.time + 1, new_state.constraints)
+
+
+    def get_expanded_states(self) -> 'list[SpaceTimeState]':
+        num_agents = len(self.agents)
+        #print(f"---num_agents---{num_agents}")
+
+        # Determine list of applicable action for each individual agent.
+        applicable_actions = [[action for action in Action if self.is_applicable(agentIdx, action)] for agentIdx in range(num_agents)]
+        # print(f"---applicable_actions---{applicable_actions}")
+        # Iterate over joint actions, check conflict and generate child states.
+        joint_action = [None for _ in range(num_agents)]
+        actions_permutation = [0 for _ in range(num_agents)]
+        expanded_states = []
+        while True:
+            for agentIdx in range(num_agents):
+                joint_action[agentIdx] = applicable_actions[agentIdx][actions_permutation[agentIdx]]
+                # print(f'---agentIdx---{agentIdx}')
+                # print(f"---joint_action---{joint_action}")
+            # if not self.is_conflicting(joint_action):
+
+            # Generate the resulting state from the joint action.
+            child_state = self.result(joint_action)
+            # Increment the time for the child state.
+            child_state.time = self.time + 1
+            expanded_states.append(child_state)
+
+            # Advance permutation.
+            done = False
+            for agent in range(num_agents):
+                if actions_permutation[agent] < len(applicable_actions[agent]) - 1:
+                    actions_permutation[agent] += 1
+                    break
+                else:
+                    actions_permutation[agent] = 0
+                    if agent == num_agents - 1:
+                        done = True
+            # Last permutation?
+            if done:
+                break
+        State._RNG.shuffle(expanded_states)
+        return expanded_states
+
+
+    def is_constrained(self, agent_index, position, time):
+        # Check if there is a constraint for the given agent at the given position and time
+        # return any(constraint.agent_id == agent_index and
+        #            constraint.position == position and
+        #            constraint.time_step == time
+        #            for constraint in self.constraints)
+        for constraint in self.constraints:
+            if constraint.agent_id == agent_index and Position(constraint.position) == position and constraint.time_step == time:
+                return True
+        return False
+
+
+
+    def __eq__(self, other):
+        return (self.agents == other.agents and
+                self.boxes == other.boxes and
+                self.goals == other.goals and
+                self.time == other.time)
+
+
+    def __hash__(self):
+        if self._hash is None:
+            self._hash = (hash(tuple(self.agents)) ^
+                          hash(tuple(self.boxes)) ^
+                          hash(tuple(self.goals)) ^
+                          hash(self.time))
+        return self._hash

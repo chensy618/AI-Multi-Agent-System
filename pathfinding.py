@@ -11,19 +11,8 @@ from domain.action import Action
 from state import State
 from abc import ABCMeta, abstractmethod
 import heapq
-import memory
-import time
-import sys
-
-
-start_time = time.perf_counter()
 
 action_list = []
-
-def print_search_status(explored, frontier):
-    status_template = '#Expanded: {:8,}, #Frontier: {:8,}, #Generated: {:8,}, Time: {:3.3f} s\n[Alloc: {:4.2f} MB, MaxAlloc: {:4.2f} MB]'
-    elapsed_time = time.perf_counter() - start_time
-    print(status_template.format(len(explored), frontier.size(), len(explored) + frontier.size(), elapsed_time, memory.get_usage(), memory.max_usage), file=sys.stderr, flush=True)
 
 class SpaceTimeAstar:
     def __init__(self, grid, agents, boxes, goals, walls, width, height):
@@ -43,7 +32,7 @@ class SpaceTimeAstar:
         for actions in plan:
             time += 1
             for agent, action in zip(agents, actions):
-                # print(f"---action--- {action}")
+                print(f"---action--- {action}")
                 if action == Action.NoOp:
                     time_path[agent.id].append((agent.pos, time))
                 elif action == Action.MoveN:
@@ -55,9 +44,9 @@ class SpaceTimeAstar:
                 elif action == Action.MoveE:
                     agent.pos = Position(agent.pos.x, agent.pos.y + 1)
                     time_path[agent.id].append((agent.pos, time))
-                    # print(f"---agent.pos--- {agent.pos}")
-                    # print(f"---time--- {time}")
-                    # print(f"---timeline--- {time_path}")
+                    print(f"---agent.pos--- {agent.pos}")
+                    print(f"---time--- {time}")
+                    print(f"---timeline--- {time_path}")
                 elif action == Action.MoveW:
                     agent.pos = Position(agent.pos.x, agent.pos.y - 1)
                     time_path[agent.id].append((agent.pos, time))
@@ -150,8 +139,8 @@ class Heuristic(metaclass=ABCMeta):
 
         self.goal_agents = list(zip(self.goal_name_agent, self.goal_position_agent))
         self.goal_boxes = list(zip(self.goal_name_box, self.goal_position_box))
-        # print(f"---goal_agents--- {self.goal_agents}")
-        # print(f"---goal_boxes--- {self.goal_boxes}")
+        print(f"---goal_agents--- {self.goal_agents}")
+        print(f"---goal_boxes--- {self.goal_boxes}")
 
     def h(self, state: 'State') -> 'int':
         return self.calculate_distance(state)

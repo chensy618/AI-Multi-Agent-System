@@ -6,6 +6,10 @@ class Box:
 
     def __repr__(self):
         return f"Box(pos={self.pos}, id={self.id}, color={self.color})"
-    
+
     def getRealBoxId(self):
-        return chr(self.id)
+        if isinstance(self.id, int):
+            return chr(self.id)
+        else:
+            # If id is already a character, return it as is
+            return self.id
