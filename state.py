@@ -23,6 +23,31 @@ class State:
         self.g = 0
         self._hash = None
 
+    def relaxed_state(self, task):
+        agentId, boxId = task 
+
+        relaxed_agent = self.get_agent_by_id(agentId)
+        agent_colored_boxes = self.get_agent_boxes(relaxed_agent.color)
+        relaxed_walls = [row[:] for row in self.walls]
+        
+        for relaxed_box in agent_colored_boxes:
+            for box in self.boxes:
+                if relaxed_box != box: # different colored box so it should be wall for the agent, because it can't pass through it
+                    relaxed_walls[box.pos.y][box.pos.x] = True 
+
+        return State([relaxed_agent], agent_colored_boxes, self.goals, relaxed_walls)
+
+
+    def get_agent_by_id(self, agentId) -> Agent:
+        for agent in self.agents:
+            if agentId == agent.id:
+                return agent
+        
+
+    def get_agent_boxes(self, color) -> list[Box]:
+        return [box for box in self.boxes if box.color == color]
+
+
     def result(self, joint_action: list[Action]) -> 'State':
         '''
         Returns the state resulting from applying joint_action in this state.
@@ -102,14 +127,14 @@ class State:
             expanded_states.append(self.result(joint_action))
 
             # Advance permutation.
-            done = False
-            for agent in range(num_agents):
-                if actions_permutation[agent] < len(applicable_actions[agent]) - 1:
-                    actions_permutation[agent] += 1
+            done = False    
+            for agent_id in range(num_agents):
+                if actions_permutation[agent_id] < len(applicable_actions[agent_id]) - 1:
+                    actions_permutation[agent_id] += 1
                     break
                 else:
-                    actions_permutation[agent] = 0
-                    if agent == num_agents - 1:
+                    actions_permutation[agent_id] = 0
+                    if agent_id == num_agents - 1:
                         done = True
             # Last permutation?
             if done:
@@ -117,8 +142,8 @@ class State:
         State._RNG.shuffle(expanded_states)
         return expanded_states
 
-    def is_applicable(self, agent: int, action: Action) -> bool:
-        agent = self.agents[agent]
+    def is_applicable(self, agent_id: int, action: Action) -> bool:
+        agent = self.agents[agent_id]
         #print(f"---agent---{agent}")
         agent_destination = agent.pos + action.agent_rel_pos
         #print(f"---agent_destination---{agent_destination}")
@@ -263,13 +288,15 @@ class State:
         max_row = max(max(agent.pos.x for agent in self.agents), max(box.pos.x for box in self.boxes), max(wall.pos.position.x for wall in State.walls))
         max_col = max(max(agent.pos.y for agent in self.agents), max(box.pos.y for box in self.boxes), max(wall.pos.position.y for wall in State.walls))
         lines = []
+        max_row = self.width
+        max_col = self.height
         for row in range(max_row + 1):
             line = []
             for col in range(max_col + 1):
-                pos = Position(row, col)
+                pos = Position(col, row)
                 agent = self.agent_at(pos)
                 box = self.box_at(pos)
-                wall = next((wall for wall in self.walls if wall.pos == pos), None)  # Added line
+                wall = self.walls[row][col] if self.walls and row < len(self.walls) and col < len(self.walls[row]) else False
                 if box is not None:
                     line.append(box.getRealBoxId())
                 elif wall is not None:

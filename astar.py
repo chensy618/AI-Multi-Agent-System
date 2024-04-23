@@ -4,6 +4,7 @@ from abc import ABCMeta, abstractmethod
 from collections import deque
 from state import State 
 from domain.position import Position
+from domain.st_position import STPosition
 from domain.action import Action, ActionType
 import time
 import sys
@@ -19,10 +20,9 @@ def astar(problem_state):
     #         [MoveS],
     #     ]
     initial_state = problem_state
-    goal_position = problem_state.goals
     frontier = FrontierBestFirst(HeuristicAStar(initial_state))
     frontier.add(initial_state)
-
+    
     explored = set()
 
     while True:
@@ -31,7 +31,7 @@ def astar(problem_state):
             return None  # No solution found
 
         current_state = frontier.pop()
-        # print(f"---current_state--- {current_state.agents[0].pos}")
+        print(f"---current_state--- {[agent.pos for agent in current_state.agents]}")
 
         if current_state.is_goal_state():
             single_agent_plan = current_state.extract_plan()
