@@ -17,7 +17,7 @@ def space_time_a_star(problem, constraints):
 
     initial_time = 0
     initial_state = SpaceTimeState(agent, box, goal, initial_time, constraints)
-    print(f"---initial_state--{initial_state}")
+    print(f"---initial_state--{initial_state.agents, initial_state.boxes, initial_state.goals, initial_state.time, initial_state.constraints}")
     print(f"---initial_state.constraints--{initial_state.constraints}")
 
     frontier = FrontierBestFirst(HeuristicAStar(initial_state))

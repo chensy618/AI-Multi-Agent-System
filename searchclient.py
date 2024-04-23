@@ -15,16 +15,17 @@ from domain.wall import Wall
 from astar import astar
 from htn import htn
 
-import debugpy
-debugpy.listen(("localhost", 1234)) # Open a debugging server at localhost:1234
-debugpy.wait_for_client() # Wait for the debugger to connect
-debugpy.breakpoint() # Ensure the program starts paused
+# import debugpy
+# debugpy.listen(("localhost", 1234)) # Open a debugging server at localhost:1234
+# debugpy.wait_for_client() # Wait for the debugger to connect
+# debugpy.breakpoint() # Ensure the program starts paused
 
 # data structure for agent, box, goal
 AgentConfig = namedtuple('AgentConfig', ['position', 'id', 'color'])
 BoxConfig = namedtuple('BoxConfig', ['position', 'letter', 'color'])
 GoalConfig = namedtuple('GoalConfig', ['position', 'letter'])
 WallConfig = namedtuple('WallConfig', ['position'])
+
 
 class LevelParser:
     @staticmethod
@@ -157,16 +158,21 @@ class SearchClient:
         # ########### original code ###########
         # plan = astar(initial_state, conflict)
         # print(f"---plan--{plan}")
-        if plan is None:
-            print('Unable to solve level.', file=sys.stderr, flush=True)
-            sys.exit(0)
-        else:
-            print('Found solution of length {}.'.format(len(plan)), file=sys.stderr, flush=True)
-            for joint_action in plan:
-                print("|".join(a.name_ + "@" + a.name_ for a in joint_action), flush=True)
-                #We must read the server's response to not fill up the stdin buffer and block the server.
-                response = server_messages.readline()
-                # print(f"---response--{response}")
+        for key, action_list in plan_list.items():
+            print(f"---key--{key}")
+            if action_list is None:
+                continue
+            plan = action_list
+            if plan is None:
+                print('Unable to solve level.', file=sys.stderr, flush=True)
+                sys.exit(0)
+            else:
+                print('Found solution of length {}.'.format(len(plan)), file=sys.stderr, flush=True)
+                for joint_action in plan:
+                    print("|".join(a.name_  +"@" + a.name_  for a in joint_action), flush=True)
+                    #We must read the server's response to not fill up the stdin buffer and block the server.
+                    response = server_messages.readline()
+                    # print(f"---response--{response}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Simple client based on state-space graph search.')
