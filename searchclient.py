@@ -157,6 +157,7 @@ class SearchClient:
         # ########### original code ###########
         # plan = astar(initial_state, conflict)
         # print(f"---plan--{plan}")
+        plan = plan_list
         if plan is None:
             print('Unable to solve level.', file=sys.stderr, flush=True)
             sys.exit(0)

@@ -1,7 +1,8 @@
 import heapq
+import sys
 from abc import ABCMeta, abstractmethod
 from collections import deque
-from state import State
+from state import State 
 from domain.position import Position
 from domain.action import Action, ActionType
 import time
@@ -33,6 +34,8 @@ def astar(problem_state):
         # print(f"---current_state--- {current_state.agents[0].pos}")
 
         if current_state.is_goal_state():
+            single_agent_plan = current_state.extract_plan()
+            print(f"Where am I? Function: {sys._getframe().f_code.co_name}, single_agent_plan:{single_agent_plan}")
             return current_state.extract_plan()  # Return the plan to reach the goal state
 
         explored.add(current_state)

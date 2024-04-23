@@ -7,6 +7,7 @@ from domain.color import Color
 from domain.goal import Goal
 from domain.position import Position
 from domain.wall import Wall
+from domain.st_position import STPosition
 
 class State:
     _RNG = random.Random(1)
@@ -291,6 +292,7 @@ class SpaceTimeState(State):
     def is_applicable(self, agent: int, action: Action) -> bool:
         agent = self.agents[agent]
         #print(f"---agent---{agent}")
+        print(f"--is applicable-action---{action}")
         agent_destination = agent.pos + action.agent_rel_pos
         #print(f"---agent_destination---{agent_destination}")
         if action.type is ActionType.NoOp:
@@ -304,7 +306,7 @@ class SpaceTimeState(State):
             # Check if there is a box at the agent's destination to push
             box_to_push = next((box for box in self.boxes if box.pos == agent_destination), None)
             if box_to_push and box_to_push.color == agent.color:
-                # Calculate the box's destination position
+                # Calculate the box's destination position with time component
                 box_destination = agent_destination + action.box_rel_pos
                 # Check if both the agent's and the box's destinations are free and not constrained
                 return (self.is_free(agent_destination) and
@@ -331,7 +333,8 @@ class SpaceTimeState(State):
     def result(self, joint_action: list[Action]) -> 'SpaceTimeState':
         # Add the time dimension to the new state
         new_state = super().result(joint_action)
-        return SpaceTimeState(new_state.agents, new_state.boxes, new_state.goals, self.time + 1)
+        print(f"constraints--{self.constraints}")
+        return SpaceTimeState(new_state.agents, new_state.boxes, new_state.goals, self.time + 1, new_state.constraints)
 
 
     def get_expanded_states(self) -> 'list[SpaceTimeState]':
@@ -377,10 +380,14 @@ class SpaceTimeState(State):
 
     def is_constrained(self, agent_index, position, time):
         # Check if there is a constraint for the given agent at the given position and time
-        return any(constraint.agent_id == agent_index and
-                   constraint.position == position and
-                   constraint.time_step == time
-                   for constraint in self.constraints)
+        # return any(constraint.agent_id == agent_index and
+        #            constraint.position == position and
+        #            constraint.time_step == time
+        #            for constraint in self.constraints)
+        for constraint in self.constraints:
+            if constraint.agent_id == agent_index and Position(constraint.position) == position and constraint.time_step == time:
+                return True
+        return False
 
 
 

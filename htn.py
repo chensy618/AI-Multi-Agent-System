@@ -18,6 +18,7 @@ def htn(initial_state):
             agent_goal = next((goal for goal in initial_state.goals if goal.id == agent_box.id), None)
             print(f"---agent_goal--{agent_goal}")
             individual_state = State([agent], [agent_box], [agent_goal])
+            print(f"---individual_state--{individual_state}")
         else:
             print(f"---initial_state.goals--{initial_state.goals}")
             agent_goal = next((goal for goal in initial_state.goals if int(goal.id) == int(agent.id)), None)

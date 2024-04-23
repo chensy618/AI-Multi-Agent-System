@@ -16,6 +16,7 @@ def space_time_a_star(problem, constraints):
     # ---goal--[Goal(pos=Position(x=2, y=4), id=A)]
 
     initial_time = 0
+    print(f"--spacetime-constraints--{constraints}")
     initial_state = SpaceTimeState(agent, box, goal, initial_time, constraints)
     print(f"---initial_state--{initial_state}")
     print(f"---initial_state.constraints--{initial_state.constraints}")
@@ -40,5 +41,5 @@ def space_time_a_star(problem, constraints):
 
         for state in current_state.get_expanded_states():
             if state not in explored and not frontier.contains(state):
-                frontier.add(state)
+                frontier.add(state) 
 

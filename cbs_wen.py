@@ -23,7 +23,10 @@ def conflict_based_search(problem_list):
             print(f"---agent--{agent.id}")
             print(f"---problem--{problem}")
             initial_positions[agent.id] = agent.pos
+            print(f"Where am I? Function : {sys._getframe().f_code.co_name},agent.pos--{agent.pos}")
+            print(f"Where am I? Function : {sys._getframe().f_code.co_name},problem--{problem.agents,problem.boxes,problem.goals}")
             root.solution[agent.id] = astar(problem)
+            print(f"Where am I? Function : {sys._getframe().f_code.co_name},root.solution--{root.solution.values()}")
     print(f"---initial_positions--{initial_positions}")
     root.cost = cost(root.solution)
     frontier = PriorityQueue()
