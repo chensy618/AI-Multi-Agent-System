@@ -30,6 +30,9 @@ WallConfig = namedtuple('WallConfig', ['position'])
 layout_rows = 0
 layout_cols = 0
 class LevelParser:
+    # store the layout of the level
+    initial_grid = []
+
     @staticmethod
     def parse_colors(server_messages):
         agent_colors, box_colors = {}, {}
@@ -73,6 +76,8 @@ class LevelParser:
     def parse_initial_and_goal_states(server_messages):
         initial_layout, line = LevelParser.parse_layout(server_messages, '#goal')
         goal_layout, _ = LevelParser.parse_layout(server_messages, '#end')
+        global initial_grid
+        initial_grid = initial_layout
         # print(f"parse_initial and goal--{initial_layout,goal_layout}")
         return initial_layout, goal_layout
 
@@ -87,6 +92,15 @@ class LevelParser:
         goal_layout, line = LevelParser.parse_layout(server_messages, '#end')
         return goal_layout
     
+    @staticmethod
+    def parse_grid(grid):
+        layout_rows = len(initial_grid)
+        layout_cols = max(len(row) for row in initial_grid)
+        grid = [[None for _ in range(layout_cols)] for _ in range(layout_rows)]
+        for row_idx, row in enumerate(initial_grid):
+            for col_idx, char in enumerate(row):
+                grid[row_idx][col_idx] = char
+        return grid
 class SearchClient:
     @staticmethod
     def parse_level(server_messages) -> 'State':
@@ -96,7 +110,7 @@ class SearchClient:
         agent_colors, box_colors = LevelParser.parse_colors(server_messages)
         # print(f"---agent_colors, box_colors--{agent_colors, box_colors}")
         initial_layout, goal_layout = LevelParser.parse_initial_and_goal_states(server_messages)
-        #print(f"---initial_layout, goal_layout--{initial_layout, goal_layout}")
+        print(f"---initial_layout, goal_layout--{initial_layout, goal_layout}")
         # agents, boxes, goals, walls initialization : empty lists
         # iterate through the initial_layout and goal_layout
         agents, boxes, goals, walls = [], [], [], []
@@ -155,7 +169,10 @@ class SearchClient:
         conflict = None
         print('Starting.', file=sys.stderr, flush=True)
         grid = [[None for _ in range(layout_cols)] for _ in range(layout_rows)]
-        st_astar = SpaceTimeAstar(grid, initial_state.agents, initial_state.boxes, initial_state.goals, initial_state.walls, layout_rows, layout_cols)
+        print(f"---grid--{grid}")
+        grid_update = LevelParser.parse_grid(grid)
+        print(f"---grid_update--{grid_update}")
+        st_astar = SpaceTimeAstar(grid_update, initial_state.agents, initial_state.boxes, initial_state.goals, initial_state.walls, layout_rows, layout_cols)
         # st_astar.initialize_grid(layout_rows, layout_cols, max_time)
         plan, time_path = st_astar.st_astar(initial_state)
         # st_astar = SpaceTimeAstar(initial_state,initial_state.goals)
