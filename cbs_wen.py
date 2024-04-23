@@ -4,6 +4,7 @@ import sys
 from astar import astar
 from cbs.node import Node
 
+from domain.action import ActionType
 from domain.conflict import Conflict
 from domain.constraint import Constraint
 from domain.position import Position
@@ -18,13 +19,21 @@ def conflict_based_search(problem_list):
     root = Node()
     root.constraints = []
     initial_positions = {}
+    # initial_box_positions = {}
     for problem in problem_list:
         for agent in problem.agents:
             print(f"---agent--{agent.id}")
             print(f"---problem--{problem}")
             initial_positions[agent.id] = agent.pos
             root.solution[agent.id] = astar(problem)
+        ############## Related boxes position code has been commented out
+        # # but actually needed when considering more types of conflicts ##############
+        # # Store initial positions of boxes
+        # for box in problem.boxes:
+        #     print(f"---box--{box.id}")
+        #     initial_box_positions[box.id] = box.pos
     print(f"---initial_positions--{initial_positions}")
+    # print(f"---initial_box_positions--{initial_box_positions}")
     root.cost = cost(root.solution)
     frontier = PriorityQueue()
     count_next = next(tiebreaker)
@@ -32,6 +41,7 @@ def conflict_based_search(problem_list):
     while not frontier.empty():
         node_cost, tiebreaker_value, node = frontier.get()
         conflict = find_first_conflict(node.solution, initial_positions)
+        # conflict = find_first_conflict(node.solution, initial_positions, initial_box_positions)
         if conflict is None:
             print('I am here')
             return node.solution
@@ -73,6 +83,8 @@ def cost(solution):
     return total_cost
 
 
+#################### Below code works only for agent-agent conflict####################
+#################### Currently the level is an agent-box conflict. so need to adjust the code####################
 def find_first_conflict(solution, initial_positions):
     """
     Find the first conflict in the solution.
@@ -88,7 +100,7 @@ def find_first_conflict(solution, initial_positions):
         # print(f"---current_position--{current_position}")
         # print(f"---agent_id--{agent_id}")
         # print(f"---path--{path}")
-        time_step = 0
+        time_step = 1 # Start the first step at 1
         for action_list in path:
             action = action_list[0]  # Assuming each action is wrapped in a list
             # print(f"---action--{action}")
@@ -112,7 +124,12 @@ def find_first_conflict(solution, initial_positions):
     return None
 
 
-#################### box position as well ####################
+# ################### Need to consider more types of conflicts as well####################
+# # Agent-Agent Conflict
+# # Agent-Box Conflict
+# # Box-Box Conflict
+# # following conflict
+# ################### Below code need big adjustment####################
 # def find_first_conflict(solution, initial_positions, initial_box_positions):
 #     """
 #     Find the first conflict in the solution.
@@ -128,7 +145,7 @@ def find_first_conflict(solution, initial_positions):
 #     for agent_id, path in solution.items():
 #         # Get the initial position of the agent
 #         current_position = initial_positions[agent_id]
-#         time_step = 0
+#         time_step = 1  # Start the first step at 1
 #         for action_list in path:
 #             action = action_list[0]  # Assuming each action is wrapped in a list
 #             # Calculate the resulting position of the agent after the action
