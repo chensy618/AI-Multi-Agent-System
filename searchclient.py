@@ -158,21 +158,18 @@ class SearchClient:
         # ########### original code ###########
         # plan = astar(initial_state, conflict)
         # print(f"---plan--{plan}")
-        for key, action_list in plan_list.items():
-            print(f"---key--{key}")
-            if action_list is None:
-                continue
-            plan = action_list
-            if plan is None:
-                print('Unable to solve level.', file=sys.stderr, flush=True)
-                sys.exit(0)
-            else:
-                print('Found solution of length {}.'.format(len(plan)), file=sys.stderr, flush=True)
-                for joint_action in plan:
-                    print("|".join(a.name_  +"@" + a.name_  for a in joint_action), flush=True)
-                    #We must read the server's response to not fill up the stdin buffer and block the server.
-                    response = server_messages.readline()
-                    # print(f"---response--{response}")
+        plan = plan_list.values()
+        print(f"---plan--{plan}")
+        if plan is None:
+            print('Unable to solve level.', file=sys.stderr, flush=True)
+            sys.exit(0)
+        else:
+            print('Found solution of length {}.'.format(len(plan)), file=sys.stderr, flush=True)
+            for joint_action in plan:
+                print("|".join(a.name_  +"@" + a.name_  for a in joint_action), flush=True)
+                #We must read the server's response to not fill up the stdin buffer and block the server.
+                response = server_messages.readline()
+                # print(f"---response--{response}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Simple client based on state-space graph search.')

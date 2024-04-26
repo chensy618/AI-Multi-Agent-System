@@ -7,6 +7,7 @@ from domain.color import Color
 from domain.goal import Goal
 from domain.position import Position
 from domain.wall import Wall
+from domain.constraint import Constraint
 
 class State:
     _RNG = random.Random(1)
@@ -204,7 +205,7 @@ class State:
         wall_flag = self.wall_at(position)
         box_flag = self.box_at(position)
         agent_flag = self.agent_at(position)
-        print(f"---wall_flag---{wall_flag},---box_flag---{box_flag},---agent_flag---{agent_flag},---position---{position}")
+        #print(f"---wall_flag---{wall_flag},---box_flag---{box_flag},---agent_flag---{agent_flag},---position---{position}")
         return self.wall_at(position) is None and self.box_at(position) is None and self.agent_at(position) is None
     
     def agent_at(self, position: Position) -> Agent:
@@ -321,11 +322,7 @@ class SpaceTimeState(State):
                 # Calculate the box's destination position
                 box_destination = agent_destination + action.box_rel_pos
                 # Check if both the agent's and the box's destinations are free and not constrained
-                # return (self.is_free(agent_destination) and
-                #         self.is_free(box_destination) and
-                #         not self.is_constrained(agent, agent_destination, self.time + 1) and
-                #         not self.is_constrained(agent, box_destination, self.time + 1))
-                return self.is_free(box_destination) and not self.is_constrained(agent, box_destination, self.time + 1) and not self.is_constrained(agent, agent_destination, self.time + 1)
+                return self.is_free(box_destination) and not self.is_constrained(agent, box_destination, self.time + 1)
             else:
                 return False
 
@@ -346,8 +343,7 @@ class SpaceTimeState(State):
     def result(self, joint_action: list[Action]) -> 'SpaceTimeState':
         # Add the time dimension to the new state
         new_state = super().result(joint_action)
-        new_state.constraints = self.constraints
-        return SpaceTimeState(new_state.agents, new_state.boxes, new_state.goals, self.time + 1, new_state.constraints)
+        return SpaceTimeState(new_state.agents, new_state.boxes, new_state.goals, self.time + 1, self.constraints)
 
     def get_expanded_states(self) -> 'list[SpaceTimeState]':
         num_agents = len(self.agents)
@@ -395,11 +391,6 @@ class SpaceTimeState(State):
         return st_pos.x == pos.x and st_pos.y == pos.y
 
     def is_constrained(self, agent_index, position, time):
-        # Check if there is a constraint for the given agent at the given position and time
-        # return any(constraint.agent_id == agent_index and
-        #            constraint.position == position and
-        #            constraint.time_step == time
-        #            for constraint in self.constraints)
         print(f"---self.constraints---{self.constraints}")
         for constraint in self.constraints:
             print(f"--constraint.position:{constraint.pos}, position:{position}")
@@ -409,9 +400,6 @@ class SpaceTimeState(State):
                 return True
         return False
         
-    
-
-
 
     def __eq__(self, other):
         return (self.agents == other.agents and
