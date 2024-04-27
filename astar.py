@@ -4,6 +4,7 @@ from collections import deque
 from state import State
 from domain.position import Position
 from domain.action import Action, ActionType
+from domain.st_position import STPosition
 import time
 import sys
 import memory
@@ -11,14 +12,169 @@ import memory
 globals().update(Action.__members__)
 start_time = time.perf_counter()
 
+def construct_path_with_time(agents, boxes, plan):
+        time = 0
+        box_time_path = {box.id : [] for box in boxes}
+        agent_time_path = {agent.id : [] for agent in agents}
+        time_path = {}
+        for actions in plan:
+            time += 1
+            for agent, box, action in zip(agents, boxes, actions):
+                # print(f"---action--- {action}")
+                if action == Action.NoOp:
+                    agent.pos = agent.pos
+                    box.pos = box.pos
+                    agent_time_path[agent.id].append(STPosition(agent.pos, time))
+                    box_time_path[box.id].append(STPosition(box.pos, time))
+                elif action == Action.MoveN:
+                    agent.pos = Position(agent.pos.x - 1, agent.pos.y)
+                    box.pos = box.pos
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x, box.pos.y,time))
+                elif action == Action.MoveS:
+                    agent.pos = Position(agent.pos.x + 1, agent.pos.y)
+                    box.pos = box.pos
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos, time))
+                elif action == Action.MoveE:
+                    agent.pos = Position(agent.pos.x, agent.pos.y + 1)
+                    box.pos = box.pos
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos, time))
+                elif action == Action.MoveW:
+                    agent.pos = Position(agent.pos.x, agent.pos.y - 1)
+                    box.pos = box.pos
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos, time))
+                elif action == Action.PushN:
+                    agent.pos = Position(agent.pos.x - 1, agent.pos.y)
+                    box.pos = Position(box.pos.x - 1, box.pos.y)
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x,box.pos.y,time))
+                elif action == Action.PushS:
+                    agent.pos = Position(agent.pos.x + 1, agent.pos.y)
+                    box.pos = Position(box.pos.x + 1, box.pos.y)
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x,box.pos.y,time))
+                elif action == Action.PushE:
+                    agent.pos = Position(agent.pos.x, agent.pos.y + 1)
+                    box.pos = Position(box.pos.x, box.pos.y + 1)
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x,box.pos.y,time))
+                elif action == Action.PushW:
+                    agent.pos = Position(agent.pos.x, agent.pos.y - 1)
+                    box.pos = Position(box.pos.x, box.pos.y - 1)
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x,box.pos.y,time))
+                elif action == Action.PullN:
+                    agent.pos = Position(agent.pos.x + 1, agent.pos.y)
+                    box.pos = Position(box.pos.x + 1, box.pos.y)
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x,box.pos.y,time))
+                elif action == Action.PullS:
+                    agent.pos = Position(agent.pos.x - 1, agent.pos.y)
+                    box.pos = Position(box.pos.x - 1, box.pos.y)
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x,box.pos.y,time))
+                elif action == Action.PullE:
+                    agent.pos = Position(agent.pos.x, agent.pos.y - 1)
+                    box.pos = Position(box.pos.x, box.pos.y - 1)
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x,box.pos.y,time))
+                elif action == Action.PullW:
+                    agent.pos = Position(agent.pos.x, agent.pos.y + 1)
+                    box.pos = Position(box.pos.x, box.pos.y + 1)
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x,box.pos.y,time))
+                elif action == Action.PushNE:
+                    agent.pos = Position(agent.pos.x - 1, agent.pos.y)
+                    box.pos = Position(box.pos.x, box.pos.y + 1)
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x,box.pos.y,time))
+                elif action == Action.PushNW:
+                    agent.pos = Position(agent.pos.x - 1, agent.pos.y)
+                    box.pos = Position(box.pos.x, box.pos.y - 1)
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x,box.pos.y,time))
+                elif action == Action.PushSE:
+                    agent.pos = Position(agent.pos.x + 1, agent.pos.y)
+                    box.pos = Position(box.pos.x, box.pos.y + 1)
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x,box.pos.y,time))
+                elif action == Action.PushSW:
+                    agent.pos = Position(agent.pos.x + 1, agent.pos.y)
+                    box.pos = Position(box.pos.x, box.pos.y - 1)
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x,box.pos.y,time))
+                elif action == Action.PushEN:
+                    agent.pos = Position(agent.pos.x, agent.pos.y + 1)
+                    box.pos = Position(box.pos.x - 1, box.pos.y)
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x,box.pos.y,time))
+                elif action == Action.PushES: 
+                    agent.pos = Position(agent.pos.x, agent.pos.y + 1)
+                    box.pos = Position(box.pos.x + 1, box.pos.y)
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x,box.pos.y,time))
+                elif action == Action.PushWN:
+                    agent.pos = Position(agent.pos.x, agent.pos.y - 1)
+                    box.pos = Position(box.pos.x - 1, box.pos.y)
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x,box.pos.y,time))
+                elif action == Action.PushWS:
+                    agent.pos = Position(agent.pos.x, agent.pos.y - 1)
+                    box.pos = Position(box.pos.x + 1, box.pos.y)
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x,box.pos.y,time))
+                elif action == Action.PullNE:
+                    agent.pos = Position(agent.pos.x - 1, agent.pos.y)
+                    box.pos = Position(box.pos.x, box.pos.y)
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x,box.pos.y,time))
+                elif action == Action.PullNW:
+                    agent.pos = Position(agent.pos.x - 1, agent.pos.y)
+                    box.pos = Position(box.pos.x, box.pos.y - 1)
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x,box.pos.y,time))
+                elif action == Action.PullSE:
+                    agent.pos = Position(agent.pos.x + 1, agent.pos.y)
+                    box.pos = Position(box.pos.x, box.pos.y + 1)
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x,box.pos.y,time))
+                elif action == Action.PullSW:
+                    agent.pos = Position(agent.pos.x + 1, agent.pos.y)
+                    box.pos = Position(box.pos.x, box.pos.y - 1)
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x,box.pos.y,time))
+                elif action == Action.PullEN:
+                    agent.pos = Position(agent.pos.x, agent.pos.y + 1)
+                    box.pos = Position(box.pos.x - 1, box.pos.y)
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x,box.pos.y,time))
+                elif action == Action.PullES:
+                    agent.pos = Position(agent.pos.x, agent.pos.y + 1)
+                    box.pos = Position(box.pos.x + 1, box.pos.y)
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x,box.pos.y,time))
+                elif action == Action.PullWN: 
+                    agent.pos = Position(agent.pos.x, agent.pos.y - 1)
+                    box.pos = Position(box.pos.x - 1, box.pos.y)
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x,box.pos.y,time))
+                elif action == Action.PullWS:
+                    agent.pos = Position(agent.pos.x, agent.pos.y - 1)
+                    box.pos = Position(box.pos.x + 1, box.pos.y)
+                    agent_time_path[agent.id].append(STPosition(agent.pos.x,agent.pos.y,time))
+                    box_time_path[box.id].append(STPosition(box.pos.x,box.pos.y,time))
+                else:
+                    pass
+                time_path = {**agent_time_path, **box_time_path}
+        return time_path
+
+
+
 def astar(problem_state):
-    # return [
-    #         [MoveE],
-    #         [MoveE],
-    #         [MoveS],
-    #     ]
     initial_state = problem_state
-    goal_position = problem_state.goals
     frontier = FrontierBestFirst(HeuristicAStar(initial_state))
     frontier.add(initial_state)
 
@@ -33,7 +189,9 @@ def astar(problem_state):
         # print(f"---current_state--- {current_state.agents[0].pos}")
 
         if current_state.is_goal_state():
-            return current_state.extract_plan()  # Return the plan to reach the goal state
+            action_plan = current_state.extract_plan()
+            time_pos_plan = construct_path_with_time(initial_state.agents,initial_state.boxes, action_plan)
+            return time_pos_plan,action_plan  # Return the plan to reach the goal state
 
         explored.add(current_state)
 
@@ -141,8 +299,8 @@ class Heuristic(metaclass=ABCMeta):
 
         self.goal_agents = list(zip(self.goal_name_agent, self.goal_position_agent))
         self.goal_boxes = list(zip(self.goal_name_box, self.goal_position_box))
-        print(f"---goal_agents--- {self.goal_agents}")
-        print(f"---goal_boxes--- {self.goal_boxes}")
+        # print(f"---goal_agents--- {self.goal_agents}")
+        # print(f"---goal_boxes--- {self.goal_boxes}")
 
     def h(self, state: 'State') -> 'int':
         #return self.goal_count_heuristic(state)

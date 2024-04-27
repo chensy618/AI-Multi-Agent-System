@@ -1,7 +1,6 @@
 from astar import Frontier, FrontierBestFirst, PriorityQueue, Heuristic, HeuristicAStar, HeuristicWeightedAStar
 from state import SpaceTimeState
 
-
 def space_time_a_star(problem, constraints):
     print(f"---problem--{problem}")
     agent = problem.agents

@@ -8,6 +8,7 @@ class Node:
         self.solution = {}  # Maps agent IDs to their paths
         self.constraints = []  # List of constraints on the agents
         self.cost = 0  # Cost of the solution
+        self.plan = None  # Plan of the solution
 
     def copy(self):
         # Create a deep copy of the node

@@ -14,6 +14,7 @@ from domain.goal import Goal
 from domain.wall import Wall
 from astar import astar
 from htn import htn
+from search_plan import SpaceTimeState
 
 # import debugpy
 # debugpy.listen(("localhost", 1234)) # Open a debugging server at localhost:1234
@@ -121,6 +122,10 @@ class SearchClient:
         box_objs = [Box(position, letter, color) for position, letter, color in boxes]
         goal_objs = [Goal(position, letter) for position, letter in goals]
         State.walls = [Wall(position) for position in walls]
+        SpaceTimeState.walls = [Wall(position) for position in walls]
+        
+        SpaceTimeState(agent_objs, box_objs, goal_objs, 0, [])
+        
         # print(f"---agent_objs is--{agent_objs}")
         # print(f"---box_objs is--{box_objs}")
         # print(f"---goal_objs is--{goal_objs}")
@@ -154,22 +159,22 @@ class SearchClient:
         #     print(f"---plan--{plan}")
         #     plan_list.append(plan)
         plan_list = conflict_based_search(problem_list)
-        print(f"---plan_list--{plan_list}")
+        if plan_list is None:
+            print('Unable to solve level.', file=sys.stderr, flush=True)
+            sys.exit(0)
         # ########### original code ###########
         # plan = astar(initial_state, conflict)
         # print(f"---plan--{plan}")
-        plan = plan_list.values()
-        print(f"---plan--{plan}")
-        if plan is None:
-            print('Unable to solve level.', file=sys.stderr, flush=True)
-            sys.exit(0)
-        else:
-            print('Found solution of length {}.'.format(len(plan)), file=sys.stderr, flush=True)
-            for joint_action in plan:
-                print("|".join(a.name_  +"@" + a.name_  for a in joint_action), flush=True)
-                #We must read the server's response to not fill up the stdin buffer and block the server.
-                response = server_messages.readline()
-                # print(f"---response--{response}")
+        # if plan is None:
+        #     print('Unable to solve level.', file=sys.stderr, flush=True)
+        #     sys.exit(0)
+        # else:
+        #     print('Found solution of length {}.'.format(len(plan)), file=sys.stderr, flush=True)
+        #     for joint_action in plan:
+        #         print("|".join(a.name_  +"@" + a.name_  for a in joint_action), flush=True)
+        #         #We must read the server's response to not fill up the stdin buffer and block the server.
+        #         response = server_messages.readline()
+        #         # print(f"---response--{response}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Simple client based on state-space graph search.')
