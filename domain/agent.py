@@ -1,6 +1,7 @@
+from domain.color import Color
 from domain.position import Position
 class Agent:
-    def __init__(self, pos, id, color):
+    def __init__(self, pos: Position, id: int, color: Color):
         self.pos = pos
         self.color = color
         self.id = id

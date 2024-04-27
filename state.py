@@ -1,4 +1,6 @@
+from collections import deque
 import random
+import sys
 
 from domain.action import Action, ActionType
 from domain.agent import Agent
@@ -11,41 +13,49 @@ from domain.wall import Wall
 class State:
     _RNG = random.Random(1)
 
+    goal_map = {}
+    box_goal_map = {}
+    goals = []
+
     # agents: list of Agents
     # boxes: list of Boxes
-    def __init__(self, agents: list[Agent], boxes: list[Box], goals: list[Goal], walls):
+    def __init__(self, agents: list[Agent], boxes: list[Box], walls):
         self.agents = agents
         self.boxes = boxes
-        self.goals = goals
         self.walls = walls
         self.parent = None
         self.joint_action = None
         self.g = 0
         self._hash = None
 
-    def relaxed_state(self, task):
-        agentId, boxId = task 
+    def from_agent_perspective(self, agent_id):
+        relaxed_agent = self.get_agent_by_id(agent_id)
 
-        relaxed_agent = self.get_agent_by_id(agentId)
         agent_colored_boxes = self.get_agent_boxes(relaxed_agent.color)
-        relaxed_walls = [row[:] for row in self.walls]
         
-        for relaxed_box in agent_colored_boxes:
-            for box in self.boxes:
-                if relaxed_box != box: # different colored box so it should be wall for the agent, because it can't pass through it
-                    relaxed_walls[box.pos.y][box.pos.x] = True 
+        relaxed_walls = [row[:] for row in self.walls]
 
-        return State([relaxed_agent], agent_colored_boxes, self.goals, relaxed_walls)
+        # for relaxed_box in agent_colored_boxes:
+        #     for box in self.boxes:
+        #         if relaxed_box.color != box.color: # different colored box so it should be wall for the agent, because it can't pass through it
+        #             relaxed_walls[box.pos.y][box.pos.x] = True 
+
+        return State([relaxed_agent], agent_colored_boxes, relaxed_walls)
 
 
     def get_agent_by_id(self, agentId) -> Agent:
         for agent in self.agents:
-            if agentId == agent.id:
-                return agent
+            if agentId == agent.uid:
+                return Agent(agent.pos, agent.value, agent.uid, agent.color)
         
 
     def get_agent_boxes(self, color) -> list[Box]:
-        return [box for box in self.boxes if box.color == color]
+        return [Box(box.pos, box.value, box.uid, box.color) for box in self.boxes if box.color == color]
+
+    def get_box_by_uid(self, boxId) -> Box:
+        for box in self.boxes:
+            if boxId == box.uid:
+                return box
 
 
     def result(self, joint_action: list[Action]) -> 'State':
@@ -53,9 +63,8 @@ class State:
         Returns the state resulting from applying joint_action in this state.
         Precondition: Joint action must be applicable and non-conflicting in this state.
         '''
-        copy_agents = [Agent(agent.pos, agent.id, agent.color) for agent in self.agents]
-        copy_boxes = [Box(box.pos, box.id, box.color) for box in self.boxes]
-        copy_goals = [Goal(goal.pos, goal.id) for goal in self.goals]
+        copy_agents = [Agent(agent.pos, agent.value, agent.uid, agent.color) for agent in self.agents]
+        copy_boxes = [Box(box.pos, box.value, box.uid, box.color) for box in self.boxes]
         for agent_index, action in enumerate(joint_action):
             copied_agent = copy_agents[agent_index]
             if action.type == ActionType.Move:
@@ -76,30 +85,60 @@ class State:
                 copied_agent.pos += action.agent_rel_pos
 
         # Create a new state with the updated agents and boxes
-        copy_state = State(copy_agents, copy_boxes, copy_goals, self.walls)
+        copy_state = State(copy_agents, copy_boxes, self.walls)
         copy_state.parent = self
         copy_state.joint_action = joint_action[:]
         copy_state.g = self.g + 1
         return copy_state
+
+    @staticmethod
+    def initialize_goal_map(walls, goal_pos: Position):
+        queue = deque([(goal_pos.x, goal_pos.y, 0)])  # (position, dist)
+        visited = set()
+
+        # Define movements (up, down, right, left)
+        movements = [(0, -1), (0, 1), (1, 0), (-1, 0)]
+
+        max_col = len(walls[0])
+        max_row = len(walls)
+
+        distance_grid = [[None] * max_col for _ in range(max_row)]
+
+        while queue:
+            (x, y, dist) = queue.popleft()
+
+            if (x, y) in visited or walls[y][x]:
+                continue
+
+            visited.add((x, y))
+            distance_grid[y][x] = dist
+
+            for dx, dy in movements:
+                new_x, new_y = x + dx, y + dy
+
+                if 0 <= new_x < max_col and 0 <= new_y < max_row and (new_x, new_y) not in visited:
+                    queue.append((new_x, new_y, dist + 1))
+        
+        return distance_grid
 
     def is_goal_state(self) -> bool:
         '''
         Checks if this state is a goal state.
         '''
         # Create a mapping of box positions to their corresponding IDs
-        box_positions = {box.pos: box.id for box in self.boxes}
+        box_positions = {box.pos: box.uid for box in self.boxes}
         # Create a mapping of agent positions to their corresponding IDs
-        agent_positions = {agent.pos: agent.id for agent in self.agents}
+        agent_positions = {agent.pos: agent.uid for agent in self.agents}
 
         # Check if all goals are satisfied by boxes and agents
-        for goal in self.goals:
-            if 'A' <= goal.id <= 'Z':
+        for goal in State.goals:
+            if 'A' <= goal.value <= 'Z':
                 # Check if there's a box at the goal position with the matching ID
-                if box_positions.get(goal.pos) != goal.id:
+                if box_positions.get(goal.pos) != goal.value:
                     return False
-            elif '0' <= goal.id <= '9':
+            elif '0' <= goal.value <= '9':
                 # Check if there's an agent at the goal position with the matching ID
-                if agent_positions.get(goal.pos) != int(goal.id):
+                if agent_positions.get(goal.pos) != int(goal.value):
                     return False
             else:
                 # If the goal ID is not recognized as a box or agent, return False
@@ -238,7 +277,7 @@ class State:
         return None
 
     def goal_at(self, position: Position) -> Goal:
-        for goal in self.goals:
+        for goal in State.goals:
             #if goal.pos.x == position.x and goal.pos.y == position.y:
             if goal.pos.postion == position:
                 return goal
@@ -260,7 +299,7 @@ class State:
             _hash = _hash * prime + hash(tuple(agent.color for agent in self.agents))
             _hash = _hash * prime + hash(tuple(box.pos for box in self.boxes))
             _hash = _hash * prime + hash(tuple(box.color for box in self.boxes))
-            _hash = _hash * prime + hash(tuple((goal.pos, goal.id) for goal in self.goals))
+            hash = _hash * prime + hash(tuple((goal.pos, goal.value, goal.uid) for goal in State.goals))
             flattened_walls = tuple(tuple(row) for row in self.walls)
             _hash = _hash * prime + hash(flattened_walls)
             self._hash = _hash
@@ -275,7 +314,7 @@ class State:
             return False
         if any(b1.pos != b2.pos or b1.color != b2.color for b1, b2 in zip(self.boxes, other.boxes)):
             return False
-        if any(g1.pos != g2.pos or g1.id != g2.id for g1, g2 in zip(self.goals, other.goals)):
+        if any(g1.pos != g2.pos or g1.id != g2.id for g1, g2 in zip(State.goals, other.goals)):
             return False
         return True
 
@@ -297,7 +336,7 @@ class State:
                 elif wall is not None:
                     line.append('+')
                 elif agent is not None:
-                    line.append(str(agent.id))
+                    line.append(str(agent.uid))
                 else:
                     line.append(' ')
             lines.append(''.join(line))

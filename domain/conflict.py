@@ -1,3 +1,7 @@
+from domain.agent import Agent
+from domain.st_position import STPosition
+
+
 class Conflict:
     # ai and aj are the two agents who have conflict at (pos, t)
     def __init__(self, ai, aj, st_position):
