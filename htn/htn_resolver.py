@@ -1,22 +1,21 @@
 from collections import deque
+import sys
 
-from astar import astar
-from domain.agent import Agent
-from domain.box import Box
-from domain.goal import Goal
 from htn.htn_helper import HTNHelper
 from state import State
 
 
 class HTNResolver:
-    # Stores list of (agentId, boxId) tuples for each agent
-    agent_tasks = {}
-    
-    # Stores current assigned task for an agent
-    assigned_tasks = {}
-    
-    @staticmethod
-    def initialize_problems(initial_state: State):
+    def __init__(self):
+        # Stores list of (agentId, boxId) tuples for each agent
+        self.agent_tasks = {}
+        
+        # Stores current assigned task for an agent
+        self.round = {}
+        
+        self.round_counter = 0
+
+    def initialize_problems(self, initial_state: State):
         agents = initial_state.agents
         boxes = initial_state.boxes
 
@@ -37,28 +36,36 @@ class HTNResolver:
                 agent_index = i % len(color_agents)
                 agent = color_agents[agent_index]
 
-
-                
                 # TODO Check if generating plan for agent -> box, is possible (not blocked)
 
                 # Create agent_tasks for each agent
-                if agent.id not in HTNResolver.agent_tasks:
-                    HTNResolver.agent_tasks[agent.id] = deque()
+                if agent.uid not in self.agent_tasks:
+                    self.agent_tasks[agent.uid] = deque()
 
-                HTNResolver.agent_tasks[agent.id].append((agent.id, box.id))
+                self.agent_tasks[agent.uid].append(box)
 
-    @staticmethod
-    def set_assigned_taskss(relaxed_state: State):
-        # TODO Get closest box to agent for assigning
-        for agent_id in list(HTNResolver.agent_tasks.keys()):
-            if(HTNResolver.assigned_tasks.get(agent_id) is None and HTNResolver.agent_tasks[agent_id]):
-                task = HTNResolver.agent_tasks[agent_id].popleft()
-                # TODO Modify current state for the single agent task
-                HTNResolver.assigned_tasks[agent_id] = astar(relaxed_state, []) 
+    def create_round(self):
+        self.round_counter += 1
 
-    @staticmethod        
-    def has_any_task_left():
-        for _, tasks in HTNResolver.agent_tasks:
+        for agent_id in list(self.agent_tasks.keys()):
+            if(self.round.get(agent_id) is not None):
+                raise RuntimeError(f"Agent {agent_id} has not completed the previous task")
+            box = self.agent_tasks[agent_id].popleft()
+            goal_uid = HTNHelper.get_closest_goal_uid_to_box(box)
+
+            self.round[agent_id] = (box.uid, goal_uid) 
+
+    def create_plans(self, current_state: State):
+        plans = {}
+        for agent_id in list(self.round.keys()):
+            (box_uid, goal_uid) = self.round.pop(agent_id)  # Remove the agent's task from self.round
+            relaxed_state = current_state.from_agent_perspective(agent_id)
+            # plan = astar(relaxed_state)
+            # plans[agent_id] = plan
+        return plans
+        
+    def has_any_task_left(self):
+        for _, tasks in self.agent_tasks.items():
             if len(tasks) > 0: return True
 
         return False

@@ -200,7 +200,7 @@ class SearchClient:
             plans = resolver.create_plans(current_state)
             
             # Resolve plans conflicts with cbs
-            # - solution = run_CBS(current_state, agents),
+            # - solution = run_CBS(current_state, plans),
             # - joint_actions.append(solution)
             # - current_state = state_after_executing_the_solution
 

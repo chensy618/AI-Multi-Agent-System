@@ -8,6 +8,7 @@ from domain.goal import Goal
 from domain.wall import Wall
 from domain.color import Color
 from domain.action import Action
+from helper.distance_calc import DistanceCalc
 from state import State
 from abc import ABCMeta, abstractmethod
 import heapq
@@ -91,47 +92,38 @@ class SpaceTimeAstar:
         return time_path
     
 class Heuristic(metaclass=ABCMeta):
-    def __init__(self, initial_state: 'State', goal_map):
+    def __init__(self, initial_state: 'State'):
         self.initial_state = initial_state
-        self.goal_map = goal_map
 
-    def h(self, state: 'State', problem) -> 'int':
-        return self.calculate_heuristic_value(state, problem)
+    def h(self, state: 'State', round) -> 'int':
+        return self.calculate_heuristic_value(state, round)
 
 
-    def calculate_heuristic_value(self, state, problem) -> 'int':
-        h = 0
+    def calculate_heuristic_value(self, state, round) -> 'int':
+        distance = 0
         
         for agent in state.agents:
-            if(problem[agent.id] == None):
+            # Check if the agent has a task
+            if(round[agent.uid] == None):
                 continue
 
-            goal_box_uid = problem[agent.id]
+            box_uid, goal_uid = round[agent.uid]
 
-            agent_goal_box = state.boxes[goal_box_uid]
+            agent_box = state.boxes[box_uid]
             
-            if(self.box_map[agent_goal_box.id] == None):
+            if(State.box_goal_map[agent_box.uid] == None):
                 continue
 
-            # TODO: only works if the agent has one box otherwise problematic with the agent.id
-            agent_to_box_dist
-            if(self.box_map[agent_goal_box.id][agent_goal_box.pos.y][agent_goal_box.pos.x] != 0):
-                agent_to_box_dist = self.manhatten_distance(agent.pos, agent_goal_box.pos)
-            else:
-                agent_to_box_dist = self.box_map[agent_goal_box.id][agent.pos.y][agent.pos.x]
-            h += agent_to_box_dist
+            agent_to_box_dist = DistanceCalc.pos_to_box_distance(agent_box, agent.pos)
+            distance += agent_to_box_dist
         
         for box in state.boxes:
-            if(self.goal_map[box.id] == None):
+            if(State.goal_map[goal_uid] == None):
                 continue
-            # TODO: only works if the agent has one goal otherwise problematic with the agent.id
-            box_to_goal = self.goal_map[box.id][box.pos.y][box.pos.x]
-            h += box_to_goal
+            box_to_goal_dist = State.goal_map[goal_uid][box.pos.y][box.pos.x]
+            distance += box_to_goal_dist
 
-        return h
-
-    def manhatten_distance(self, pos1, pos2) -> 'int':
-        return abs(pos1.x - pos2.x) + abs(pos1.y - pos2.y)
+        return distance
 
     @abstractmethod
     def f(self, state: 'State') -> 'int': pass
@@ -143,9 +135,9 @@ class HeuristicAStar(Heuristic):
     def __init__(self, initial_state: 'State'):
         super().__init__(initial_state)
 
-    def f(self, state: 'State') -> 'int':
+    def f(self, state: 'State', problem) -> 'int':
         g = state.g
-        h = self.h(state)
+        h = self.h(state, problem)
         return g + h
 
     def __repr__(self):
@@ -202,8 +194,8 @@ class AStarFrontier(Frontier):
         self.heuristic = heuristic
         self.priority_queue = PriorityQueue()
 
-    def add(self, state: 'State'):
-        self.priority_queue.push(state, state.g + self.heuristic.f(state))
+    def add(self, state: 'State', round):
+        self.priority_queue.push(state, state.g + self.heuristic.f(state, round))
 
     def pop(self) -> 'State':
         return self.priority_queue.pop()
