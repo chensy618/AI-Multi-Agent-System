@@ -43,8 +43,8 @@ class StateTranslator:
         return " & ".join(statements)
     
     def construct_goal_statements(self):
-        copy_goals = [Goal(goal.pos, goal.id) for goal in self.goals]
-        goal_statements = [f"GoalAt({goal.id},{self.translate_position(goal.pos)})" for goal in copy_goals]
+        copy_goals = [Goal(goal.pos, goal.value, goal.uid) for goal in self.goals]
+        goal_statements = [f"GoalAt({goal.value}, {self.translate_position(goal.pos)})" for goal in copy_goals]
         return " & ".join(goal_statements)
     
     def construct_wall_statements(self):
