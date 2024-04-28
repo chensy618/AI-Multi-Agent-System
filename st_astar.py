@@ -16,7 +16,7 @@ def space_time_a_star(problem, constraints):
     # ---goal--[Goal(pos=Position(x=2, y=4), id=A)]
 
     initial_time = 0
-    initial_state = SpaceTimeState(agent, box, goal, initial_time, constraints)
+    initial_state = SpaceTimeState(agent, box, goal, initial_time, constraints, 0)
     print(f"---initial_state--{initial_state}")
     print(f"---initial_state.constraints--{initial_state.constraints}")
 
@@ -32,8 +32,9 @@ def space_time_a_star(problem, constraints):
 
         current_state = frontier.pop()
         print(f"---current_state--- {current_state.agents[0].pos}")
-
         if current_state.is_goal_state():
+            print(f"---current_state.is_goal_state()--- {current_state.is_goal_state()}")
+            print(f"---current_state.joint_action()--- {current_state.joint_action}")
             return current_state.extract_plan()  # Return the plan to reach the goal state
 
         explored.add(current_state)

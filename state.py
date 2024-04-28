@@ -54,6 +54,8 @@ class State:
         copy_state.parent = self
         copy_state.joint_action = joint_action[:]
         copy_state.g = self.g + 1
+        print(f"---copy state g---{copy_state.g}")
+        print(f"---copy state joint_action---{copy_state.joint_action}")
         return copy_state
 
     def is_goal_state(self) -> bool:
@@ -83,7 +85,7 @@ class State:
 
     def get_expanded_states(self) -> 'list[State]':
         num_agents = len(self.agents)
-        #print(f"---num_agents---{num_agents}")
+        # print(f"---num_agents---{num_agents}")
 
         # Determine list of applicable action for each individual agent.
         applicable_actions = [[action for action in Action if self.is_applicable(agentIdx, action)] for agentIdx in range(num_agents)]
@@ -114,6 +116,8 @@ class State:
             if done:
                 break
         State._RNG.shuffle(expanded_states)
+        print(f'---in the end the joint_action---{joint_action}')
+        print(f'---in the end the expanded_states---{expanded_states}')
         return expanded_states
 
     def is_applicable(self, agent: int, action: Action) -> bool:
@@ -225,9 +229,13 @@ class State:
         plan = [None for _ in range(self.g)]
         state = self
         while state.joint_action is not None:
+            print(f"---state.joint_action---{state.joint_action}")
             plan[state.g - 1] = state.joint_action
             state = state.parent
         return plan
+
+    def test_func():
+        print(f"---test_func state---")
 
     def __hash__(self):
         if self._hash is None:
@@ -259,8 +267,16 @@ class State:
         return True
 
     def __repr__(self):
-        max_row = max(max(agent.pos.x for agent in self.agents), max(box.pos.x for box in self.boxes), max(wall.pos.position.x for wall in State.walls))
-        max_col = max(max(agent.pos.y for agent in self.agents), max(box.pos.y for box in self.boxes), max(wall.pos.position.y for wall in State.walls))
+        max_row = max(
+            max((agent.pos.x for agent in self.agents), default=-1),
+            max((box.pos.x for box in self.boxes), default=-1),
+            max((wall.pos.position.x for wall in State.walls), default=-1)
+        )
+        max_col = max(
+            max((agent.pos.y for agent in self.agents), default=-1),
+            max((box.pos.y for box in self.boxes), default=-1),
+            max((wall.pos.position.y for wall in State.walls), default=-1)
+        )
         lines = []
         for row in range(max_row + 1):
             line = []
@@ -282,23 +298,30 @@ class State:
 
 
 class SpaceTimeState(State):
-    def __init__(self, agents, boxes, goals, time, constraints):
+    def __init__(self, agents, boxes, goals, time, constraints, g):
         super().__init__(agents, boxes, goals)
         self.time = time  # Add a time component to the state
         self.constraints = constraints
+        self.parent = None
+        self.joint_action = None
+        self.g = g
+        self._hash = None
 
     # Modify is_applicable function to include constraints judgement
     def is_applicable(self, agent: int, action: Action) -> bool:
         agent = self.agents[agent]
-        #print(f"---agent---{agent}")
+        # print(f"---agent---{agent}")
         agent_destination = agent.pos + action.agent_rel_pos
-        #print(f"---agent_destination---{agent_destination}")
+        # print(f"---agent_destination---{agent_destination}")
         if action.type is ActionType.NoOp:
             return True
 
         elif action.type is ActionType.Move:
             # Check if the agent's destination is free and not constrained
-            return self.is_free(agent_destination) and not self.is_constrained(agent, agent_destination, self.time + 1)
+            # print(f"---self.is_free(agent_destination)---{self.is_free(agent_destination)}")
+            # print(f"---self.is_constrained(agent, agent_destination, self.time + 1)---{self.is_constrained(agent.id, agent_destination, self.time + 1)}")
+            print(f"---returned value---{self.is_free(agent_destination) and not self.is_constrained(agent.id, agent_destination, self.time + 1)}")
+            return self.is_free(agent_destination) and not self.is_constrained(agent.id, agent_destination, self.time + 1)
 
         elif action.type is ActionType.Push:
             # Check if there is a box at the agent's destination to push
@@ -309,8 +332,8 @@ class SpaceTimeState(State):
                 # Check if both the agent's and the box's destinations are free and not constrained
                 return (self.is_free(agent_destination) and
                         self.is_free(box_destination) and
-                        not self.is_constrained(agent, agent_destination, self.time + 1) and
-                        not self.is_constrained(agent, box_destination, self.time + 1))
+                        not self.is_constrained(agent.id, agent_destination, self.time + 1) and
+                        not self.is_constrained(agent.id, box_destination, self.time + 1))
             else:
                 return False
 
@@ -321,68 +344,128 @@ class SpaceTimeState(State):
             box_to_pull = next((box for box in self.boxes if box.pos == box_position), None)
             if box_to_pull and box_to_pull.color == agent.color:
                 # Check if the agent's destination is free and not constrained
-                return self.is_free(agent_destination) and not self.is_constrained(agent, agent_destination, self.time + 1)
+                return self.is_free(agent_destination) and not self.is_constrained(agent.idI, agent_destination, self.time + 1)
             else:
                 return False
 
         return False
 
 
+    # def result(self, joint_action: list[Action]) -> 'SpaceTimeState':
+    #     # Add the time dimension to the new state
+    #     new_state = super().result(joint_action)
+    #     print(f"---joint_action---{new_state.joint_action}")
+    #     print(f"---new_state agent---{new_state.agents}")
+    #     print(f"---new_state box---{new_state.boxes}")
+    #     print(f"---new_state goal---{new_state.goals}")
+    #     print(f"---new_state g---{new_state.g}")
+    #     return SpaceTimeState(new_state.agents, new_state.boxes, new_state.goals, self.time + 1, self.constraints, new_state.g)
+
+
     def result(self, joint_action: list[Action]) -> 'SpaceTimeState':
-        # Add the time dimension to the new state
-        new_state = super().result(joint_action)
-        return SpaceTimeState(new_state.agents, new_state.boxes, new_state.goals, self.time + 1)
+        '''
+        Returns the state resulting from applying joint_action in this state.
+        Precondition: Joint action must be applicable and non-conflicting in this state.
+        '''
+        copy_agents = [Agent(agent.pos, agent.id, agent.color) for agent in self.agents]
+        copy_boxes = [Box(box.pos, box.id, box.color) for box in self.boxes]
+        copy_goals = [Goal(goal.pos, goal.id) for goal in self.goals]
+        for agent_index, action in enumerate(joint_action):
+            copied_agent = copy_agents[agent_index]
+            if action.type == ActionType.Move:
+                # Update the agent's position
+                copied_agent.pos += action.agent_rel_pos
+            elif action.type in [ActionType.Push, ActionType.Pull]:
+                box_pos = Position(-1, -1)
+                if action.type == ActionType.Push:
+                    box_pos = copied_agent.pos + action.agent_rel_pos
+                else:  # ActionType.Pull
+                    box_pos = copied_agent.pos - action.box_rel_pos
 
+                # Find the box object with the matching position
+                copied_box = next(box for box in copy_boxes if box.pos == box_pos)
 
-    def get_expanded_states(self) -> 'list[SpaceTimeState]':
-        num_agents = len(self.agents)
-        #print(f"---num_agents---{num_agents}")
+                # Update the box's position
+                copied_box.pos += action.box_rel_pos
+                copied_agent.pos += action.agent_rel_pos
 
-        # Determine list of applicable action for each individual agent.
-        applicable_actions = [[action for action in Action if self.is_applicable(agentIdx, action)] for agentIdx in range(num_agents)]
-        # print(f"---applicable_actions---{applicable_actions}")
-        # Iterate over joint actions, check conflict and generate child states.
-        joint_action = [None for _ in range(num_agents)]
-        actions_permutation = [0 for _ in range(num_agents)]
-        expanded_states = []
-        while True:
-            for agentIdx in range(num_agents):
-                joint_action[agentIdx] = applicable_actions[agentIdx][actions_permutation[agentIdx]]
-                # print(f'---agentIdx---{agentIdx}')
-                # print(f"---joint_action---{joint_action}")
-            # if not self.is_conflicting(joint_action):
+        # Create a new state with the updated agents and boxes
+        copy_state = SpaceTimeState(copy_agents, copy_boxes, copy_goals, self.time + 1, self.constraints, self.g + 1)
+        copy_state.parent = self
+        copy_state.joint_action = joint_action[:]
+        print(f"---copy state g---{copy_state.g}")
+        print(f"---copy state joint_action---{copy_state.joint_action}")
+        return copy_state
 
-            # Generate the resulting state from the joint action.
-            child_state = self.result(joint_action)
-            # Increment the time for the child state.
-            child_state.time = self.time + 1
-            expanded_states.append(child_state)
+    # def get_expanded_states(self) -> 'list[SpaceTimeState]':
+    #     num_agents = len(self.agents)
+    #     #print(f"---num_agents---{num_agents}")
 
-            # Advance permutation.
-            done = False
-            for agent in range(num_agents):
-                if actions_permutation[agent] < len(applicable_actions[agent]) - 1:
-                    actions_permutation[agent] += 1
-                    break
-                else:
-                    actions_permutation[agent] = 0
-                    if agent == num_agents - 1:
-                        done = True
-            # Last permutation?
-            if done:
-                break
-        State._RNG.shuffle(expanded_states)
-        return expanded_states
+    #     # Determine list of applicable action for each individual agent.
+    #     applicable_actions = [[action for action in Action if self.is_applicable(agentIdx, action)] for agentIdx in range(num_agents)]
+    #     print(f"---applicable_actions---{applicable_actions}")
+    #     # Iterate over joint actions, check conflict and generate child states.
+    #     joint_action = [None for _ in range(num_agents)]
+    #     actions_permutation = [0 for _ in range(num_agents)]
+    #     expanded_states = []
+    #     while True:
+    #         for agentIdx in range(num_agents):
+    #             joint_action[agentIdx] = applicable_actions[agentIdx][actions_permutation[agentIdx]]
+    #             # print(f'---agentIdx---{agentIdx}')
+    #             # print(f"---joint_action---{joint_action}")
+    #         # if not self.is_conflicting(joint_action):
+
+    #         # Generate the resulting state from the joint action.
+    #         print(f'---joint_action in expand states is---{joint_action}')
+    #         child_state = self.result(joint_action)
+    #         # Increment the time for the child state.
+    #         child_state.time = self.time + 1
+    #         expanded_states.append(child_state)
+
+    #         # Advance permutation.
+    #         done = False
+    #         for agent in range(num_agents):
+    #             if actions_permutation[agent] < len(applicable_actions[agent]) - 1:
+    #                 actions_permutation[agent] += 1
+    #                 break
+    #             else:
+    #                 actions_permutation[agent] = 0
+    #                 if agent == num_agents - 1:
+    #                     done = True
+    #         # Last permutation?
+    #         if done:
+    #             break
+    #     State._RNG.shuffle(expanded_states)
+    #     print(f'---in the end the expanded_states for spacetime---{expanded_states}')
+    #     return expanded_states
+
+    def extract_plan(self) -> list[Action]:
+        plan = [None for _ in range(self.g)]
+        state = self
+        while state.joint_action is not None:
+            # print(f"---state.joint_action---{state.joint_action}")
+            plan[state.g - 1] = state.joint_action
+            state = state.parent
+        print(f"---plan---{plan}")
+        return plan
 
 
     def is_constrained(self, agent_index, position, time):
         # Check if there is a constraint for the given agent at the given position and time
-        return any(constraint.agent_id == agent_index and
-                   constraint.position == position and
-                   constraint.time_step == time
+        # print(f"---agent_index---{agent_index}")
+        # print(f"---position---{position}")
+        # print(f"---time---{time}")
+        # print(f"---self.constraints---{self.constraints}")
+        # print(f"self.constraints.agentId is {self.constraints[0].agentId}")
+        # print(f"self.constraints.position is {self.constraints[0].pos}")
+        # print(f"self.constraints.time_step is {self.constraints[0].t}")
+        return any(constraint.agentId == agent_index and
+                   constraint.pos == position and
+                   constraint.t == time
                    for constraint in self.constraints)
 
-
+    def test_func():
+        print(f"---test_func space time---")
 
     def __eq__(self, other):
         return (self.agents == other.agents and

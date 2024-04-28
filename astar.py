@@ -33,6 +33,7 @@ def astar(problem_state):
         # print(f"---current_state--- {current_state.agents[0].pos}")
 
         if current_state.is_goal_state():
+            print(f"---current_state.joint_action()--- {current_state.joint_action}")
             return current_state.extract_plan()  # Return the plan to reach the goal state
 
         explored.add(current_state)
@@ -163,7 +164,9 @@ class Heuristic(metaclass=ABCMeta):
                 goal_pos = goal[1] # get the position
                 # print(f'#####agent_id is {agent_id}#######')
                 # print(f'#####goal_pos is {goal_pos}#######')
-                agent_pos = state.agents[agent_id].pos
+                # print(f'#####state.agents is {state.agents}#######')
+                # Find the agent in the list with the matching id
+                agent_pos = next((agent.pos for agent in state.agents if agent.id == agent_id), None)
                 distance = abs(agent_pos.x - goal_pos.x) + abs(agent_pos.y - goal_pos.y)
                 agent_to_goal_distance += distance
                 # print(f'------------agent_to_goal_distance is {agent_to_goal_distance}-------------------')

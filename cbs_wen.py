@@ -44,7 +44,8 @@ def conflict_based_search(problem_list):
         # conflict = find_first_conflict(node.solution, initial_positions, initial_box_positions)
         if conflict is None:
             print('I am here')
-            return node.solution
+            executable_plan = merge_plans(node.solution)
+            return executable_plan
         else:
             print(f"---conflict--{conflict}")
         for problem in problem_list:
@@ -53,11 +54,11 @@ def conflict_based_search(problem_list):
                 if agent.id in [conflict.ai, conflict.aj]:
                     m = node.copy()
                     print(f"---m--{m}")
-                    print(STPosition(conflict.pos.x, conflict.pos.y, conflict.t))
-                    m.constraints.append(Constraint(agent.id, STPosition(conflict.pos.x, conflict.pos.y, conflict.t), conflict.t))
+                    print(Position(conflict.pos.x, conflict.pos.y))
+                    m.constraints.append(Constraint(agent.id, Position(conflict.pos.x, conflict.pos.y), conflict.t))
                     print(f"---m.constraints--{m.constraints}")
                     m.solution[agent.id] = space_time_a_star(problem, m.constraints)
-                    print(f"---m.solution--{m.solution}")
+                    print(f"---m.solution--{m.solution[agent.id]}")
                     m.node_cost = cost(m.solution)
                     print(f"---m.node_cost--{m.node_cost}")
 
