@@ -4,11 +4,10 @@ import sys
 from astar import astar
 from cbs.node import Node
 
-from domain.action import ActionType
+from domain.action import Action
 from domain.conflict import Conflict
 from domain.constraint import Constraint
 from domain.position import Position
-from domain.st_position import STPosition
 from queue import PriorityQueue
 from st_astar import space_time_a_star
 
@@ -84,7 +83,6 @@ def cost(solution):
     return total_cost
 
 
-#################### Below code works only for agent-agent conflict####################
 #################### Currently the level is an agent-box conflict. so need to adjust the code####################
 def find_first_conflict(solution, initial_positions):
     """
@@ -184,4 +182,33 @@ def find_first_conflict(solution, initial_positions):
 #     return None
 
 
+def merge_plans(plans):
+    """
+    Merge the individual plans of the agents into a single executable plan.
 
+    :param solution: A dictionary mapping agent IDs to their respective paths (lists of actions).
+    :return: A list of joint actions that represents the executable plan.
+    """
+    # Find the maximum length of the individual agent plans
+    max_length = max(len(plan) for plan in plans.values())
+
+    # Initialize the merged plan
+    merged_plan = []
+
+    # Iterate over each time step
+    for step in range(max_length):
+        joint_action = []
+
+        # For each agent, get the action at the current step or use NoOp if the plan is shorter
+        for agent_id, plan in plans.items():
+            if step < len(plan):
+                action = plan[step][0]  # Each action is a list, take the first element
+            else:
+                # Assuming NoOp is represented as None or a specific NoOp action
+                action = Action.NoOp
+            joint_action.append(action)
+
+        # Append the joint action to the merged plan
+        merged_plan.append(joint_action)
+    print(f"---merged_plan--{merged_plan}")
+    return merged_plan

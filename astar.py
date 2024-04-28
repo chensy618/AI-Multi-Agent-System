@@ -33,7 +33,6 @@ def astar(problem_state):
         # print(f"---current_state--- {current_state.agents[0].pos}")
 
         if current_state.is_goal_state():
-            print(f"---current_state.joint_action()--- {current_state.joint_action}")
             return current_state.extract_plan()  # Return the plan to reach the goal state
 
         explored.add(current_state)

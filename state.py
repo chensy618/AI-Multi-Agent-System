@@ -229,13 +229,11 @@ class State:
         plan = [None for _ in range(self.g)]
         state = self
         while state.joint_action is not None:
-            print(f"---state.joint_action---{state.joint_action}")
+            # print(f"---state.joint_action---{state.joint_action}")
             plan[state.g - 1] = state.joint_action
             state = state.parent
         return plan
 
-    def test_func():
-        print(f"---test_func state---")
 
     def __hash__(self):
         if self._hash is None:
@@ -318,9 +316,8 @@ class SpaceTimeState(State):
 
         elif action.type is ActionType.Move:
             # Check if the agent's destination is free and not constrained
-            # print(f"---self.is_free(agent_destination)---{self.is_free(agent_destination)}")
-            # print(f"---self.is_constrained(agent, agent_destination, self.time + 1)---{self.is_constrained(agent.id, agent_destination, self.time + 1)}")
-            print(f"---returned value---{self.is_free(agent_destination) and not self.is_constrained(agent.id, agent_destination, self.time + 1)}")
+            print(f"---self.is_free(agent_destination)---{self.is_free(agent_destination)}")
+            print(f"---self.is_constrained(agent, agent_destination, self.time + 1)---{self.is_constrained(agent.id, agent_destination, self.time + 1)}")
             return self.is_free(agent_destination) and not self.is_constrained(agent.id, agent_destination, self.time + 1)
 
         elif action.type is ActionType.Push:
@@ -397,58 +394,6 @@ class SpaceTimeState(State):
         print(f"---copy state joint_action---{copy_state.joint_action}")
         return copy_state
 
-    # def get_expanded_states(self) -> 'list[SpaceTimeState]':
-    #     num_agents = len(self.agents)
-    #     #print(f"---num_agents---{num_agents}")
-
-    #     # Determine list of applicable action for each individual agent.
-    #     applicable_actions = [[action for action in Action if self.is_applicable(agentIdx, action)] for agentIdx in range(num_agents)]
-    #     print(f"---applicable_actions---{applicable_actions}")
-    #     # Iterate over joint actions, check conflict and generate child states.
-    #     joint_action = [None for _ in range(num_agents)]
-    #     actions_permutation = [0 for _ in range(num_agents)]
-    #     expanded_states = []
-    #     while True:
-    #         for agentIdx in range(num_agents):
-    #             joint_action[agentIdx] = applicable_actions[agentIdx][actions_permutation[agentIdx]]
-    #             # print(f'---agentIdx---{agentIdx}')
-    #             # print(f"---joint_action---{joint_action}")
-    #         # if not self.is_conflicting(joint_action):
-
-    #         # Generate the resulting state from the joint action.
-    #         print(f'---joint_action in expand states is---{joint_action}')
-    #         child_state = self.result(joint_action)
-    #         # Increment the time for the child state.
-    #         child_state.time = self.time + 1
-    #         expanded_states.append(child_state)
-
-    #         # Advance permutation.
-    #         done = False
-    #         for agent in range(num_agents):
-    #             if actions_permutation[agent] < len(applicable_actions[agent]) - 1:
-    #                 actions_permutation[agent] += 1
-    #                 break
-    #             else:
-    #                 actions_permutation[agent] = 0
-    #                 if agent == num_agents - 1:
-    #                     done = True
-    #         # Last permutation?
-    #         if done:
-    #             break
-    #     State._RNG.shuffle(expanded_states)
-    #     print(f'---in the end the expanded_states for spacetime---{expanded_states}')
-    #     return expanded_states
-
-    def extract_plan(self) -> list[Action]:
-        plan = [None for _ in range(self.g)]
-        state = self
-        while state.joint_action is not None:
-            # print(f"---state.joint_action---{state.joint_action}")
-            plan[state.g - 1] = state.joint_action
-            state = state.parent
-        print(f"---plan---{plan}")
-        return plan
-
 
     def is_constrained(self, agent_index, position, time):
         # Check if there is a constraint for the given agent at the given position and time
@@ -464,8 +409,6 @@ class SpaceTimeState(State):
                    constraint.t == time
                    for constraint in self.constraints)
 
-    def test_func():
-        print(f"---test_func space time---")
 
     def __eq__(self, other):
         return (self.agents == other.agents and

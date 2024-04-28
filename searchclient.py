@@ -15,10 +15,10 @@ from domain.wall import Wall
 from astar import astar
 from htn import htn
 
-import debugpy
-debugpy.listen(("localhost", 1234)) # Open a debugging server at localhost:1234
-debugpy.wait_for_client() # Wait for the debugger to connect
-debugpy.breakpoint() # Ensure the program starts paused
+# import debugpy
+# debugpy.listen(("localhost", 1234)) # Open a debugging server at localhost:1234
+# debugpy.wait_for_client() # Wait for the debugger to connect
+# debugpy.breakpoint() # Ensure the program starts paused
 
 # data structure for agent, box, goal
 AgentConfig = namedtuple('AgentConfig', ['position', 'id', 'color'])
@@ -152,7 +152,7 @@ class SearchClient:
         #     plan = conflict_based_search(problem)
         #     print(f"---plan--{plan}")
         #     plan_list.append(plan)
-        plan_list = conflict_based_search(problem_list)
+        plan = conflict_based_search(problem_list)
         print(f"---plan_list--{plan_list}")
         # ########### original code ###########
         # plan = astar(initial_state, conflict)
