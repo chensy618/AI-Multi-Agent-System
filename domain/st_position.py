@@ -2,7 +2,7 @@ from domain.position import Position
 
 # Position with time included as well, might be used for space-time-a*
 class STPosition(Position):
-    def __init__(self, x, y, t):
+    def __init__(self, x: int, y: int, t: int):
         super().__init__(x, y)
         self.t = t
 
