@@ -327,10 +327,11 @@ class SpaceTimeState(State):
                 # Calculate the box's destination position
                 box_destination = agent_destination + action.box_rel_pos
                 # Check if both the agent's and the box's destinations are free and not constrained
-                return (self.is_free(agent_destination) and
-                        self.is_free(box_destination) and
-                        not self.is_constrained(agent.id, agent_destination, self.time + 1) and
-                        not self.is_constrained(agent.id, box_destination, self.time + 1))
+                return (self.is_free(box_destination) and not self.is_constrained(box_to_push.id, box_destination, self.time + 1))
+                # return (self.is_free(agent_destination) and
+                #         self.is_free(box_destination) and
+                #         not self.is_constrained(box_to_push.id, agent_destination, self.time + 1) and
+                #         not self.is_constrained(box_to_push.id, box_destination, self.time + 1))
             else:
                 return False
 
@@ -341,7 +342,7 @@ class SpaceTimeState(State):
             box_to_pull = next((box for box in self.boxes if box.pos == box_position), None)
             if box_to_pull and box_to_pull.color == agent.color:
                 # Check if the agent's destination is free and not constrained
-                return self.is_free(agent_destination) and not self.is_constrained(agent.id, agent_destination, self.time + 1)
+                return self.is_free(agent_destination) and not self.is_constrained(box_to_pull.id, agent_destination, self.time + 1)
             else:
                 return False
 
