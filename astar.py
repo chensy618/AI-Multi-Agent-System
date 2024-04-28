@@ -16,14 +16,13 @@ globals().update(Action.__members__)
 start_time = time.perf_counter()
 
 def astar(problem_state, conflicts):
+    print(f"===============A_STAR================")
     # return [
     #         [MoveE],
     #         [MoveE],
     #         [MoveS],
     #     ]
     initial_state = problem_state
-    goal_position = problem_state.goals[0]
-    print(f"---goal_position--- {goal_position.pos}")
     frontier = FrontierBestFirst(HeuristicAStar(initial_state))
     frontier.add(initial_state)
     
@@ -35,7 +34,7 @@ def astar(problem_state, conflicts):
             return None  # No solution found
 
         current_state = frontier.pop()
-        # print(f"---current_state--- {current_state.agents[0].pos}")
+        print(f"---current_state--- {[agent.pos for agent in current_state.agents]}")
 
         if current_state.is_goal_state():
             return current_state.extract_plan()  # Return the plan to reach the goal state

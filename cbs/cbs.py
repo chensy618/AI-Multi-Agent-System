@@ -9,7 +9,7 @@ def conflict_based_search(problem, agents, cost):
     root = Node()
     root.constraints = []
     for agent in agents:
-        root.solution[agent] = space_time_a_star(problem[agent], [])
+        root.solution[agent.id] = space_time_a_star(problem[agent.id], [])
     root.cost = cost(root.solution)
     frontier = PriorityQueue(root, lambda n: n.cost)
     while not frontier.empty:
@@ -20,7 +20,7 @@ def conflict_based_search(problem, agents, cost):
         for agent in [conflict.ai, conflict.aj]:
             m = node.copy()
             m.constraints.append(Constraint(agent, STPosition(conflict.pos, conflict.t)))
-            m.solution[agent] = space_time_a_star(problem[agent], m.constraints)
+            m.solution[agent.id] = space_time_a_star(problem[agent.id], m.constraints)
             m.cost = cost(m.solution)
 
             if(m.cost < sys.maxint):
@@ -46,11 +46,12 @@ def cost_ms(plans):
 def is_valid(solution):
     return find_first_conflict(solution) is None
 
-def find_first_conflict(solution):
+def find_first_conflict(solutions):
     visited = set()
-    for path in solution:
-        for space_time_position in path:
-            if(space_time_position in visited):
-                return space_time_position
-            visited.add(space_time_position)
+    for agent_i, plan in solutions:
+        for space_time_position in plan:
+            for agent_j, st_position in visited:
+                if(space_time_position == st_position):
+                    return Conflict(agent_i, agent_j, space_time_position)
+            visited.add((agent_i, space_time_position))
     return None

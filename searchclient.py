@@ -1,6 +1,10 @@
 import io
 import argparse
+import pprint
 import sys
+from cbs.cbs import conflict_based_search
+from htn.htn_resolver import HTNResolver
+from astar import HeuristicAStar
 import memory
 from collections import namedtuple
 from domain.position import Position
@@ -23,10 +27,6 @@ from pop.action_schema import StateTranslator
 # debugpy.breakpoint() # Ensure the program starts paused
 
 # data structure for agent, box, goal
-AgentConfig = namedtuple('AgentConfig', ['position', 'id', 'color'])
-BoxConfig = namedtuple('BoxConfig', ['position', 'letter', 'color'])
-GoalConfig = namedtuple('GoalConfig', ['position', 'letter'])
-WallConfig = namedtuple('WallConfig', ['position'])
 layout_rows = 0
 layout_cols = 0
 class LevelParser:
@@ -99,81 +99,153 @@ class SearchClient:
         #print(f"---initial_layout, goal_layout--{initial_layout, goal_layout}")
         # agents, boxes, goals, walls initialization : empty lists
         # iterate through the initial_layout and goal_layout
-        agents, boxes, goals, walls = [], [], [], []
+        agents, boxes, goals = [], [], []
+
+        nrows = len(initial_layout)
+        ncols = len(initial_layout[0]) if nrows > 0 else 0
+
+        walls = [[False] * ncols for _ in range(nrows)]
+
+        agent_uid = 0
+        box_uid = 0
         for row_idx, row in enumerate(initial_layout):
             for col_idx, char in enumerate(row):
-                position = Position(row_idx, col_idx)
+                position = Position(col_idx, row_idx)
                 if char.isdigit():
-                    agents.append(AgentConfig(position, int(char), agent_colors.get(int(char))))
+                    agents.append(Agent(pos=position, value=int(char), uid=agent_uid, color=agent_colors.get(int(char))))
+                    agent_uid += 1
                 elif char.isupper():
-                    boxes.append(BoxConfig(position, char, box_colors.get(char)))
+                    boxes.append(Box(pos=position, value=char, uid=box_uid, color=box_colors.get(char)))
+                    box_uid += 1
                 else:
                     if char == '+':
-                        walls.append(WallConfig(position))
+                        walls[row_idx][col_idx] = True
 
         # read position of goals
+        uid: int = 0
+
         for row_idx, row in enumerate(goal_layout):
             for col_idx, char in enumerate(row):
                 if char.isdigit() or char.isupper():
-                    goals.append(GoalConfig(Position(row_idx, col_idx), char))
+                    goals.append(Goal(pos=Position(col_idx, row_idx), value=char, uid=uid))
+                    uid =+ 1
 
         # Calculate the dimensions of the level\
         global layout_rows, layout_cols
         layout_rows = len(initial_layout)
         layout_cols = max(len(row) for row in initial_layout)
-        print(f"---num_rows, num_cols--{layout_rows, layout_cols}")
 
-        # Convert configs to actual objects
-        agent_objs = [Agent(position, id_, color) for position, id_, color in agents]
-        box_objs = [Box(position, letter, color) for position, letter, color in boxes]
-        goal_objs = [Goal(position, letter) for position, letter in goals]
-        wall_objs = [Wall(position) for position in walls]
-        # print(f"---agent_objs is--{agent_objs}")
-        # print(f"---box_objs is--{box_objs}")
-        # print(f"---goal_objs is--{goal_objs}")
-        # print(f"---wall_objs is--{wall_objs}")
-        # schema = StateTranslator(agent_objs, box_objs, goal_objs, wall_objs, layout_rows, layout_cols)
-        # original_state = schema.construct_init_statements()
-        # goal_state = schema.construct_goal_statements()
-        # wall_state = schema.construct_wall_statements()
-        # print(f"---original schema--{original_state}")
-        # print(f"---goal schema--{goal_state}")
-        # print(f"---wall schema--{wall_state}")
-        return State(agent_objs, box_objs, goal_objs, wall_objs, layout_rows, layout_cols)
+
+
+
+        State.goals = goals
+        return State(agents, boxes, walls)
 
     @staticmethod
     def main(args) -> None:
-        print('SearchClient initializing. I am sending this using the error output stream.', file=sys.stderr)
-
         print('SearchClient', flush=True)
-        print('#This is a comment.', flush=True)
+        # print('#This is a comment.', flush=True)
 
         server_messages = io.TextIOWrapper(sys.stdin.buffer, encoding='ASCII')
         initial_state = SearchClient.parse_level(server_messages)
-        print(f"---initial_state--{initial_state.agents,initial_state.boxes,initial_state.goals,initial_state.walls}")
+
+        print("\nINITIAL STATE", file=sys.stderr)
+        for agent in initial_state.agents:
+            print(f"Agent - {agent.value} ---> ", agent, file=sys.stderr)
+        for box in initial_state.boxes:
+            print(f"Box - {box.value} ---> ", box, file=sys.stderr)
+        for goal in State.goals:
+            print(f"Goal - {goal.value} ---> ", goal, file=sys.stderr)
+        print("INITIAL STATE\n", file=sys.stderr)
+
+        for goal in State.goals:
+            State.goal_map[goal.uid] = State.initialize_goal_map(initial_state.walls, goal.pos)
+
+        for box in initial_state.boxes:
+            State.box_goal_map[box.uid] = State.initialize_goal_map(initial_state.walls, box.pos)
+
+        for goal_id in State.goal_map.keys():
+            print(f"\n----------Distance map for Goal - {goal_id}-------------", file=sys.stderr)
+            goal_grid = State.goal_map[goal_id]
+            for row in goal_grid:
+                print(' '.join(f"{cell if cell is not None else 'None':4}" for cell in row), file=sys.stderr)
+        print("-----------Distance-------------\n", file=sys.stderr)
+
+        for box_id in State.box_goal_map.keys():
+            print(f"\n----------Distance map for Box - {box_id}-------------", file=sys.stderr)
+            goal_grid = State.box_goal_map[box_id]
+            for row in goal_grid:
+                print(' '.join(f"{cell if cell is not None else 'None':4}" for cell in row), file=sys.stderr)
+        print("-----------Distance-------------\n", file=sys.stderr)
+
+        ### PSEUDO CODE for integrating CBS and HTN
+
+        # Initialize problems for each agent
+        # - Get same colored agents and boxes
+        # - Distribute the boxes between those agents
+        # - Store all tasks in a Map<agentId -> deque<Task>>
+        # - calculate BFS_from_goal / BFS_from_box for each goal / box: goal_map and box_map Map<goalId -> [][]>, Map<boxId -> [][]>
+        #   -> it has to be run in a state with only walls and free cells
+        
+        print("-----------Problem-------------\n", file=sys.stderr)
+        resolver = HTNResolver()
+        resolver.initialize_problems(initial_state)
+
+        current_state = initial_state
+        while(resolver.has_any_task_left()):
+            print("Round -> ", resolver.round_counter, file=sys.stderr)
+            print(f"---agent_tasks---{resolver.agent_tasks}", file=sys.stderr)
+            resolver.create_round()
+            print(f"---current round---{resolver.round}", file=sys.stderr)
+            plans = resolver.create_plans(current_state)
+            
+            # Resolve plans conflicts with cbs
+            # - solution = run_CBS(current_state, plans),
+            # - joint_actions.append(solution)
+            # - current_state = state_after_executing_the_solution
+
+        print("-----------Problem-------------\n", file=sys.stderr)
+
+
+        # Prioritize tasks based on plausability and factor of blocking
+        # - the tasks whose goal doesn't block any goal should be given more priority (priority + 100)
+        # - If A* can solve a task it should be prioritized over the tasks that can't be solved (priority + 10)
+        # - the closest box to the agent should be given priority, if we can't choose between multiple boxes (priority + x, where x is based on the number of tasks with the same priority) 
+
+        # Heuristic function should change according to task priority
+        # - h(n) = w1 * (distance_of_agent_to_box + distance_of_box_to_goal), (this is for the box, which is on priority)
+        #   -> w1 should be set based on priority (e.g.: if an agent is blocking other agents it should be given high priority w1 = 100, w2 = 10, w3 = 1...)
+        #   distance_of_agent_to_box is based on whether box has moved away, if it has moved we return manhattan_distance otherwise perfect heuristic from box_map
+        
+        # Integrate CBS with HTN
+        # - initialize agent_current_tasks
+        # - current_state = initial_state
+        # - While loop: (current_tasks is empty)
+            # - If an agent has a task left, assign priority task to agent
+            # - Create the plans for each agent
+            # - solution = run_CBS(current_state, agents),
+            # - joint_actions.append(solution)
+            # - current_state = state_after_executing_the_solution
+
+        # Create the problem solution from the joint_actions
+
         # Search for a plan
         conflict = None
         print('Starting.', file=sys.stderr, flush=True)
         grid = [[None for _ in range(layout_cols)] for _ in range(layout_rows)]
-        st_astar = SpaceTimeAstar(grid, initial_state.agents, initial_state.boxes, initial_state.goals, initial_state.walls, layout_rows, layout_cols)
-        # st_astar.initialize_grid(layout_rows, layout_cols, max_time)
-        plan, time_path = st_astar.st_astar(initial_state)
-        # st_astar = SpaceTimeAstar(initial_state,initial_state.goals)
+
         # plan = st_astar.st_astar_search()
-        # reservations = st_astar.get_reservation_table()
-        # print(f"---reservations--{reservations}")
-        print(f"time-path{time_path}")
-        print(f"Plan:{plan}")
-        if plan is None:
-            print('Unable to solve level.', file=sys.stderr, flush=True)
-            sys.exit(0)
-        else:
-            print('Found solution of length {}.'.format(len(plan)), file=sys.stderr, flush=True)
-            for joint_action in plan:
-                print("|".join(a.name_ + "@" + a.name_ for a in joint_action), flush=True)
-                #We must read the server's response to not fill up the stdin buffer and block the server.
-                response = server_messages.readline()
-                # print(f"---response--{response}")
+
+        # if plan is None:
+        #     print('Unable to solve level.', file=sys.stderr, flush=True)
+        #     sys.exit(0)
+        # else:
+        #     print('Found solution of length {}.'.format(len(plan)), file=sys.stderr, flush=True)
+        #     for joint_action in plan:
+        #         print("|".join(a.name_ + "@" + a.name_ for a in joint_action), flush=True)
+        #         #We must read the server's response to not fill up the stdin buffer and block the server.
+        #         response = server_messages.readline()
+        #         # print(f"---response--{response}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Simple client based on state-space graph search.')
