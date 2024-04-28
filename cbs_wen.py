@@ -55,6 +55,7 @@ def conflict_based_search(problem_list):
                     print(f"---m--{m}")
                     print(Position(conflict.pos.x, conflict.pos.y))
                     m.constraints.append(Constraint(agent.id, Position(conflict.pos.x, conflict.pos.y), conflict.t))
+                    m.constraints.append(Constraint(agent.id, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
                     print(f"---m.constraints--{m.constraints}")
                     m.solution[agent.id] = space_time_a_star(problem, m.constraints)
                     print(f"---m.solution--{m.solution[agent.id]}")
