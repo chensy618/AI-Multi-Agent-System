@@ -21,35 +21,29 @@ def conflict_based_search(problem_list):
     initial_box_positions = {}
     for problem in problem_list:
         for agent in problem.agents:
-            print(f"---agent--{agent.id}")
-            print(f"---problem--{problem}")
             initial_agent_positions[agent.id] = agent.pos
+            # Solve each subproblem independently using A* search
             root.solution[agent.id] = astar(problem)
-        ############## Related boxes position code has been commented out
-        # # but actually needed when considering more types of conflicts ##############
-        # # Store initial positions of boxes
         for box in problem.boxes:
-            print(f"---box--{box.id}")
             initial_box_positions[box.id] = box.pos
-    print(f"---initial_positions--{initial_agent_positions}")
-    # print(f"---initial_box_positions--{initial_box_positions}")
     root.cost = cost(root.solution)
     frontier = PriorityQueue()
     count_next = next(tiebreaker)
     frontier.put((root.cost, count_next, root))
     while not frontier.empty():
         node_cost, tiebreaker_value, node = frontier.get()
-        conflict = find_first_conflict(node.solution, initial_agent_positions, initial_box_positions)
-        # conflict = find_first_conflict(node.solution, initial_positions, initial_box_positions)
+        # based on the conflict type, we only support to call the corresponding conflict solve method
+        conflict = find_first_conflict_box_box(node.solution, problem_list, initial_box_positions)
+        #conflict = find_first_conflict_agt_agt(node.solution, initial_agent_positions)
         if conflict is None:
-            print('I am here')
+            print('I am here, no conflict found.')
             executable_plan = merge_plans(node.solution)
             return executable_plan
         else:
             print(f"---conflict--{conflict}")
         for problem in problem_list:
+            # this is the box-box conflict solve method : start from here
             for box, agent in zip(problem.boxes, problem.agents):
-                print(f"---box--{box.id}")
                 if box.id in [conflict.ai, conflict.aj]:
                     m = node.copy()
                     print(f"---m--{m}")
@@ -68,6 +62,8 @@ def conflict_based_search(problem_list):
                     if m.node_cost < sys.maxsize:
                         count_next = next(tiebreaker)
                         frontier.put((m.node_cost, count_next, m))  # Include the tiebreaker in the tuple
+            # ----------end of box-box conflict solve -----------------------------------------------------------------
+            # this is the agent-agent conflict solve method : start from here
             # for agent in problem.agents:
             #     print(f"---agent--{agent.id}")
             #     if agent.id in [conflict.ai, conflict.aj]:
@@ -87,7 +83,7 @@ def conflict_based_search(problem_list):
             #         if m.node_cost < sys.maxsize:
             #             count_next = next(tiebreaker)  # Get the next value from the tiebreaker
             #             frontier.put((m.node_cost, count_next, m))  # Include the tiebreaker in the tuple
-
+            # ----------end of agent-agent conflict solve ------------------------------------------------------------------
 
 def cost(solution):
     """
@@ -104,8 +100,47 @@ def cost(solution):
     return total_cost
 
 
-#################### Currently the level is an agent-box conflict. so need to adjust the code####################
-def find_first_conflict(solution, initial_agent_positions, initial_box_positions):
+def find_first_conflict_agt_agt(solution, initial_positions):
+    """
+    Find the first conflict in the solution.
+
+    :param solution: A dictionary mapping agent IDs to their respective paths (lists of actions).
+    :return: A conflict object with details about the conflict, or None if no conflict is found.
+    """
+    # Create a dictionary to track positions of each agent at each time step
+    positions = {}
+    for agent_id, path in solution.items():
+        # Get the initial position of the agent
+        current_position = initial_positions[agent_id]
+        # print(f"---current_position--{current_position}")
+        # print(f"---agent_id--{agent_id}")
+        # print(f"---path--{path}")
+        time_step = 1 # Start the first step at 1
+        for action_list in path:
+            action = action_list[0]  # Assuming each action is wrapped in a list
+            # print(f"---action--{action}")
+            # Calculate the resulting position of the agent after the action
+            resulting_position = Position(
+                current_position.x + action.agent_rel_pos.x,
+                current_position.y + action.agent_rel_pos.y
+            )
+            if (resulting_position, time_step) in positions:
+                # Conflict detected, return information about the conflict
+                other_agent_id = positions[(resulting_position, time_step)]
+                # print(f"---agent_id--{agent_id}")
+                # print(f"---other_agent_id--{other_agent_id}")
+                # print(f"---Conflict--{Conflict(agent_id, other_agent_id, resulting_position, time_step)}")
+                return Conflict(agent_id, other_agent_id, resulting_position, time_step)
+            positions[(resulting_position, time_step)] = agent_id
+            # print(f"---positions--{positions}")
+            # Update the current position of the agent
+            current_position = resulting_position
+            time_step += 1
+    return None
+
+
+
+def find_first_conflict_box_box(solution, problem_list, initial_box_positions):
     """
     Find the first conflict in the solution.
 
@@ -117,12 +152,15 @@ def find_first_conflict(solution, initial_agent_positions, initial_box_positions
     for box_id, path in solution.items():
         print(f"solution.items()--{solution.items()}")
         # we need to optimize how to convert the id in the solution.items()
-        if box_id == 0:
-            box_id = 'A'
-        elif box_id == 1:
-            box_id = 'B'
+        # problem0 = problem_list[0].agents[0].id
+        # problem1 = problem_list[1]
+        # print(f"---problem--{problem0}")
+        # print(f"---problem--{problem1}")
+        box_id = problem_list[box_id].boxes[0].id
+        print(f"---box_id--{box_id}")
         # Get the initial position of box
         current_position = initial_box_positions[box_id]
+        print(f"---current_position--{current_position}")
         time_step = 1  # Start the first step at 1
         for action_list in path:
             action = action_list[0]
@@ -134,101 +172,13 @@ def find_first_conflict(solution, initial_agent_positions, initial_box_positions
             if (resulting_position, time_step) in positions:
                 # Conflict detected, return information about the conflict
                 other_agent_id = positions[(resulting_position, time_step)]
-                #print(f"Conflict(box_id={box_id}, other_agent_id={other_agent_id}, pos={resulting_position}, t={time_step})")
+                print(f"Conflict(box_id={box_id}, other_agent_id={other_agent_id}, pos={resulting_position}, t={time_step})")
                 return Conflict(box_id, other_agent_id, resulting_position, time_step)
             positions[(resulting_position, time_step)] = box_id
             # Update the current position of the box
             current_position = resulting_position
             time_step += 1
-            
-    # for agent_id, path in solution.items():
-    #     # Get the initial position of the agent
-    #     current_position = initial_agent_positions[agent_id]
-    #     # print(f"---current_position--{current_position}")
-    #     # print(f"---agent_id--{agent_id}")
-    #     # print(f"---path--{path}")
-    #     time_step = 1 # Start the first step at 1
-    #     for action_list in path:
-    #         action = action_list[0]  # Assuming each action is wrapped in a list
-    #         # print(f"---action--{action}")
-    #         # Calculate the resulting position of the agent after the action
-    #         resulting_position = Position(
-    #             current_position.x + action.agent_rel_pos.x,
-    #             current_position.y + action.agent_rel_pos.y
-    #         )
-    #         if (resulting_position, time_step) in positions:
-    #             # Conflict detected, return information about the conflict
-    #             other_agent_id = positions[(resulting_position, time_step)]
-    #             # print(f"---agent_id--{agent_id}")
-    #             # print(f"---other_agent_id--{other_agent_id}")
-    #             # print(f"---Conflict--{Conflict(agent_id, other_agent_id, resulting_position, time_step)}")
-    #             return Conflict(agent_id, other_agent_id, resulting_position, time_step)
-    #         positions[(resulting_position, time_step)] = agent_id
-    #         # print(f"---positions--{positions}")
-    #         # Update the current position of the agent
-    #         current_position = resulting_position
-    #         time_step += 1
     return None
-
-
-# ################### Need to consider more types of conflicts as well####################
-# # Agent-Agent Conflict
-# # Agent-Box Conflict
-# # Box-Box Conflict
-# # following conflict
-# ################### Below code need big adjustment####################
-# def find_first_conflict(solution, initial_positions, initial_box_positions):
-#     """
-#     Find the first conflict in the solution.
-
-#     :param solution: A dictionary mapping agent IDs to their respective paths (lists of actions).
-#     :param initial_positions: A dictionary mapping agent IDs to their initial positions.
-#     :param initial_box_positions: A dictionary mapping box IDs to their initial positions.
-#     :return: A conflict object with details about the conflict, or None if no conflict is found.
-#     """
-#     # Create a dictionary to track positions of each agent and box at each time step
-#     positions = {}
-#     box_positions = {pos: box_id for box_id, pos in initial_box_positions.items()}
-#     for agent_id, path in solution.items():
-#         # Get the initial position of the agent
-#         current_position = initial_positions[agent_id]
-#         time_step = 1  # Start the first step at 1
-#         for action_list in path:
-#             action = action_list[0]  # Assuming each action is wrapped in a list
-#             # Calculate the resulting position of the agent after the action
-#             resulting_position = Position(
-#                 current_position.x + action.agent_rel_pos.x,
-#                 current_position.y + action.agent_rel_pos.y
-#             )
-#             # Check for agent-agent conflicts
-#             if (resulting_position, time_step) in positions:
-#                 # Conflict detected, return information about the conflict
-#                 other_agent_id = positions[(resulting_position, time_step)]
-#                 return Conflict(agent_id, other_agent_id, resulting_position, time_step)
-#             # Check for agent-box conflicts
-#             if action.type in [ActionType.Push, ActionType.Pull]:
-#                 # Calculate the new position of the box after the action
-#                 box_new_position = Position(
-#                     current_position.x + action.box_rel_pos.x,
-#                     current_position.y + action.box_rel_pos.y
-#                 )
-#                 if box_new_position in box_positions and box_positions[box_new_position] != agent_id:
-#                     # Conflict detected between agent and box
-#                     return Conflict(agent_id, box_positions[box_new_position], box_new_position, time_step)
-#                 # Update the box position
-#                 if action.type == ActionType.Push:
-#                     box_positions.pop(current_position, None)  # Remove the old box position
-#                     box_positions[box_new_position] = agent_id  # Add the new box position
-#                 elif action.type == ActionType.Pull:
-#                     box_positions.pop(resulting_position, None)  # Remove the old box position
-#                     box_positions[current_position] = agent_id  # Add the new box position
-
-#             positions[(resulting_position, time_step)] = agent_id
-#             # Update the current position of the agent
-#             current_position = resulting_position
-#             time_step += 1
-#     return None
-
 
 def merge_plans(plans):
     """
