@@ -54,8 +54,8 @@ class State:
         copy_state.parent = self
         copy_state.joint_action = joint_action[:]
         copy_state.g = self.g + 1
-        print(f"---copy state g---{copy_state.g}")
-        print(f"---copy state joint_action---{copy_state.joint_action}")
+        # print(f"---copy state g---{copy_state.g}")
+        # print(f"---copy state joint_action---{copy_state.joint_action}")
         return copy_state
 
     def is_goal_state(self) -> bool:
@@ -116,8 +116,8 @@ class State:
             if done:
                 break
         State._RNG.shuffle(expanded_states)
-        print(f'---in the end the joint_action---{joint_action}')
-        print(f'---in the end the expanded_states---{expanded_states}')
+        # print(f'---in the end the joint_action---{joint_action}')
+        # print(f'---in the end the expanded_states---{expanded_states}')
         return expanded_states
 
     def is_applicable(self, agent: int, action: Action) -> bool:
@@ -316,8 +316,8 @@ class SpaceTimeState(State):
 
         elif action.type is ActionType.Move:
             # Check if the agent's destination is free and not constrained
-            print(f"---self.is_free(agent_destination)---{self.is_free(agent_destination)}")
-            print(f"---self.is_constrained(agent, agent_destination, self.time + 1)---{self.is_constrained(agent.id, agent_destination, self.time + 1)}")
+            # print(f"---self.is_free(agent_destination)---{self.is_free(agent_destination)}")
+            # print(f"---self.is_constrained(agent, agent_destination, self.time + 1)---{self.is_constrained(agent.id, agent_destination, self.time + 1)}")
             return self.is_free(agent_destination) and not self.is_constrained(agent.id, agent_destination, self.time + 1)
 
         elif action.type is ActionType.Push:
@@ -391,8 +391,8 @@ class SpaceTimeState(State):
         copy_state = SpaceTimeState(copy_agents, copy_boxes, copy_goals, self.time + 1, self.constraints, self.g + 1)
         copy_state.parent = self
         copy_state.joint_action = joint_action[:]
-        print(f"---copy state g---{copy_state.g}")
-        print(f"---copy state joint_action---{copy_state.joint_action}")
+        # print(f"---copy state g---{copy_state.g}")
+        # print(f"---copy state joint_action---{copy_state.joint_action}")
         return copy_state
 
 
