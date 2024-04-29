@@ -35,6 +35,7 @@ def conflict_based_search(problem_list):
         # based on the conflict type, we only support to call the corresponding conflict solve method
         conflict = find_first_conflict_box_box(node.solution, problem_list, initial_box_positions)
         #conflict = find_first_conflict_agt_agt(node.solution, initial_agent_positions)
+        #conflict = find_first_conflict_agt_box(node.solution, problem_list, initial_agent_positions, initial_box_positions)
         if conflict is None:
             print('I am here, no conflict found.')
             executable_plan = merge_plans(node.solution)
@@ -63,6 +64,7 @@ def conflict_based_search(problem_list):
                         count_next = next(tiebreaker)
                         frontier.put((m.node_cost, count_next, m))  # Include the tiebreaker in the tuple
             # ----------end of box-box conflict solve -----------------------------------------------------------------
+            
             # this is the agent-agent conflict solve method : start from here
             # for agent in problem.agents:
             #     print(f"---agent--{agent.id}")
@@ -85,6 +87,27 @@ def conflict_based_search(problem_list):
             #             frontier.put((m.node_cost, count_next, m))  # Include the tiebreaker in the tuple
             # ----------end of agent-agent conflict solve ------------------------------------------------------------------
 
+            #this is the agent-agent conflict solve method : start from here
+            # for agent in problem.agents:
+            #     print(f"---agent--{agent.id}")
+            #     if agent.id in [conflict.ai, conflict.aj]:
+            #         m = node.copy()
+            #         print(f"---m--{m}")
+            #         print(Position(conflict.pos.x, conflict.pos.y))
+            #         m.constraints.append(Constraint(agent.id, Position(conflict.pos.x, conflict.pos.y), conflict.t))
+            #         m.constraints.append(Constraint(agent.id, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
+            #         print(f"---m.constraints--{m.constraints}")
+            #         m.solution[agent.id] = space_time_a_star(problem, m.constraints)
+            #         print(f"---m.solution--{m.solution[agent.id]}")
+            #         m.node_cost = cost(m.solution)
+            #         print(f"---m.node_cost--{m.node_cost}")
+
+            #         # When putting a node into the priority queue, include the tiebreaker
+            #         # To be able to solve the issue when the costs are equal
+            #         if m.node_cost < sys.maxsize:
+            #             count_next = next(tiebreaker)  # Get the next value from the tiebreaker
+            #             frontier.put((m.node_cost, count_next, m))  # Include the tiebreaker in the tuple
+            #----------end of agent-agent conflict solve ------------------------------------------------------------------
 def cost(solution):
     """
     Calculate the total cost of a solution, which is the sum of the lengths of all paths.
@@ -180,6 +203,71 @@ def find_first_conflict_box_box(solution, problem_list, initial_box_positions):
             time_step += 1
     return None
 
+def find_first_conflict_agt_box(solution, problem_list, initial_agent_positions, initial_box_positions):
+    """
+    Find the first conflict in the solution, checking for conflicts between agents and boxes.
+
+    :param solution: Dictionary mapping IDs to their respective paths (lists of actions).
+    :param problem_list: List or dictionary containing problem data for each agent, including box info.
+    :param initial_agent_positions: Dictionary with initial positions of agents.
+    :param initial_box_positions: Dictionary with initial positions of boxes.
+    :return: A conflict object with details about the conflict, or None if no conflict is found.
+    """
+    # Dictionary to track positions of agents and boxes at each time step
+    positions = {}
+
+    # Loop through each agent and process their paths
+    for agent_id, path in solution.items():
+        # Assuming each agent has at least one box associated with it in problem_list
+        box_id = problem_list[agent_id].boxes[0].id
+        current_agent_position = initial_agent_positions[agent_id]
+        current_box_position = initial_box_positions[box_id]
+        time_step = 1  # Start the first step at 1
+
+        for action_list in path:
+            action = action_list[0]  # Assuming each action is wrapped in a list
+
+            # Calculate new position for the agent
+            new_agent_position = Position(
+                current_agent_position.x + action.agent_rel_pos.x,
+                current_agent_position.y + action.agent_rel_pos.y
+            )
+
+            # calculate new position for the box
+            new_box_position = Position(
+                current_box_position.x + action.box_rel_pos.x,
+                current_box_position.y + action.box_rel_pos.y
+            )
+            
+            
+            # TODO: Implement conflict detection between agents and boxes
+            # Check for conflicts between the agent's new position and all box positions
+            # for other_box_id, pos in positions.get(('box', time_step), {}).items():
+            #     if new_agent_position == pos:
+            #         return Conflict(agent_id, other_box_id, new_agent_position, time_step)
+
+
+            # Check for conflicts between the box's new position and all agent positions
+            # for other_agent_id, pos in positions.get(('agent', time_step), {}).items():
+            #     if new_box_position == pos:
+            #         return Conflict(other_agent_id, box_id, new_box_position, time_step)
+
+            # # Update positions in the dictionary
+            # positions.setdefault(('agent', time_step), {})[agent_id] = new_agent_position
+            # positions.setdefault(('box', time_step), {})[box_id] = new_box_position
+
+            # Move to next step
+            current_agent_position = new_agent_position
+            current_box_position = new_box_position
+            time_step += 1
+
+    return None
+
+
+
+    
+    
+    
 def merge_plans(plans):
     """
     Merge the individual plans of the agents into a single executable plan.
