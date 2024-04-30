@@ -1,3 +1,4 @@
+import sys
 from helper.distance_calc import DistanceCalc
 from state import State
 
@@ -25,13 +26,15 @@ class HTNHelper:
     def get_closest_goal_uid_to_box(box):
         min_dist = float('inf')
         closest_goal = None
-        for goal in State.goals:
+
+        box_goals = [goal for goal in State.goals if (goal.value == box.value)]
+        for goal in box_goals:
             dist = State.goal_map[goal.uid][box.pos.y][box.pos.x]
             if dist < min_dist:
                 min_dist = dist
                 closest_goal = goal
 
-        return goal.uid
+        return closest_goal.uid
     
     @staticmethod
     def get_closest_box_uid_to_agent(agent_boxes, agent):

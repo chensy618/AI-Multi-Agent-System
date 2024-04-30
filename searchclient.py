@@ -122,21 +122,19 @@ class SearchClient:
                         walls[row_idx][col_idx] = True
 
         # read position of goals
-        uid: int = 0
+        goal_uid = 0
 
         for row_idx, row in enumerate(goal_layout):
             for col_idx, char in enumerate(row):
                 if char.isdigit() or char.isupper():
-                    goals.append(Goal(pos=Position(col_idx, row_idx), value=char, uid=uid))
-                    uid =+ 1
+                    goals.append(Goal(pos=Position(col_idx, row_idx), value=char, uid=goal_uid))
+                    goal_uid += 1
+                    
 
         # Calculate the dimensions of the level\
         global layout_rows, layout_cols
         layout_rows = len(initial_layout)
         layout_cols = max(len(row) for row in initial_layout)
-
-
-
 
         State.goals = goals
         return State(agents, boxes, walls)

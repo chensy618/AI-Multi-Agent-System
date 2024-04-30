@@ -52,7 +52,6 @@ class HTNResolver:
                 raise RuntimeError(f"Agent {agent_id} has not completed the previous task")
             box = self.agent_tasks[agent_id].popleft()
             goal_uid = HTNHelper.get_closest_goal_uid_to_box(box)
-
             self.round[agent_id] = (box.uid, goal_uid) 
 
     def create_plans(self, current_state: State):
