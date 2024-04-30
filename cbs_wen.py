@@ -19,6 +19,7 @@ def conflict_based_search(problem_list):
     root.constraints = []
     initial_positions = []
 
+    # Get initial positions
     for problem in problem_list:
         # Iterate over agents, assuming that not all agents may have a corresponding box
         for agent in problem.agents:
@@ -39,6 +40,8 @@ def conflict_based_search(problem_list):
     frontier.put((root.cost, count_next, root))
     while not frontier.empty():
         node_cost, tiebreaker_value, node = frontier.get()
+
+        # Find first conflict in the solutions
         conflict = find_first_conflict(node.solution, initial_positions)
         if conflict is None:
             print('I am here, no conflict found.')
@@ -47,14 +50,12 @@ def conflict_based_search(problem_list):
         else:
             print(f"---conflict--{conflict}")
         for problem in problem_list:
-            print(f"---problem.boxes--{problem.boxes}")
+            # If there are no boxes in the problem, then the conflict is between agents
             if problem.boxes == []:
                 for agent in problem.agents:
                     print(f"----------------------------agent.id--{agent.id}")
                     if agent.id in [conflict.ai, conflict.aj]:
                         m = node.copy()
-                        print(f"---m--{m}")
-                        print(Position(conflict.pos.x, conflict.pos.y))
                         m.constraints.append(Constraint(agent.id, Position(conflict.pos.x, conflict.pos.y), conflict.t))
                         m.constraints.append(Constraint(agent.id, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
                         print(f"---m.constraints--{m.constraints}")
@@ -62,7 +63,6 @@ def conflict_based_search(problem_list):
                         print(f"---m.solution--{m.solution[agent.id]}")
                         m.node_cost = cost(m.solution)
                         print(f"---m.node_cost--{m.node_cost}")
-
                         # When putting a node into the priority queue, include the tiebreaker
                         # To be able to solve the issue when the costs are equal
                         if m.node_cost < sys.maxsize:
@@ -74,8 +74,6 @@ def conflict_based_search(problem_list):
                     print(f"-------------------------------box.id--{box.id}")
                     if box.id in [conflict.ai, conflict.aj]:
                         m = node.copy()
-                        print(f"---m--{m}")
-                        print(Position(conflict.pos.x, conflict.pos.y))
                         m.constraints.append(Constraint(box.id, Position(conflict.pos.x, conflict.pos.y), conflict.t))
                         m.constraints.append(Constraint(box.id, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
                         m.constraints.append(Constraint(box.id, Position(conflict.pos.x, conflict.pos.y), conflict.t+2))
@@ -84,9 +82,6 @@ def conflict_based_search(problem_list):
                         print(f"---m.solution--{m.solution[agent.id]}")
                         m.node_cost = cost(m.solution)
                         print(f"---m.node_cost--{m.node_cost}")
-
-                        # When putting a node into the priority queue, include the tiebreaker
-                        # To be able to solve the issue when the costs are equal
                         if m.node_cost < sys.maxsize:
                             count_next = next(tiebreaker)
                             frontier.put((m.node_cost, count_next, m))  # Include the tiebreaker in the tuple
