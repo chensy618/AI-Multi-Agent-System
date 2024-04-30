@@ -15,8 +15,7 @@ import memory
 globals().update(Action.__members__)
 start_time = time.perf_counter()
 
-def astar(problem_state, conflicts):
-    print(f"===============A_STAR================")
+def astar(problem_state):
     # return [
     #         [MoveE],
     #         [MoveE],
@@ -167,7 +166,9 @@ class Heuristic(metaclass=ABCMeta):
                 goal_pos = goal[1] # get the position
                 # print(f'#####agent_id is {agent_id}#######')
                 # print(f'#####goal_pos is {goal_pos}#######')
-                agent_pos = state.agents[agent_id].pos
+                # print(f'#####state.agents is {state.agents}#######')
+                # Find the agent in the list with the matching id
+                agent_pos = next((agent.pos for agent in state.agents if agent.id == agent_id), None)
                 distance = abs(agent_pos.x - goal_pos.x) + abs(agent_pos.y - goal_pos.y)
                 agent_to_goal_distance += distance
                 # print(f'------------agent_to_goal_distance is {agent_to_goal_distance}-------------------')

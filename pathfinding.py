@@ -44,7 +44,7 @@ class SpaceTimeAstar:
         for actions in plan:
             time += 1
             for agent, action in zip(agents, actions):
-                # print(f"---action--- {action}")
+                print(f"---action--- {action}")
                 if action == Action.NoOp:
                     time_path[agent.id].append((agent.pos, time))
                 elif action == Action.MoveN:
@@ -56,9 +56,9 @@ class SpaceTimeAstar:
                 elif action == Action.MoveE:
                     agent.pos = Position(agent.pos.x, agent.pos.y + 1)
                     time_path[agent.id].append((agent.pos, time))
-                    # print(f"---agent.pos--- {agent.pos}")
-                    # print(f"---time--- {time}")
-                    # print(f"---timeline--- {time_path}")
+                    print(f"---agent.pos--- {agent.pos}")
+                    print(f"---time--- {time}")
+                    print(f"---timeline--- {time_path}")
                 elif action == Action.MoveW:
                     agent.pos = Position(agent.pos.x, agent.pos.y - 1)
                     time_path[agent.id].append((agent.pos, time))

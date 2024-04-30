@@ -2,20 +2,16 @@ import io
 import argparse
 import pprint
 import sys
-from cbs.cbs import conflict_based_search
 from htn.htn_resolver import HTNResolver
-from astar import HeuristicAStar
 import memory
-from collections import namedtuple
+
+from cbs_wen import conflict_based_search
 from domain.position import Position
 from domain.color import Color
 from state import State
 from domain.agent import Agent
 from domain.box import Box
 from domain.goal import Goal
-from domain.wall import Wall
-from pathfinding import SpaceTimeAstar
-from pop.action_schema import StateTranslator
 
 # import debugpy
 # debugpy.listen(("localhost", 12345)) # Open a debugging server at localhost:1234
@@ -198,6 +194,7 @@ class SearchClient:
             plans = resolver.create_plans(current_state)
             
             # Resolve plans conflicts with cbs
+            plan = conflict_based_search(resolver.round)
             # - solution = run_CBS(current_state, plans),
             # - joint_actions.append(solution)
             # - current_state = state_after_executing_the_solution
@@ -224,26 +221,6 @@ class SearchClient:
             # - solution = run_CBS(current_state, agents),
             # - joint_actions.append(solution)
             # - current_state = state_after_executing_the_solution
-
-        # Create the problem solution from the joint_actions
-
-        # Search for a plan
-        conflict = None
-        print('Starting.', file=sys.stderr, flush=True)
-        grid = [[None for _ in range(layout_cols)] for _ in range(layout_rows)]
-
-        # plan = st_astar.st_astar_search()
-
-        # if plan is None:
-        #     print('Unable to solve level.', file=sys.stderr, flush=True)
-        #     sys.exit(0)
-        # else:
-        #     print('Found solution of length {}.'.format(len(plan)), file=sys.stderr, flush=True)
-        #     for joint_action in plan:
-        #         print("|".join(a.name_ + "@" + a.name_ for a in joint_action), flush=True)
-        #         #We must read the server's response to not fill up the stdin buffer and block the server.
-        #         response = server_messages.readline()
-        #         # print(f"---response--{response}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Simple client based on state-space graph search.')
