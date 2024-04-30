@@ -50,28 +50,30 @@ def conflict_based_search(problem_list):
         else:
             print(f"---conflict--{conflict}")
         for problem in problem_list:
-            # If there are no boxes in the problem, then the conflict is between agents
-            if problem.boxes == []:
-                for agent in problem.agents:
-                    print(f"----------------------------agent.id--{agent.id}")
-                    if agent.id in [conflict.ai, conflict.aj]:
-                        m = node.copy()
-                        m.constraints.append(Constraint(agent.id, Position(conflict.pos.x, conflict.pos.y), conflict.t))
-                        m.constraints.append(Constraint(agent.id, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
-                        print(f"---m.constraints--{m.constraints}")
-                        m.solution[agent.id] = space_time_a_star(problem, m.constraints)
-                        print(f"---m.solution--{m.solution[agent.id]}")
-                        m.node_cost = cost(m.solution)
-                        print(f"---m.node_cost--{m.node_cost}")
-                        # When putting a node into the priority queue, include the tiebreaker
-                        # To be able to solve the issue when the costs are equal
-                        if m.node_cost < sys.maxsize:
-                            count_next = next(tiebreaker)
-                            frontier.put((m.node_cost, count_next, m))  # Include the tiebreaker in the tuple
+            for agent in problem.agents:
+                print(f"----------------------------agent.id--{agent.id}")
+                if agent.id in [conflict.ai, conflict.aj]:
+                    m = node.copy()
+                    m.constraints.append(Constraint(agent.id, Position(conflict.pos.x, conflict.pos.y), conflict.t))
+                    m.constraints.append(Constraint(agent.id, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
+                    print(f"---m.constraints--{m.constraints}")
+                    m.solution[agent.id] = space_time_a_star(problem, m.constraints)
+                    print(f"---m.solution--{m.solution[agent.id]}")
+                    m.node_cost = cost(m.solution)
+                    print(f"---m.node_cost--{m.node_cost}")
+                    # When putting a node into the priority queue, include the tiebreaker
+                    # To be able to solve the issue when the costs are equal
+                    if m.node_cost < sys.maxsize:
+                        count_next = next(tiebreaker)
+                        frontier.put((m.node_cost, count_next, m))  # Include the tiebreaker in the tuple
 
-            else:
-                for box, agent in zip(problem.boxes, problem.agents):
+                # If agent is not involved in the conflict, then try to check box conflicts
+                else:
+                    # TODO: Optimize here when there is new problem structure
+                    # Get corresponding box id
+                    box = next((b for b in problem.boxes if b.color == agent.color), None)
                     print(f"-------------------------------box.id--{box.id}")
+                    print(f"-------------------------------agent.id--{agent.id}")
                     if box.id in [conflict.ai, conflict.aj]:
                         m = node.copy()
                         m.constraints.append(Constraint(box.id, Position(conflict.pos.x, conflict.pos.y), conflict.t))
