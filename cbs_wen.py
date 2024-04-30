@@ -51,8 +51,8 @@ def conflict_based_search(problem_list):
             print(f"---conflict--{conflict}")
         for problem in problem_list:
             for agent in problem.agents:
-                print(f"----------------------------agent.id--{agent.id}")
                 if agent.id in [conflict.ai, conflict.aj]:
+                    print(f"----------------------------agent.id--{agent.id}")
                     m = node.copy()
                     m.constraints.append(Constraint(agent.id, Position(conflict.pos.x, conflict.pos.y), conflict.t))
                     m.constraints.append(Constraint(agent.id, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
@@ -99,7 +99,7 @@ def cost(solution):
     """
     total_cost = 0
     for path in solution.values():
-        print(f"---path--{path}")
+        # print(f"---path--{path}")
         if path is not None:
             total_cost += len(path)  # Add the length of this agent's path to the total cost
     return total_cost
@@ -118,6 +118,7 @@ def find_first_conflict(solution, initial_positions):
     for agent_id, path in solution.items():
         print(f"---agent_id--{agent_id}")
         print(f'---box is--{initial_positions[agent_id][2]}')
+        print(f'---path is--{path}')
 
         # agent-agent conflict
         if initial_positions[agent_id][2] is None:
@@ -127,7 +128,7 @@ def find_first_conflict(solution, initial_positions):
             # print(f"---path--{path}")
             time_step = 1 # Start the first step at 1
             for action_list in path:
-                action = action_list[0]  # Assuming each action is wrapped in a list
+                action = action_list[0]
                 # print(f"---action--{action}")
                 # Calculate the resulting position of the agent after the action
                 resulting_position = Position(
@@ -178,6 +179,8 @@ def find_first_conflict(solution, initial_positions):
                 positions[(resulting_agent_position, time_step)] = agent_id
                 positions[(resulting_box_position, time_step)] = box_id
                 print(f"---positions--{positions}")
+                current_agent_position = resulting_agent_position
+                current_box_position = resulting_box_position
                 time_step += 1
 
     return None
