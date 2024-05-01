@@ -56,6 +56,7 @@ def conflict_based_search(problem_list):
                     m = node.copy()
                     m.constraints.append(Constraint(agent.id, Position(conflict.pos.x, conflict.pos.y), conflict.t))
                     m.constraints.append(Constraint(agent.id, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
+                    m.constraints.append(Constraint(agent.id, Position(conflict.pos.x, conflict.pos.y), conflict.t+2))
                     print(f"---m.constraints--{m.constraints}")
                     m.solution[agent.id] = space_time_a_star(problem, m.constraints)
                     print(f"---m.solution--{m.solution[agent.id]}")
@@ -66,7 +67,7 @@ def conflict_based_search(problem_list):
                     if m.node_cost < sys.maxsize:
                         count_next = next(tiebreaker)
                         frontier.put((m.node_cost, count_next, m))  # Include the tiebreaker in the tuple
-
+                
                 # If agent is not involved in the conflict, then try to check box conflicts
                 else:
                     # TODO: Optimize here when there is new problem structure
@@ -124,12 +125,12 @@ def find_first_conflict(solution, initial_positions):
         if initial_positions[agent_id][2] is None:
             current_position = initial_positions[agent_id][1]
             print(f"---current_position--{current_position}")
-            # print(f"---agent_id--{agent_id}")
-            # print(f"---path--{path}")
+            print(f"---agent_id--{agent_id}")
+            print(f"---path--{path}")
             time_step = 1 # Start the first step at 1
             for action_list in path:
                 action = action_list[0]
-                # print(f"---action--{action}")
+                print(f"---action--{action}")
                 # Calculate the resulting position of the agent after the action
                 resulting_position = Position(
                     current_position.x + action.agent_rel_pos.x,
@@ -138,12 +139,12 @@ def find_first_conflict(solution, initial_positions):
                 if (resulting_position, time_step) in positions:
                     # Conflict detected, return information about the conflict
                     other_agent_id = positions[(resulting_position, time_step)]
-                    # print(f"---agent_id--{agent_id}")
-                    # print(f"---other_agent_id--{other_agent_id}")
-                    # print(f"---Conflict--{Conflict(agent_id, other_agent_id, resulting_position, time_step)}")
+                    print(f"---agent_id--{agent_id}")
+                    print(f"---other_agent_id--{other_agent_id}")
+                    print(f"---Conflict--{Conflict(agent_id, other_agent_id, resulting_position, time_step)}")
                     return Conflict(agent_id, other_agent_id, resulting_position, time_step)
                 positions[(resulting_position, time_step)] = agent_id
-                # print(f"---positions--{positions}")
+                print(f"---positions--{positions}")
                 # Update the current position of the agent
                 current_position = resulting_position
                 time_step += 1
@@ -172,9 +173,11 @@ def find_first_conflict(solution, initial_positions):
                 print(f"---resulting_box_position--{resulting_box_position}")
                 if (resulting_agent_position, time_step) in positions:
                     other_entity_id = positions[(resulting_agent_position, time_step)]
+                    print(f"---Conflict--{Conflict(agent_id, other_entity_id, resulting_agent_position, time_step)}")
                     return Conflict(agent_id, other_entity_id, resulting_agent_position, time_step)
                 elif (resulting_box_position, time_step) in positions:
                     other_entity_id = positions[(resulting_box_position, time_step)]
+                    print(f"---Conflict--{Conflict(box_id, other_entity_id, resulting_box_position, time_step)}")
                     return Conflict(box_id, other_entity_id, resulting_box_position, time_step)
                 positions[(resulting_agent_position, time_step)] = agent_id
                 positions[(resulting_box_position, time_step)] = box_id
@@ -209,6 +212,8 @@ def merge_plans(plans):
                 action = plan[step][0]  # Each action is a list, take the first element
             else:
                 # Assuming NoOp is represented as None or a specific NoOp action
+                # We can't always use NoOp here, becuase the that agent reach the goal, it won't move anymore
+                # In this case, it will block the other agents
                 action = Action.NoOp
             joint_action.append(action)
 
