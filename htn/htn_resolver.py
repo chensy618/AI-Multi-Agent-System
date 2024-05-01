@@ -1,3 +1,4 @@
+from asyncio import Task
 from collections import deque
 import sys
 
@@ -42,7 +43,14 @@ class HTNResolver:
                 if agent.uid not in self.agent_tasks:
                     self.agent_tasks[agent.uid] = deque()
 
-                self.agent_tasks[agent.uid].append(box)
+                goal_uid = HTNHelper.get_closest_goal_uid_to_box(box)
+                self.agent_tasks[agent.uid].append(Task(agent.uid, box.uid, goal_uid))
+
+        # If the task is to get agent to goal
+        for agent in state.agents:
+            if agent.uid not in self.agent_tasks:
+                self.agent_tasks[agent.uid] = deque()
+            self.agent_tasks[agent.uid].append(agent)
 
     def create_round(self):
         self.round_counter += 1
@@ -50,9 +58,8 @@ class HTNResolver:
         for agent_id in list(self.agent_tasks.keys()):
             if(self.round.get(agent_id) is not None):
                 raise RuntimeError(f"Agent {agent_id} has not completed the previous task")
-            box = self.agent_tasks[agent_id].popleft()
-            goal_uid = HTNHelper.get_closest_goal_uid_to_box(box)
-            self.round[agent_id] = (box.uid, goal_uid) 
+            task = self.agent_tasks[agent_id].popleft()
+            self.round[agent_id] = task 
 
     def create_plans(self, current_state: State):
         plans = {}
