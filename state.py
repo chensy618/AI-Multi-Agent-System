@@ -127,7 +127,6 @@ class State:
                 if 0 <= new_x < max_col and 0 <= new_y < max_row and (new_x, new_y) not in visited:
                     queue.append((new_x, new_y, dist + 1))
                     
-        print("distance_grid ->", distance_grid, file=sys.stderr)
         return distance_grid
 
     def is_goal_state(self) -> bool:
@@ -410,7 +409,7 @@ class SpaceTimeState(State):
             box_to_pull = next((box for box in self.boxes if box.pos == box_position), None)
             if box_to_pull and box_to_pull.color == agent.color:
                 # Check if the agent's destination is free and not constrained
-                return self.is_free(agent_destination) and not self.is_constrained(box_to_pull.id, agent_destination, self.time + 1)
+                return self.is_free(agent_destination) and not self.is_constrained(agent.id, agent_destination, self.time + 1)
             else:
                 return False
 

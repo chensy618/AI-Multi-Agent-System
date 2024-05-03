@@ -18,7 +18,9 @@ tiebreaker = itertools.count()
 def conflict_based_search(current_state: State, round):
     root = Node()
     root.constraints = []
-    # get initial position of agents, boxes.
+    # get initial positions of agents, boxes.
+    # initial_positions format should like as follows : 
+    # [(0, Position(x=3, y=1), 'A', Position(x=3, y=2)), (1, Position(x=5, y=3), 'B', Position(x=4, y=3))]
     initial_positions = []
     for problem in round:
         print(f"----problem:{problem}",file=sys.stderr)
