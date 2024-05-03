@@ -195,9 +195,8 @@ class SearchClient:
             # Resolve plans conflicts with cbs
             plan = conflict_based_search(current_state, resolver.round)
             final_plan = plan
-            # - solution = run_CBS(current_state, plans),
-            # - joint_actions.append(solution)
-            # - current_state = state_after_executing_the_solution
+            # - final_plan.append(plan)
+            # set current_state to the state after executing the plan.
 
         print("-----------Problem-------------\n", file=sys.stderr)
 
@@ -206,7 +205,7 @@ class SearchClient:
             sys.exit(0)
         else:
             print('Found solution of length {}.'.format(len(plan)), file=sys.stderr, flush=True)
-            for joint_action in plan:
+            for joint_action in final_plan:
                 print("|".join(a.name_ + "@" + a.name_ for a in joint_action), flush=True)
                 #We must read the server's response to not fill up the stdin buffer and block the server.
                 response = server_messages.readline()
