@@ -17,10 +17,10 @@ from domain.goal import Goal
 # debugpy.listen(("localhost", 12345)) # Open a debugging server at localhost:1234
 # debugpy.wait_for_client() # Wait for the debugger to connect
 # debugpy.breakpoint() # Ensure the program starts paused
-# import debugpy
-# debugpy.listen(("localhost", 1234)) # Open a debugging server at localhost:1234
-# debugpy.wait_for_client() # Wait for the debugger to connect
-# debugpy.breakpoint() # Ensure the program starts paused
+import debugpy
+debugpy.listen(("localhost", 1234)) # Open a debugging server at localhost:1234
+debugpy.wait_for_client() # Wait for the debugger to connect
+debugpy.breakpoint() # Ensure the program starts paused
 
 # data structure for agent, box, goal
 layout_rows = 0
@@ -92,15 +92,18 @@ class SearchClient:
         agent_colors, box_colors = LevelParser.parse_colors(server_messages)
         # print(f"---agent_colors, box_colors--{agent_colors, box_colors}")
         initial_layout, goal_layout = LevelParser.parse_initial_and_goal_states(server_messages)
+        print(f"---initial_layout, goal_layout--{initial_layout, goal_layout}")
         #print(f"---initial_layout, goal_layout--{initial_layout, goal_layout}")
         # agents, boxes, goals, walls initialization : empty lists
         # iterate through the initial_layout and goal_layout
         agents, boxes, goals = [], [], []
 
         nrows = len(initial_layout)
-        ncols = len(initial_layout[0]) if nrows > 0 else 0
-
+        # ncols = len(initial_layout[0]) if nrows > 0 else 0
+        ncols = max(len(row) for row in initial_layout)
+        # print(f"---nrows, ncols--{nrows, ncols}")
         walls = [[False] * ncols for _ in range(nrows)]
+        # print(f"---walls--{walls[0]}")
 
         agent_uid = 0
         box_uid = 0
@@ -116,6 +119,7 @@ class SearchClient:
                 else:
                     if char == '+':
                         walls[row_idx][col_idx] = True
+                        # print(f"---row, col--{row_idx, col_idx}")
 
         # read position of goals
         goal_uid = 0
@@ -153,11 +157,12 @@ class SearchClient:
         print("INITIAL STATE\n", file=sys.stderr)
 
         for goal in State.goals:
+            print(f"Goal - {goal.value} ---> ", goal, file=sys.stderr)
             State.goal_map[goal.uid] = State.initialize_goal_map(initial_state.walls, goal.pos)
-
+        print(f"---goal_map--{State.goal_map}", file=sys.stderr)
         for box in initial_state.boxes:
             State.box_goal_map[box.uid] = State.initialize_goal_map(initial_state.walls, box.pos)
-
+        
         for goal_id in State.goal_map.keys():
             print(f"\n----------Distance map for Goal - {goal_id}-------------", file=sys.stderr)
             goal_grid = State.goal_map[goal_id]

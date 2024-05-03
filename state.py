@@ -126,7 +126,8 @@ class State:
 
                 if 0 <= new_x < max_col and 0 <= new_y < max_row and (new_x, new_y) not in visited:
                     queue.append((new_x, new_y, dist + 1))
-        
+                    
+        print("distance_grid ->", distance_grid, file=sys.stderr)
         return distance_grid
 
     def is_goal_state(self) -> bool:
