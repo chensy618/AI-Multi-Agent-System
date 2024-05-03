@@ -1,27 +1,19 @@
-from astar import Frontier, FrontierBestFirst, PriorityQueue, Heuristic, HeuristicAStar, HeuristicWeightedAStar
-from state import SpaceTimeState
+from heuristic import AStarFrontier, HeuristicAStar
+from state import SpaceTimeState, State
 
 
-def space_time_a_star(problem, constraints):
-    print(f"---problem--{problem}")
-    agent = problem.agents
-    box = problem.boxes
-    goal = problem.goals
-
-    # print(f"---agent--{agent}")
-    # print(f"---box--{box}")
-    # print(f"---goal--{goal}")
-    # ---agent--[Agent(pos=Position(x=2, y=1), id=0, color=Color.Red)]
-    # ---box--[Box(pos=Position(x=2, y=2), id=A, color=Color.Red)]
-    # ---goal--[Goal(pos=Position(x=2, y=4), id=A)]
+def space_time_a_star(inital_state, constraints, round):
+    agent = inital_state.agents
+    box = inital_state.boxes
+    goal = State.goals
 
     initial_time = 0
     initial_state = SpaceTimeState(agent, box, goal, initial_time, constraints, 0)
     print(f"---initial_state--{initial_state}")
     print(f"---initial_state.constraints--{initial_state.constraints}")
 
-    frontier = FrontierBestFirst(HeuristicAStar(initial_state))
-    frontier.add(initial_state)
+    frontier = AStarFrontier(HeuristicAStar(initial_state))
+    frontier.add(initial_state, round)
 
     explored = set()
 
@@ -41,5 +33,5 @@ def space_time_a_star(problem, constraints):
 
         for state in current_state.get_expanded_states():
             if state not in explored and not frontier.contains(state):
-                frontier.add(state)
+                frontier.add(state, round)
 

@@ -1,7 +1,7 @@
-from asyncio import Task
 from collections import deque
 import sys
 
+from domain.task import Task
 from htn.htn_helper import HTNHelper
 from state import State
 
@@ -43,14 +43,15 @@ class HTNResolver:
                 if agent.uid not in self.agent_tasks:
                     self.agent_tasks[agent.uid] = deque()
 
-                goal_uid = HTNHelper.get_closest_goal_uid_to_box(box)
-                self.agent_tasks[agent.uid].append(Task(agent.uid, box.uid, goal_uid))
+                goal_uid = HTNHelper.get_closest_goal_uid_to_box(box, self.agent_tasks)
+                self.agent_tasks[agent.uid].append(Task(box.uid, goal_uid))
 
         # If the task is to get agent to goal
-        for agent in state.agents:
+        for agent in initial_state.agents:
             if agent.uid not in self.agent_tasks:
                 self.agent_tasks[agent.uid] = deque()
-            self.agent_tasks[agent.uid].append(agent)
+            goal_uid = HTNHelper.get_closest_goal_uid_to_agent(agent, self.agent_tasks)
+            self.agent_tasks[agent.uid].append(Task(-1, goal_uid))
 
     def create_round(self):
         self.round_counter += 1
@@ -61,14 +62,14 @@ class HTNResolver:
             task = self.agent_tasks[agent_id].popleft()
             self.round[agent_id] = task 
 
-    def create_plans(self, current_state: State):
-        plans = {}
-        for agent_id in list(self.round.keys()):
-            (box_uid, goal_uid) = self.round.pop(agent_id)  # Remove the agent's task from self.round
-            relaxed_state = current_state.from_agent_perspective(agent_id)
-            # plan = astar(relaxed_state)
-            # plans[agent_id] = plan
-        return plans
+    # def create_plans(self, current_state: State):
+    #     plans = {}
+    #     for agent_id in list(self.round.keys()):
+    #         (box_uid, goal_uid) = self.round.pop(agent_id)  # Remove the agent's task from self.round
+    #         relaxed_state = current_state.from_agent_perspective(agent_id)
+    #         # plan = astar(relaxed_state)
+    #         # plans[agent_id] = plan
+    #     return plans
         
     def has_any_task_left(self):
         for _, tasks in self.agent_tasks.items():

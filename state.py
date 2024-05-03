@@ -8,6 +8,7 @@ from domain.box import Box
 from domain.color import Color
 from domain.goal import Goal
 from domain.position import Position
+from domain.task import Task
 from domain.wall import Wall
 
 class State:
@@ -29,9 +30,13 @@ class State:
         self._hash = None
 
     def from_agent_perspective(self, agent_id):
+        print("from_agent_perspective - ", agent_id, file=sys.stderr)
+
         relaxed_agent = self.get_agent_by_id(agent_id)
+        print("relaxed_agent", relaxed_agent, file=sys.stderr)
 
         agent_colored_boxes = self.get_agent_boxes(relaxed_agent.color)
+        print("agent_colored_boxes", agent_colored_boxes, file=sys.stderr)
         
         relaxed_walls = [row[:] for row in self.walls]
 
@@ -40,6 +45,7 @@ class State:
         #         if relaxed_box.color != box.color: # different colored box so it should be wall for the agent, because it can't pass through it
         #             relaxed_walls[box.pos.y][box.pos.x] = True 
 
+        print("from_agent_perspective", file=sys.stderr)
         return State([relaxed_agent], agent_colored_boxes, relaxed_walls)
 
 
@@ -131,7 +137,7 @@ class State:
         box_positions = {box.pos: box.uid for box in self.boxes}
         # Create a mapping of agent positions to their corresponding IDs
         agent_positions = {agent.pos: agent.uid for agent in self.agents}
-
+        print("agent_positions ->", agent_positions, file=sys.stderr)
         # Check if all goals are satisfied by boxes and agents
         for goal in State.goals:
             if 'A' <= goal.value <= 'Z':
@@ -147,6 +153,16 @@ class State:
                 print('There is something wrong with the goal id set up, please')
                 return False
         return True
+
+    def is_goal_state_for_subgoal(self, task: Task, agent: Agent) -> bool:
+        if(task.box_uid == -1):
+            if State.goal_map[task.goal_uid][agent.pos.y][agent.pos.x] == 0:
+                return True
+        else:
+            box = self.get_box_by_uid(task.box_uid)
+            if State.box_goal_map[task.goal_uid][box.pos.y][box.pos.x] == 0:
+                return True
+        return False
 
     def get_expanded_states(self) -> 'list[State]':
         num_agents = len(self.agents)
@@ -320,10 +336,6 @@ class State:
         if any(a1.pos != a2.pos or a1.color != a2.color for a1, a2 in zip(self.agents, other.agents)):
             return False
         if any(b1.pos != b2.pos or b1.color != b2.color for b1, b2 in zip(self.boxes, other.boxes)):
-            return False
-        if State.walls != other.walls:
-            return False
-        if any(g1.pos != g2.pos or g1.id != g2.id for g1, g2 in zip(State.goals, other.goals)):
             return False
         return True
 

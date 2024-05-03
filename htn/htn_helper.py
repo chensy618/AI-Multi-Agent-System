@@ -23,18 +23,43 @@ class HTNHelper:
         return boxes_by_color
     
     @staticmethod
-    def get_closest_goal_uid_to_box(box):
+    def get_closest_goal_uid_to_box(box, agent_tasks):
         min_dist = float('inf')
-        closest_goal = None
+        closest_goal_uid = None
 
-        box_goals = [goal for goal in State.goals if (goal.value == box.value)]
-        for goal in box_goals:
-            dist = State.goal_map[goal.uid][box.pos.y][box.pos.x]
+        # Create a set of goal_uids from agent_tasks for quick lookup
+        existing_goal_uids = {task.goal_uid for task in agent_tasks.values()}
+
+        # Filter box_goals_uids to exclude those that are already in existing_goal_uids
+        available_box_goals_uids = [goal.uid for goal in State.goals if goal.value == box.value and goal.uid not in existing_goal_uids]
+
+        for goal_uid in available_box_goals_uids:
+            dist = State.goal_map[goal_uid][box.pos.y][box.pos.x]
             if dist < min_dist:
                 min_dist = dist
-                closest_goal = goal
+                closest_goal_uid = goal_uid
 
-        return closest_goal.uid
+        return closest_goal_uid
+    
+    def get_closest_goal_uid_to_agent(agent, agent_tasks):
+        min_dist = float('inf')
+        closest_goal_uid = None
+
+        # Create a set of goal_uids from agent_tasks for quick lookup
+        # existing_goal_uids = [task.goal_uid for task in agent_tasks.values()]
+        existing_goal_uids = {task.goal_uid for tasks in agent_tasks.values() for task in tasks if len(tasks) > 0}
+
+        
+        # Filter box_goals_uids to exclude those that are already in existing_goal_uids
+        available_agent_goals_uids = [goal.uid for goal in State.goals if int(goal.value) == agent.value and goal.uid not in existing_goal_uids]
+        
+        for goal_uid in available_agent_goals_uids:
+            dist = State.goal_map[goal_uid][agent.pos.y][agent.pos.x]
+            if dist < min_dist:
+                min_dist = dist
+                closest_goal_uid = goal_uid
+
+        return closest_goal_uid
     
     @staticmethod
     def get_closest_box_uid_to_agent(agent_boxes, agent):

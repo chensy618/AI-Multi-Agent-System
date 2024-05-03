@@ -10,22 +10,21 @@ from domain.constraint import Constraint
 from domain.position import Position
 from queue import PriorityQueue
 from st_astar import space_time_a_star
+from state import State
 
 # Create a counter that will serve as a tiebreaker
 tiebreaker = itertools.count()
 
-def conflict_based_search(problem_list):
+def conflict_based_search(current_state: State, round):
     root = Node()
     root.constraints = []
-    initial_agent_positions = {}
-    initial_box_positions = {}
-    for problem in problem_list:
-        for agent in problem.agents:
-            initial_agent_positions[agent.id] = agent.pos
-            # Solve each subproblem independently using A* search
-            root.solution[agent.id] = astar(problem)
-        for box in problem.boxes:
-            initial_box_positions[box.id] = box.pos
+
+    for agent in current_state.agents:
+        relaxed_state = current_state.from_agent_perspective(agent.uid)
+        something = astar(relaxed_state, round)
+        print('something', something, file=sys.stderr)
+        root.solution[agent.uid] = something
+        
     root.cost = cost(root.solution)
     frontier = PriorityQueue()
     count_next = next(tiebreaker)
@@ -33,16 +32,16 @@ def conflict_based_search(problem_list):
     while not frontier.empty():
         node_cost, tiebreaker_value, node = frontier.get()
         # based on the conflict type, we only support to call the corresponding conflict solve method
-        conflict = find_first_conflict_box_box(node.solution, problem_list, initial_box_positions)
+        conflict = find_first_conflict_box_box(node.solution, round, initial_box_positions)
         #conflict = find_first_conflict_agt_agt(node.solution, initial_agent_positions)
         #conflict = find_first_conflict_agt_box(node.solution, problem_list, initial_agent_positions, initial_box_positions)
         if conflict is None:
-            print('I am here, no conflict found.')
+            print('I am here, no conflict found.', file=sys.stderr)
             executable_plan = merge_plans(node.solution)
             return executable_plan
         else:
-            print(f"---conflict--{conflict}")
-        for problem in problem_list:
+            print(f"---conflict--{conflict}", file=sys.stderr)
+        for problem in round:
             # this is the box-box conflict solve method : start from here
             for box, agent in zip(problem.boxes, problem.agents):
                 if box.id in [conflict.ai, conflict.aj]:
@@ -52,11 +51,11 @@ def conflict_based_search(problem_list):
                     m.constraints.append(Constraint(box.id, Position(conflict.pos.x, conflict.pos.y), conflict.t))
                     m.constraints.append(Constraint(box.id, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
                     m.constraints.append(Constraint(box.id, Position(conflict.pos.x, conflict.pos.y), conflict.t+2))
-                    print(f"---m.constraints--{m.constraints}")
-                    m.solution[agent.id] = space_time_a_star(problem, m.constraints)
-                    print(f"---m.solution--{m.solution[agent.id]}")
+                    print(f"---m.constraints--{m.constraints}", file=sys.stderr)
+                    m.solution[agent.id] = space_time_a_star(problem, m.constraints, round)
+                    print(f"---m.solution--{m.solution[agent.id]}", file=sys.stderr)
                     m.node_cost = cost(m.solution)
-                    print(f"---m.node_cost--{m.node_cost}")
+                    print(f"---m.node_cost--{m.node_cost}", file=sys.stderr)
 
                     # When putting a node into the priority queue, include the tiebreaker
                     # To be able to solve the issue when the costs are equal
@@ -117,7 +116,7 @@ def cost(solution):
     """
     total_cost = 0
     for path in solution.values():
-        print(f"---path--{path}")
+        print(f"---path--{path}", file=sys.stderr)
         if path is not None:
             total_cost += len(path)  # Add the length of this agent's path to the total cost
     return total_cost
@@ -173,17 +172,17 @@ def find_first_conflict_box_box(solution, problem_list, initial_box_positions):
     # Create a dictionary to track positions of each agent at each time step
     positions = {}
     for box_id, path in solution.items():
-        print(f"solution.items()--{solution.items()}")
+        print(f"solution.items()--{solution.items()}", file=sys.stderr)
         # we need to optimize how to convert the id in the solution.items()
         # problem0 = problem_list[0].agents[0].id
         # problem1 = problem_list[1]
         # print(f"---problem--{problem0}")
         # print(f"---problem--{problem1}")
         box_id = problem_list[box_id].boxes[0].id
-        print(f"---box_id--{box_id}")
+        print(f"---box_id--{box_id}", file=sys.stderr)
         # Get the initial position of box
         current_position = initial_box_positions[box_id]
-        print(f"---current_position--{current_position}")
+        print(f"---current_position--{current_position}", file=sys.stderr)
         time_step = 1  # Start the first step at 1
         for action_list in path:
             action = action_list[0]
@@ -195,7 +194,7 @@ def find_first_conflict_box_box(solution, problem_list, initial_box_positions):
             if (resulting_position, time_step) in positions:
                 # Conflict detected, return information about the conflict
                 other_agent_id = positions[(resulting_position, time_step)]
-                print(f"Conflict(box_id={box_id}, other_agent_id={other_agent_id}, pos={resulting_position}, t={time_step})")
+                print(f"Conflict(box_id={box_id}, other_agent_id={other_agent_id}, pos={resulting_position}, t={time_step})", file=sys.stderr)
                 return Conflict(box_id, other_agent_id, resulting_position, time_step)
             positions[(resulting_position, time_step)] = box_id
             # Update the current position of the box
@@ -296,5 +295,5 @@ def merge_plans(plans):
 
         # Append the joint action to the merged plan
         merged_plan.append(joint_action)
-    print(f"---merged_plan--{merged_plan}")
+    print(f"---merged_plan--{merged_plan}", file=sys.stderr)
     return merged_plan

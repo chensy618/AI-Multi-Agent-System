@@ -163,14 +163,12 @@ class SearchClient:
             goal_grid = State.goal_map[goal_id]
             for row in goal_grid:
                 print(' '.join(f"{cell if cell is not None else 'None':4}" for cell in row), file=sys.stderr)
-        print("-----------Distance-------------\n", file=sys.stderr)
 
         for box_id in State.box_goal_map.keys():
             print(f"\n----------Distance map for Box - {box_id}-------------", file=sys.stderr)
             goal_grid = State.box_goal_map[box_id]
             for row in goal_grid:
                 print(' '.join(f"{cell if cell is not None else 'None':4}" for cell in row), file=sys.stderr)
-        print("-----------Distance-------------\n", file=sys.stderr)
 
         ### PSEUDO CODE for integrating CBS and HTN
 
@@ -185,21 +183,34 @@ class SearchClient:
         resolver = HTNResolver()
         resolver.initialize_problems(initial_state)
 
+        print(f"---agent_tasks---{resolver.agent_tasks}", file=sys.stderr)
+
+        final_plan = None
         current_state = initial_state
         while(resolver.has_any_task_left()):
             print("Round -> ", resolver.round_counter, file=sys.stderr)
-            print(f"---agent_tasks---{resolver.agent_tasks}", file=sys.stderr)
             resolver.create_round()
             print(f"---current round---{resolver.round}", file=sys.stderr)
-            plans = resolver.create_plans(current_state)
             
             # Resolve plans conflicts with cbs
-            plan = conflict_based_search(resolver.round)
+            plan = conflict_based_search(current_state, resolver.round)
+            final_plan = plan
             # - solution = run_CBS(current_state, plans),
             # - joint_actions.append(solution)
             # - current_state = state_after_executing_the_solution
 
         print("-----------Problem-------------\n", file=sys.stderr)
+
+        if final_plan is None:
+            print('Unable to solve level.', file=sys.stderr, flush=True)
+            sys.exit(0)
+        else:
+            print('Found solution of length {}.'.format(len(plan)), file=sys.stderr, flush=True)
+            for joint_action in plan:
+                print("|".join(a.name_ + "@" + a.name_ for a in joint_action), flush=True)
+                #We must read the server's response to not fill up the stdin buffer and block the server.
+                response = server_messages.readline()
+                # print(f"---response--{response}")
 
 
         # Prioritize tasks based on plausability and factor of blocking
