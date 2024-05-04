@@ -133,7 +133,6 @@ def find_first_conflict(solution, initial_positions):
         print(f'---path is--{path}')
 
         # agent-agent conflict
-        # TODO: Optimize here for the extended steps
         if initial_positions[agent_id][2] is None:
             current_position = initial_positions[agent_id][1]
             print(f"---current_position--{current_position}")
@@ -163,7 +162,6 @@ def find_first_conflict(solution, initial_positions):
                     if (resulting_position, time_step) in positions:
                         # Conflict detected, return information about the conflict
                         other_agent_id = positions[(resulting_position, time_step)]
-                        # TODO: Get the avoid_pos_list
                         print(f"---MoveAwayConflict--{MoveAwayConflict(agent_id, resulting_agent_position, avoid_pos_list, time_step-1)}")
                         return MoveAwayConflict(agent_id, resulting_agent_position, avoid_pos_list, time_step-1)
 
@@ -217,7 +215,6 @@ def find_first_conflict(solution, initial_positions):
                     if (resulting_agent_position, time_step) in positions:
                         other_entity_id = positions[(resulting_agent_position, time_step)]
                         print(f'###### positions--{positions}########')
-                        # TODO: Get the avoid_pos_list
                         avoid_pos_list = {pos: agent_id for pos, agent_id in positions.items() if pos[1] >= time_step-1}
                         print(f'---avoid_pos_list 1--{avoid_pos_list}')
                         print(f"---MoveAwayConflict 1 --{MoveAwayConflict(agent_id, resulting_agent_position, avoid_pos_list, time_step-1)}")
@@ -225,7 +222,6 @@ def find_first_conflict(solution, initial_positions):
                     elif (resulting_box_position, time_step) in positions:
                         other_entity_id = positions[(resulting_box_position, time_step)]
                         print(f'###### positions--{positions}########')
-                        # TODO: Get the avoid_pos_list
                         avoid_pos_list = {pos: agent_id for pos, agent_id in positions.items() if pos[1] >= time_step-1}
                         print(f'---avoid_pos_list 2--{avoid_pos_list}')
                         print(f"---MoveAwayConflict 2 --{MoveAwayConflict(agent_id, resulting_agent_position, avoid_pos_list, time_step-1)}")
