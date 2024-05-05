@@ -28,7 +28,7 @@ def conflict_based_search(current_state: State, round):
             box = next((b for b in problem.boxes if b.color == agent.color), None)
             initial_position = (agent.id, agent.pos, box.id if box else None, box.pos if box else None)
             initial_positions.append(initial_position)
-             
+
     for agent in current_state.agents:
         relaxed_state = current_state.from_agent_perspective(agent.uid)
         something = astar(relaxed_state, round)

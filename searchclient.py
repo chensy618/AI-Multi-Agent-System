@@ -159,7 +159,6 @@ class SearchClient:
         for goal in State.goals:
             print(f"Goal - {goal.value} ---> ", goal, file=sys.stderr)
             State.goal_map[goal.uid] = State.initialize_goal_map(initial_state.walls, goal.pos)
-        print(f"---goal_map--{State.goal_map}", file=sys.stderr)
         for box in initial_state.boxes:
             State.box_goal_map[box.uid] = State.initialize_goal_map(initial_state.walls, box.pos)
         

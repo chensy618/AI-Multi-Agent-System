@@ -61,15 +61,6 @@ class HTNResolver:
                 raise RuntimeError(f"Agent {agent_id} has not completed the previous task")
             task = self.agent_tasks[agent_id].popleft()
             self.round[agent_id] = task 
-
-    # def create_plans(self, current_state: State):
-    #     plans = {}
-    #     for agent_id in list(self.round.keys()):
-    #         (box_uid, goal_uid) = self.round.pop(agent_id)  # Remove the agent's task from self.round
-    #         relaxed_state = current_state.from_agent_perspective(agent_id)
-    #         # plan = astar(relaxed_state)
-    #         # plans[agent_id] = plan
-    #     return plans
         
     def has_any_task_left(self):
         for _, tasks in self.agent_tasks.items():

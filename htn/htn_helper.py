@@ -30,14 +30,13 @@ class HTNHelper:
         # Create a set of goal_uids from agent_tasks for quick lookup
         # print(f"agent_tasks: {agent_tasks}")
         # print(f"agent_tasks.values(): {agent_tasks.values()}")
+
         existing_goal_uids = []
 
-        print(f"agent_tasks: {agent_tasks}", file=sys.stderr)
-        for agent_id, agent_queue in agent_tasks.items():  
-            print(f"agent_id: {agent_id}, agent_queue: {agent_queue}", file=sys.stderr)
-            for task in agent_queue:         
+        for queue in agent_tasks.values():
+            for task in queue:
                 existing_goal_uids.append(task.goal_uid)
-
+ 
         # Filter box_goals_uids to exclude those that are already in existing_goal_uids
         available_box_goals_uids = [goal.uid for goal in State.goals if goal.value == box.value and goal.uid not in existing_goal_uids]
 
@@ -55,14 +54,16 @@ class HTNHelper:
 
         # Create a set of goal_uids from agent_tasks for quick lookup
         # existing_goal_uids = [task.goal_uid for task in agent_tasks.values()]
-        existing_goal_uids = {task.goal_uid for tasks in agent_tasks.values() for task in tasks if len(tasks) > 0}
 
-        
+
+        existing_goal_uids = []
+
+        for queue in agent_tasks.values():
+            for task in queue:
+                existing_goal_uids.append(task.goal_uid)
+
         # Filter box_goals_uids to exclude those that are already in existing_goal_uids
-        for goal in State.goals :
-            print(f"goal_uid,goal_value--{goal.uid},{goal.value}",file=sys.stderr)
-        print(f"agent_value--{agent.value}",file=sys.stderr)
-        available_agent_goals_uids = [goal.uid for goal in State.goals if int(goal.value) == agent.value and goal.uid not in existing_goal_uids]
+        available_agent_goals_uids = [goal.uid for goal in State.goals if goal.value == agent.value and goal.uid not in existing_goal_uids]
         
         for goal_uid in available_agent_goals_uids:
             dist = State.goal_map[goal_uid][agent.pos.y][agent.pos.x]

@@ -19,7 +19,7 @@ def astar(initial_state, round):
 
     while not frontier.is_empty():
         current_state = frontier.pop()
-        print(f"---current_state--- {[agent.pos for agent in current_state.agents]}", file=sys.stderr)
+        # print(f"---current_state--- {[agent.pos for agent in current_state.agents]}", file=sys.stderr)
 
         if current_state.is_goal_state():
             print("WE EXTRACTED PLAN", file=sys.stderr)
