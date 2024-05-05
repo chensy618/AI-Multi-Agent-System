@@ -30,13 +30,13 @@ class State:
         self._hash = None
 
     def from_agent_perspective(self, agent_id):
-        print("from_agent_perspective - ", agent_id, file=sys.stderr)
+        # print("from_agent_perspective - ", agent_id, file=sys.stderr)
 
         relaxed_agent = self.get_agent_by_uid(agent_id)
-        print("relaxed_agent", relaxed_agent, file=sys.stderr)
+        # print("relaxed_agent", relaxed_agent, file=sys.stderr)
 
         agent_colored_boxes = self.get_agent_boxes(relaxed_agent.color)
-        print("agent_colored_boxes", agent_colored_boxes, file=sys.stderr)
+        # print("agent_colored_boxes", agent_colored_boxes, file=sys.stderr)
         
         relaxed_walls = [row[:] for row in self.walls]
 
@@ -45,7 +45,7 @@ class State:
         #         if relaxed_box.color != box.color: # different colored box so it should be wall for the agent, because it can't pass through it
         #             relaxed_walls[box.pos.y][box.pos.x] = True 
 
-        print("from_agent_perspective", file=sys.stderr)
+        # print("from_agent_perspective", file=sys.stderr)
         return State([relaxed_agent], agent_colored_boxes, relaxed_walls)
 
 

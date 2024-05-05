@@ -42,10 +42,10 @@ def conflict_based_search(current_state: State, round):
     #         initial_positions.append(initial_position)
 
     for agent in current_state.agents:
-        # relaxed_state = current_state.from_agent_perspective(agent.uid)
+        relaxed_state = current_state.from_agent_perspective(agent.uid)
         something = astar(current_state, round)
-        print('something', something, file=sys.stderr)
         root.solution[agent.uid] = something
+        print(f'root.solution[{agent.uid}]', root.solution[agent.uid], file=sys.stderr)
         
     root.cost = cost(root.solution)
     frontier = PriorityQueue()
