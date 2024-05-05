@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 import heapq
 import time
+import sys
 
 from helper.distance_calc import DistanceCalc
 from state import State
@@ -24,10 +25,11 @@ class Heuristic(metaclass=ABCMeta):
                 continue
 
             task = round[agent.uid]
+            print(f"---task---{task}", file=sys.stderr)
 
-            
-            if(task.box_uid == None or task.goal_uid == None):
-                raise RuntimeError(f"Box_uid is None or goal_uid is None, this should not be happening")
+            # maybe don't need this check
+            # if(task.box_uid == None or task.goal_uid == None):
+            #     raise RuntimeError(f"Box_uid is None or goal_uid is None, this should not be happening")
 
             # Check if agent needs to go to its agent goal
             if(task.box_uid == -1):

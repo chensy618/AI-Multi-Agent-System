@@ -58,7 +58,7 @@ def conflict_based_search(current_state: State, round):
             executable_plan = merge_plans(node.solution)
             return executable_plan
         elif isinstance(conflict, MoveAwayConflict):
-            print(f"---Moveaway conflict--{conflict}")
+            print(f"---Moveaway conflict--{conflict}", file=sys.stderr)
             m = node.copy()
             moveaway_agent_id = conflict.ai
             blocked_agent_id = conflict.aj
@@ -72,46 +72,35 @@ def conflict_based_search(current_state: State, round):
                 continue
         else:
             print(f"---conflict--{conflict}", file=sys.stderr)
-            # TODO : chech how to merge-------------------------------------
-            # for problem in problem_list:
-            #     for agent in problem.agents:
-            #         if agent.id in [conflict.ai, conflict.aj]:
-            #             print(f"----------------------------agent.id--{agent.id}")
-            #             m = node.copy()
-            #             m.constraints.append(Constraint(agent.id, Position(conflict.pos.x, conflict.pos.y), conflict.t))
-            #             m.constraints.append(Constraint(agent.id, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
-            #             m.constraints.append(Constraint(agent.id, Position(conflict.pos.x, conflict.pos.y), conflict.t+2))
-            #             print(f"---m.constraints--{m.constraints}")
-            #             m.solution[agent.id] = space_time_a_star(problem, m.constraints)
-            #             print(f"---m.solution--{m.solution[agent.id]}")
-            #             m.node_cost = cost(m.solution)
-            #             print(f"---m.node_cost--{m.node_cost}")
-            #             # When putting a node into the priority queue, include the tiebreaker
-            #             # To be able to solve the issue when the costs are equal
-            #             if m.node_cost < sys.maxsize:
-            #                 count_next = next(tiebreaker)
-            #                 frontier.put((m.node_cost, count_next, m))  # Include the tiebreaker in the tuple
-
-            #         # If agent is not involved in the conflict, then try to check box conflicts
-            #         else:
-            #             # TODO: Optimize here when there is new problem structure
-            #             # Get corresponding box id
-            #             box = next((b for b in problem.boxes if b.color == agent.color), None)
-            #             print(f"-------------------------------box.id--{box.id}")
-            #             print(f"-------------------------------agent.id--{agent.id}")
-            #             if box.id in [conflict.ai, conflict.aj]:
-            #                 m = node.copy()
-            #                 m.constraints.append(Constraint(box.id, Position(conflict.pos.x, conflict.pos.y), conflict.t))
-            #                 m.constraints.append(Constraint(box.id, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
-            #                 m.constraints.append(Constraint(box.id, Position(conflict.pos.x, conflict.pos.y), conflict.t+2))
-            #                 print(f"---m.constraints--{m.constraints}")
-            #                 m.solution[agent.id] = space_time_a_star(problem, m.constraints)
-            #                 print(f"---m.solution--{m.solution[agent.id]}")
-            #                 m.node_cost = cost(m.solution)
-            #                 print(f"---m.node_cost--{m.node_cost}")
-            #                 if m.node_cost < sys.maxsize:
-            #                     count_next = next(tiebreaker)
-            #                     frontier.put((m.node_cost, count_next, m))  # Include the tiebreaker in the tuple
+            # TODO : check how to merge-------------------------------------
+            for agent_id, task in round.items():
+                if agent_id in [conflict.ai, conflict.aj]:
+                    m = node.copy()
+                    m.constraints.append(Constraint(agent_id, Position(conflict.pos.x, conflict.pos.y), conflict.t))
+                    m.constraints.append(Constraint(agent_id, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
+                    m.constraints.append(Constraint(agent_id, Position(conflict.pos.x, conflict.pos.y), conflict.t+2))
+                    st_solution = space_time_a_star(current_state, m.constraints, round)
+                    print(f"---st_solution--{st_solution}", file=sys.stderr)
+                    for agent in current_state.agents:
+                        agent = current_state.get_agent_by_uid(agent.uid)
+                        m.solution[agent.uid] = [actions[agent.uid] for actions in st_solution]
+                    #m.solution[agent_id] = space_time_a_star(current_state, m.constraints, round)
+                    m.node_cost = cost(m.solution)
+                    if m.node_cost < sys.maxsize:
+                        count_next = next(tiebreaker)
+                        frontier.put((m.node_cost, count_next, m))
+                else:
+                    box = current_state.get_box_by_uid(task.box_uid)
+                    if box.uid in [conflict.ai, conflict.aj]:
+                        m = node.copy()
+                        m.constraints.append(Constraint(box.uid, Position(conflict.pos.x, conflict.pos.y), conflict.t))
+                        m.constraints.append(Constraint(box.uid, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
+                        m.constraints.append(Constraint(box.uid, Position(conflict.pos.x, conflict.pos.y), conflict.t+2))
+                        m.solution[agent_id] = space_time_a_star(current_state, m.constraints, round)
+                        m.node_cost = cost(m.solution)
+                        if m.node_cost < sys.maxsize:
+                            count_next = next(tiebreaker)
+                            frontier.put((m.node_cost, count_next, m))
 
         
         
@@ -150,7 +139,6 @@ def find_first_conflict(solution, initial_positions):
     # sort agent by their path length, so that we always start from short path
     sorted_agents = sorted(solution.items(), key=lambda item: len(item[1]))
     print(f"---sorted_agents--{sorted_agents}", file=sys.stderr)
-    print(f"default--{Position(0,0)}")
 
     for agent_id, path in sorted_agents:
         print(f"---agent_id--{agent_id}", file=sys.stderr)
@@ -177,14 +165,14 @@ def find_first_conflict(solution, initial_positions):
                         current_position.x + action.agent_rel_pos.x,
                         current_position.y + action.agent_rel_pos.y
                     )
-                    print(f"---resulting_position--{resulting_position}")
+                    print(f"---resulting_position--{resulting_position}",file=sys.stderr)
                     if (resulting_position, time_step) in positions:
                         # Conflict detected, return information about the conflict
                         other_agent_id = positions[(resulting_position, time_step)]
                         print(f"---Conflict--{Conflict(agent_id, other_agent_id, resulting_position, time_step)}", file=sys.stderr)
                         return Conflict(agent_id, other_agent_id, resulting_position, time_step)
 
-    #              # If the agent has reached the goal, still extend its path to avoid blocking other agents
+                # If the agent has reached the goal, still extend its path to avoid blocking other agents
                 else:
                     resulting_position = current_position
                     if (resulting_position, time_step) in positions:

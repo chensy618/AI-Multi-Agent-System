@@ -152,7 +152,7 @@ class State:
                     return False
             else:
                 # If the goal ID is not recognized as a box or agent, return False
-                print('There is something wrong with the goal id set up, please')
+                print('There is something wrong with the goal id set up, please', file=sys.stderr)
                 return False
         return True
 
@@ -343,6 +343,7 @@ class State:
 
     def __repr__(self):
         lines = []
+        print(f"---self.walls---{self.walls}",file=sys.stderr)
         max_row = len(self.walls)
         max_col = len(self.walls[0])
         for row in range(max_row + 1):
@@ -364,10 +365,12 @@ class State:
         return '\n'.join(lines)
 
 
+
 class SpaceTimeState(State):
-    def __init__(self, agents, boxes, goals, time, constraints, g):
-        super().__init__(agents, boxes, goals)
+    def __init__(self, agents, boxes, walls, goals, time, constraints, g):
+        super().__init__(agents, boxes, walls)
         self.time = time  # Add a time component to the state
+        self.goals = goals
         self.constraints = constraints
         self.parent = None
         self.joint_action = None
@@ -377,17 +380,14 @@ class SpaceTimeState(State):
     # Modify is_applicable function to include constraints judgement
     def is_applicable(self, agent: int, action: Action) -> bool:
         agent = self.agents[agent]
-        # print(f"---agent---{agent}")
+        #print(f"---agent---{agent}", file=sys.stderr)
         agent_destination = agent.pos + action.agent_rel_pos
-        # print(f"---agent_destination---{agent_destination}")
+        # print(f"---agent_destination---{agent_destination}",file=sys.stderr)
         if action.type is ActionType.NoOp:
             return True
 
         elif action.type is ActionType.Move:
-            # Check if the agent's destination is free and not constrained
-            # print(f"---self.is_free(agent_destination)---{self.is_free(agent_destination)}")
-            # print(f"---self.is_constrained(agent, agent_destination, self.time + 1)---{self.is_constrained(agent.id, agent_destination, self.time + 1)}")
-            return self.is_free(agent_destination) and not self.is_constrained(agent.id, agent_destination, self.time + 1)
+            return self.is_free(agent_destination) and not self.is_constrained(agent.value, agent_destination, self.time + 1)
 
         elif action.type is ActionType.Push:
             # Check if there is a box at the agent's destination to push
@@ -396,11 +396,7 @@ class SpaceTimeState(State):
                 # Calculate the box's destination position
                 box_destination = agent_destination + action.box_rel_pos
                 # Check if both the agent's and the box's destinations are free and not constrained
-                return (self.is_free(box_destination) and not self.is_constrained(box_to_push.id, box_destination, self.time + 1))
-                # return (self.is_free(agent_destination) and
-                #         self.is_free(box_destination) and
-                #         not self.is_constrained(box_to_push.id, agent_destination, self.time + 1) and
-                #         not self.is_constrained(box_to_push.id, box_destination, self.time + 1))
+                return (self.is_free(box_destination) and not self.is_constrained(box_to_push.value, box_destination, self.time + 1))
             else:
                 return False
 
@@ -411,22 +407,11 @@ class SpaceTimeState(State):
             box_to_pull = next((box for box in self.boxes if box.pos == box_position), None)
             if box_to_pull and box_to_pull.color == agent.color:
                 # Check if the agent's destination is free and not constrained
-                return self.is_free(agent_destination) and not self.is_constrained(agent.id, agent_destination, self.time + 1)
+                return self.is_free(agent_destination) and not self.is_constrained(agent.value, agent_destination, self.time + 1)
             else:
                 return False
 
         return False
-
-
-    # def result(self, joint_action: list[Action]) -> 'SpaceTimeState':
-    #     # Add the time dimension to the new state
-    #     new_state = super().result(joint_action)
-    #     print(f"---joint_action---{new_state.joint_action}")
-    #     print(f"---new_state agent---{new_state.agents}")
-    #     print(f"---new_state box---{new_state.boxes}")
-    #     print(f"---new_state goal---{new_state.goals}")
-    #     print(f"---new_state g---{new_state.g}")
-    #     return SpaceTimeState(new_state.agents, new_state.boxes, new_state.goals, self.time + 1, self.constraints, new_state.g)
 
 
     def result(self, joint_action: list[Action]) -> 'SpaceTimeState':
@@ -434,9 +419,8 @@ class SpaceTimeState(State):
         Returns the state resulting from applying joint_action in this state.
         Precondition: Joint action must be applicable and non-conflicting in this state.
         '''
-        copy_agents = [Agent(agent.pos, agent.id, agent.color) for agent in self.agents]
-        copy_boxes = [Box(box.pos, box.id, box.color) for box in self.boxes]
-        copy_goals = [Goal(goal.pos, goal.id) for goal in self.goals]
+        copy_agents = [Agent(agent.pos, agent.value, agent.uid, agent.color) for agent in self.agents]
+        copy_boxes = [Box(box.pos, box.value, box.uid, box.color) for box in self.boxes]
         for agent_index, action in enumerate(joint_action):
             copied_agent = copy_agents[agent_index]
             if action.type == ActionType.Move:
@@ -457,23 +441,13 @@ class SpaceTimeState(State):
                 copied_agent.pos += action.agent_rel_pos
 
         # Create a new state with the updated agents and boxes
-        copy_state = SpaceTimeState(copy_agents, copy_boxes, copy_goals, self.time + 1, self.constraints, self.g + 1)
+        copy_state = SpaceTimeState(copy_agents, copy_boxes, self.walls, self.goals, self.time + 1, self.constraints, self.g + 1)
         copy_state.parent = self
         copy_state.joint_action = joint_action[:]
-        # print(f"---copy state g---{copy_state.g}")
-        # print(f"---copy state joint_action---{copy_state.joint_action}")
         return copy_state
 
 
     def is_constrained(self, agent_index, position, time):
-        # Check if there is a constraint for the given agent at the given position and time
-        # print(f"---agent_index---{agent_index}")
-        # print(f"---position---{position}")
-        # print(f"---time---{time}")
-        # print(f"---self.constraints---{self.constraints}")
-        # print(f"self.constraints.agentId is {self.constraints[0].agentId}")
-        # print(f"self.constraints.position is {self.constraints[0].pos}")
-        # print(f"self.constraints.time_step is {self.constraints[0].t}")
         return any(constraint.agentId == agent_index and
                    constraint.pos == position and
                    constraint.t == time
