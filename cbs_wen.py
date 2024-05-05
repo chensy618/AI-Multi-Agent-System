@@ -268,7 +268,7 @@ def merge_plans(plans):
             if step < len(plan):
                 action = plan[step][0]  # Each action is a list, take the first element
             else:
-                # Use a specific NoOp action or None, depending on how NoOp is represented in your system
+                # Use a specific NoOp action
                 action = Action.NoOp
             joint_action.append((agent_id, action))  # Include agent_id for sorting
 
