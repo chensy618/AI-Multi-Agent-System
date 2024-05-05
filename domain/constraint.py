@@ -1,11 +1,9 @@
-from domain.st_position import STPosition
-
-
 class Constraint:
     # It's a constraint on one of the agent at (pos, t)
-    def __init__(self, agentId: int, st_pos: STPosition):
+    def __init__(self, agentId : int, pos, t):
         self.agentId = agentId
-        self.st_pos = st_pos
+        self.pos = pos
+        self.t = t
 
     def __repr__(self):
-        return f"Constraint(agentId={self.agentId}, st_pos={self.st_pos})"
+        return f"Constraint(agentId={self.agentId}, pos={self.pos}, t={self.t})"

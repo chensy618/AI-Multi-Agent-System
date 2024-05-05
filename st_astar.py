@@ -34,4 +34,3 @@ def space_time_a_star(inital_state, constraints, round):
         for state in current_state.get_expanded_states():
             if state not in explored and not frontier.contains(state):
                 frontier.add(state, round)
-
