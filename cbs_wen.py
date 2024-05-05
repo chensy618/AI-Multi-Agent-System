@@ -55,11 +55,16 @@ def conflict_based_search(problem_list):
             return executable_plan
         # Special handling for MoveAwayConflict
         elif isinstance(conflict, MoveAwayConflict):
-            print(f"---conflict--{conflict}")
+            print(f"---Moveaway conflict--{conflict}")
+            m = node.copy()
             moveaway_agent_id = conflict.ai
-            node.solution[moveaway_agent_id] = solve_moveaway_conflict(node, conflict)
-            executable_plan = merge_plans(node.solution)
-            return executable_plan
+            m.solution[moveaway_agent_id] = solve_moveaway_conflict(node, conflict)
+            m.node_cost = cost(m.solution)
+            print(f"---m.node_cost--{m.node_cost}")
+            if m.node_cost < sys.maxsize:
+                count_next = next(tiebreaker)
+                frontier.put((m.node_cost, count_next, m))  # Include the tiebreaker in the tuple
+
         else:
             for problem in problem_list:
                 for agent in problem.agents:
@@ -132,7 +137,10 @@ def find_first_conflict(solution, initial_positions):
     max_path_length = max(len(path) for path in solution.values())
     print(f"---max_path_length--{max_path_length}")
 
-    for agent_id, path in solution.items():
+    # sort agent by their path length, so that we always start from short path
+    sorted_agents = sorted(solution.items(), key=lambda item: len(item[1]))
+
+    for agent_id, path in sorted_agents:
         print(f"---agent_id--{agent_id}")
         print(f'---box is--{initial_positions[agent_id]["box_id"]}')
         print(f'---path is--{path}')
@@ -224,13 +232,11 @@ def find_first_conflict(solution, initial_positions):
                         print(f'---avoid_pos_list 1--{avoid_pos_list}')
                         print(f"---MoveAwayConflict 1 --{MoveAwayConflict(agent_id, resulting_agent_position, avoid_pos_list, time_step-1)}")
                         return MoveAwayConflict(agent_id, resulting_agent_position, avoid_pos_list, time_step-1)
+                    # box cannot move away when it reaches the goal, so need to return normal conflict for the other agent to replan
                     elif (resulting_box_position, time_step) in positions:
                         other_entity_id = positions[(resulting_box_position, time_step)]
-                        print(f'###### positions--{positions}########')
-                        avoid_pos_list = {pos: agent_id for pos, agent_id in positions.items() if pos[1] >= time_step-1}
-                        print(f'---avoid_pos_list 2--{avoid_pos_list}')
-                        print(f"---MoveAwayConflict 2 --{MoveAwayConflict(agent_id, resulting_agent_position, avoid_pos_list, time_step-1)}")
-                        return MoveAwayConflict(agent_id, resulting_agent_position, avoid_pos_list, time_step-1)
+                        print(f"---Conflict--{Conflict(box_id, other_entity_id, resulting_box_position, time_step)}")
+                        return Conflict(box_id, other_entity_id, resulting_box_position, time_step)
                     print(f"---resulting_agent_position in else--{resulting_agent_position}")
                     print(f"---resulting_box_position in else--{resulting_box_position}")
 
