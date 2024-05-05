@@ -21,17 +21,21 @@ def conflict_based_search(current_state: State, round):
     # get initial positions of agents, boxes.
     # initial_positions format should like as follows : 
     # [(0, Position(x=3, y=1), 'A', Position(x=3, y=2)), (1, Position(x=5, y=3), 'B', Position(x=4, y=3))]
-    initial_positions = []
-    for problem in round:
-        print(f"----problem:{problem}",file=sys.stderr)
-        for agent in problem.agents:
-            box = next((b for b in problem.boxes if b.color == agent.color), None)
-            initial_position = (agent.id, agent.pos, box.id if box else None, box.pos if box else None)
-            initial_positions.append(initial_position)
+    # print(f"---round:{round}", file=sys.stderr)
+    # for agent, task in round.items():
+        
+        
+    # initial_positions = []
+    # for problem in round:
+    #     print(f"----problem:{problem}",file=sys.stderr)
+    #     for agent in problem.agents:
+    #         box = next((b for b in problem.boxes if b.color == agent.color), None)
+    #         initial_position = (agent.id, agent.pos, box.id if box else None, box.pos if box else None)
+    #         initial_positions.append(initial_position)
 
     for agent in current_state.agents:
-        relaxed_state = current_state.from_agent_perspective(agent.uid)
-        something = astar(relaxed_state, round)
+        # relaxed_state = current_state.from_agent_perspective(agent.uid)
+        something = astar(current_state, round)
         print('something', something, file=sys.stderr)
         root.solution[agent.uid] = something
         
