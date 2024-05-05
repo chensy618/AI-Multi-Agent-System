@@ -17,21 +17,26 @@ tiebreaker = itertools.count()
 def conflict_based_search(problem_list):
     root = Node()
     root.constraints = []
-    initial_positions = []
+    initial_positions = {}
 
     # Get initial positions
     for problem in problem_list:
+
+        box_by_color = {box.color: box for box in problem.boxes}
         # Iterate over agents, assuming that not all agents may have a corresponding box
         for agent in problem.agents:
-            # Find the corresponding box if it exists
-            # TODO: Can be optimized by using a dictionary to map agent to boxes, instead of using color again here
-            box = next((b for b in problem.boxes if b.color == agent.color), None)
-            # goal = next((g for g in problem.goals if (g.id == agent.id or g.id == box.id)), None)
-            # Create a tuple with the agent and box information, as tuple can handle the order of data very well, and is immutable.
+            # Find the corresponding box if it exists using the color mapping
+            box = box_by_color.get(agent.color, None)
+
+            # Create a dictionary with the agent and box information
             # If there is no corresponding box, use None for the box ID and position
-            initial_position = (agent.id, agent.pos, box.id if box else None, box.pos if box else None)
-            initial_positions.append(initial_position)
+            initial_positions[agent.id] = {
+                'agent_position': agent.pos,
+                'box_id': box.id if box else None,
+                'box_position': box.pos if box else None
+            }
             root.solution[agent.id] = astar(problem)
+
     print(f"---initial_positions--{initial_positions}")
     # ---initial_positions--[(0, Position(x=3, y=1), 'A', Position(x=3, y=2)), (1, Position(x=5, y=3), 'B', Position(x=4, y=3))]
 
@@ -129,12 +134,12 @@ def find_first_conflict(solution, initial_positions):
 
     for agent_id, path in solution.items():
         print(f"---agent_id--{agent_id}")
-        print(f'---box is--{initial_positions[agent_id][2]}')
+        print(f'---box is--{initial_positions[agent_id]["box_id"]}')
         print(f'---path is--{path}')
 
         # agent-agent conflict
-        if initial_positions[agent_id][2] is None:
-            current_position = initial_positions[agent_id][1]
+        if initial_positions[agent_id]['box_id'] is None:
+            current_position = initial_positions[agent_id]['agent_position']
             print(f"---current_position--{current_position}")
             print(f"---agent_id--{agent_id}")
             print(f"---path--{path}")
@@ -174,9 +179,9 @@ def find_first_conflict(solution, initial_positions):
         # agent-box conflict
         # box-box conflict
         else:
-            current_agent_position = initial_positions[agent_id][1]
-            box_id = initial_positions[agent_id][2]
-            current_box_position = initial_positions[agent_id][3]
+            current_agent_position = initial_positions[agent_id]['agent_position']
+            box_id = initial_positions[agent_id]['box_id']
+            current_box_position = initial_positions[agent_id]['box_position']
             print(f"---current_agent_position--{current_agent_position}")
             print(f"---current_box_position--{current_box_position}")
             print(f"---box_id--{box_id}")
@@ -246,6 +251,7 @@ def merge_plans(plans):
     :param solution: A dictionary mapping agent IDs to their respective paths (lists of actions).
     :return: A list of joint actions that represents the executable plan.
     """
+    print(f"---plans--{plans}")
     # Find the maximum length of the individual agent plans
     max_length = max(len(plan) for plan in plans.values())
 
@@ -257,19 +263,21 @@ def merge_plans(plans):
         joint_action = []
 
         # For each agent, get the action at the current step or use NoOp if the plan is shorter
-        for agent_id, plan in plans.items():
+        for agent_id in sorted(plans.keys()):  # Sort the agent IDs to maintain order
+            plan = plans[agent_id]
             if step < len(plan):
                 action = plan[step][0]  # Each action is a list, take the first element
             else:
-                # Assuming NoOp is represented as None or a specific NoOp action
-                # We can't always use NoOp here, becuase the that agent reach the goal, it won't move anymore
-                # In this case, it will block the other agents
+                # Use a specific NoOp action or None, depending on how NoOp is represented in your system
                 action = Action.NoOp
-            joint_action.append(action)
+            joint_action.append((agent_id, action))  # Include agent_id for sorting
 
-        # Append the joint action to the merged plan
+        # Sort joint_action by agent_id and extract the actions in order
+        joint_action.sort(key=lambda x: x[0])
+        joint_action = [action for agent_id, action in joint_action]
+
         merged_plan.append(joint_action)
-    print(f"---merged_plan--{merged_plan}")
+        print(f'merged_plan--{merged_plan}')
     return merged_plan
 
 
