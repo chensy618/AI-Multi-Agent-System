@@ -23,17 +23,25 @@ def conflict_based_search(problem_list):
     for problem in problem_list:
 
         box_by_color = {box.color: box for box in problem.boxes}
+        goal_by_id = {goal.id: goal for goal in problem.goals}
         # Iterate over agents, assuming that not all agents may have a corresponding box
         for agent in problem.agents:
             # Find the corresponding box if it exists using the color mapping
             box = box_by_color.get(agent.color, None)
-
+            # If a box is associated with the agent, use the box's ID to find the goal
+            # Otherwise, use the agent's ID to find the goal
+            if box is not None:
+                goal = goal_by_id.get(box.id)
+            else:
+                goal = goal_by_id.get(str(agent.id))
             # Create a dictionary with the agent and box information
             # If there is no corresponding box, use None for the box ID and position
             initial_positions[agent.id] = {
                 'agent_position': agent.pos,
                 'box_id': box.id if box else None,
-                'box_position': box.pos if box else None
+                'box_position': box.pos if box else None,
+                'goal_id': goal.id,
+                'goal_position': goal.pos
             }
             root.solution[agent.id] = astar(problem)
 
@@ -58,13 +66,15 @@ def conflict_based_search(problem_list):
             print(f"---Moveaway conflict--{conflict}")
             m = node.copy()
             moveaway_agent_id = conflict.ai
-            m.solution[moveaway_agent_id] = solve_moveaway_conflict(node, conflict)
-            m.node_cost = cost(m.solution)
-            print(f"---m.node_cost--{m.node_cost}")
-            if m.node_cost < sys.maxsize:
-                count_next = next(tiebreaker)
-                frontier.put((m.node_cost, count_next, m))  # Include the tiebreaker in the tuple
-
+            blocked_agent_id = conflict.aj
+            m.solution[moveaway_agent_id], m.solution[blocked_agent_id] = solve_moveaway_conflict(node, conflict)
+            # Check if there is conflict for the new plans, if not, merge the plans, else continue
+            conflict = find_first_conflict(m.solution, initial_positions)
+            if conflict is None:
+                executable_plan = merge_plans(m.solution)
+                return executable_plan
+            else:
+                continue
         else:
             for problem in problem_list:
                 for agent in problem.agents:
@@ -145,38 +155,28 @@ def find_first_conflict(solution, initial_positions):
         print(f'---box is--{initial_positions[agent_id]["box_id"]}')
         print(f'---path is--{path}')
 
-        # agent-agent conflict
+        # Agent only conflict
         if initial_positions[agent_id]['box_id'] is None:
             current_position = initial_positions[agent_id]['agent_position']
             print(f"---current_position--{current_position}")
             print(f"---agent_id--{agent_id}")
             print(f"---path--{path}")
             time_step = 1 # Start the first step at 1
-            # Loop over the max path length to avoid situation that one agent reach the goal and stop moving, but still block the other agents
-            while time_step < max_path_length:
-                if time_step < len(path)+1:
-                    action_list = path[time_step - 1]
-                    action = action_list[0]
-                    print(f"---action--{action}")
-                    # Calculate the resulting position of the agent after the action
-                    resulting_position = Position(
-                        current_position.x + action.agent_rel_pos.x,
-                        current_position.y + action.agent_rel_pos.y
-                    )
-                    if (resulting_position, time_step) in positions:
-                        # Conflict detected, return information about the conflict
-                        other_agent_id = positions[(resulting_position, time_step)]
-                        print(f"---Conflict--{Conflict(agent_id, other_agent_id, resulting_position, time_step)}")
-                        return Conflict(agent_id, other_agent_id, resulting_position, time_step)
-
-                 # If the agent has reached the goal, still extend its path to avoid blocking other agents
-                else:
-                    resulting_position = current_position
-                    if (resulting_position, time_step) in positions:
-                        # Conflict detected, return information about the conflict
-                        other_agent_id = positions[(resulting_position, time_step)]
-                        print(f"---MoveAwayConflict--{MoveAwayConflict(agent_id, resulting_agent_position, avoid_pos_list, time_step-1)}")
-                        return MoveAwayConflict(agent_id, resulting_agent_position, avoid_pos_list, time_step-1)
+            # Agent only won't have issue with MoveAwayConflict
+            while time_step < len(path)+1:
+                action_list = path[time_step - 1]
+                action = action_list[0]
+                print(f"---action--{action}")
+                # Calculate the resulting position of the agent after the action
+                resulting_position = Position(
+                    current_position.x + action.agent_rel_pos.x,
+                    current_position.y + action.agent_rel_pos.y
+                )
+                if (resulting_position, time_step) in positions:
+                    # Conflict detected, return information about the conflict
+                    other_agent_id = positions[(resulting_position, time_step)]
+                    print(f"---Conflict--{Conflict(agent_id, other_agent_id, resulting_position, time_step)}")
+                    return Conflict(agent_id, other_agent_id, resulting_position, time_step)
 
                 positions[(resulting_position, time_step)] = agent_id
                 print(f"---positions--{positions}")
@@ -212,36 +212,55 @@ def find_first_conflict(solution, initial_positions):
                     )
                     print(f"---resulting_agent_position--{resulting_agent_position}")
                     print(f"---resulting_box_position--{resulting_box_position}")
-                    if (resulting_agent_position, time_step) in positions:
-                        other_entity_id = positions[(resulting_agent_position, time_step)]
-                        print(f"---Conflict--{Conflict(agent_id, other_entity_id, resulting_agent_position, time_step)}")
-                        return Conflict(agent_id, other_entity_id, resulting_agent_position, time_step)
-                    elif (resulting_box_position, time_step) in positions:
-                        other_entity_id = positions[(resulting_box_position, time_step)]
-                        print(f"---Conflict--{Conflict(box_id, other_entity_id, resulting_box_position, time_step)}")
-                        return Conflict(box_id, other_entity_id, resulting_box_position, time_step)
-
+                    # If the agent hasn't reached the goal, give the agent tag as 'fixed'
+                    agent_tag = 'fixed'
+                    box_tag = 'fixed'
                 # Agent has reached the goal, but still extend its path to avoid blocking other agents
                 else:
                     resulting_agent_position = current_agent_position
                     resulting_box_position = current_box_position
-                    if (resulting_agent_position, time_step) in positions:
-                        other_entity_id = positions[(resulting_agent_position, time_step)]
-                        print(f'###### positions--{positions}########')
-                        avoid_pos_list = {pos: agent_id for pos, agent_id in positions.items() if pos[1] >= time_step-1}
+                    # If the agent has reached the goal, give the agent tag as 'movable'
+                    agent_tag = 'movable'
+                    # Box cannot move after reaching the goal
+                    box_tag = 'fixed'
+
+                ### Judge conflicts ###
+                if (resulting_agent_position, time_step) in positions:
+                    tag = positions[(resulting_agent_position, time_step)]['tag']
+                    other_entity_id = positions[(resulting_agent_position, time_step)]['id']
+                    # Means the other conflict agent hasn't finished its goal yet
+                    if tag == 'fixed':
+                        print(f"---Conflict--{Conflict(agent_id, other_entity_id, resulting_agent_position, time_step)}")
+                        return Conflict(agent_id, other_entity_id, resulting_agent_position, time_step)
+                    # Means the other conflict agent has finished its goal, and can try to move out the way
+                    else:
+                        # Can not move to the same position as other agent at current timestep, box, and cannot go to own/other agent's goal position
+                        avoid_pos_list = {pos: agent_id for pos, agent_id in positions.items() if pos[1] == time_step-1}
+                        avoid_pos_list[(initial_positions[agent_id]['goal_position'], time_step)] = {'id': initial_positions[agent_id]['goal_id']}
+                        avoid_pos_list[(initial_positions[other_entity_id]['goal_position'], time_step)] = {'id': initial_positions[other_entity_id]['goal_id']}
                         print(f'---avoid_pos_list 1--{avoid_pos_list}')
-                        print(f"---MoveAwayConflict 1 --{MoveAwayConflict(agent_id, resulting_agent_position, avoid_pos_list, time_step-1)}")
-                        return MoveAwayConflict(agent_id, resulting_agent_position, avoid_pos_list, time_step-1)
-                    # box cannot move away when it reaches the goal, so need to return normal conflict for the other agent to replan
-                    elif (resulting_box_position, time_step) in positions:
-                        other_entity_id = positions[(resulting_box_position, time_step)]
+                        print(f"---MoveAwayConflict 1 --{MoveAwayConflict(other_entity_id, agent_id, resulting_agent_position, avoid_pos_list, time_step-1)}")
+                        return MoveAwayConflict(other_entity_id, agent_id, resulting_agent_position, avoid_pos_list, time_step-1)
+                elif (resulting_box_position, time_step) in positions:
+                    tag = positions[(resulting_box_position, time_step)]['tag']
+                    other_entity_id = positions[(resulting_box_position, time_step)]['id']
+                    # Means the other conflict agent hasn't finished its goal yet
+                    if tag == 'fixed':
                         print(f"---Conflict--{Conflict(box_id, other_entity_id, resulting_box_position, time_step)}")
                         return Conflict(box_id, other_entity_id, resulting_box_position, time_step)
-                    print(f"---resulting_agent_position in else--{resulting_agent_position}")
-                    print(f"---resulting_box_position in else--{resulting_box_position}")
+                    # Means the other conflict agent has finished its goal, and can try to move out the way
+                    else:
+                        # Can not move to the same position as other agent at current timestep, box, and cannot go to own/other agent's goal position
+                        avoid_pos_list = {pos: agent_id for pos, agent_id in positions.items() if pos[1] == time_step-1}
+                        avoid_pos_list[(initial_positions[agent_id]['goal_position'], time_step)] = {'id': initial_positions[agent_id]['goal_id']}
+                        avoid_pos_list[(initial_positions[other_entity_id]['goal_position'], time_step)] = {'id': initial_positions[other_entity_id]['goal_id']}
+                        print(f'---avoid_pos_list 2--{avoid_pos_list}')
+                        print(f"---MoveAwayConflict 2 --{MoveAwayConflict(other_entity_id, agent_id, resulting_box_position, avoid_pos_list, time_step-1)}")
+                        return MoveAwayConflict(other_entity_id, agent_id, resulting_box_position, avoid_pos_list, time_step-1)
 
-                positions[(resulting_agent_position, time_step)] = agent_id
-                positions[(resulting_box_position, time_step)] = box_id
+                # Store the explored agent and box positions in the positions dictionary
+                positions[(resulting_agent_position, time_step)] = {'id': agent_id, 'tag': agent_tag}
+                positions[(resulting_box_position, time_step)] = {'id': box_id, 'tag': box_tag}
                 print(f"---positions--{positions}")
                 current_agent_position = resulting_agent_position
                 current_box_position = resulting_box_position
@@ -289,6 +308,7 @@ def merge_plans(plans):
 
 def solve_moveaway_conflict(node, conflict):
     agent_id = conflict.ai
+    blocked_agent_id = conflict.aj
     avoid_pos_list = conflict.avoid_pos_list
     agent_current_pos = conflict.current_pos
     time_step = conflict.t
@@ -304,13 +324,18 @@ def solve_moveaway_conflict(node, conflict):
                 print(f"---agent_destination--{agent_destination}")
                 print(f"---action--{action}")
                 insert_action = [action]
+                break
     # print(f"---insert_action--{insert_action}")
     # print(f"---node.solution[agent_id]--{node.solution[agent_id]}")
 
     # Fill the solution with NoOp until the time step
-    while len(node.solution[agent_id]) < time_step-1:
+    while len(node.solution[agent_id]) < time_step:
         node.solution[agent_id].append([Action.NoOp])
+
     # Insert the new action at the time step
-    node.solution[agent_id].insert(time_step-1, insert_action)
+    node.solution[agent_id].insert(time_step, insert_action)
+    # Insert a NoOp action for the blocked agent to wait the other agent move
+    node.solution[blocked_agent_id].insert(time_step, [Action.NoOp])
+
     # Return the new solution for the agent that needs to move away.
-    return node.solution[agent_id]
+    return node.solution[agent_id], node.solution[blocked_agent_id]
