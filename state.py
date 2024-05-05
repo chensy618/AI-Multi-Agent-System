@@ -32,7 +32,7 @@ class State:
     def from_agent_perspective(self, agent_id):
         print("from_agent_perspective - ", agent_id, file=sys.stderr)
 
-        relaxed_agent = self.get_agent_by_id(agent_id)
+        relaxed_agent = self.get_agent_by_uid(agent_id)
         print("relaxed_agent", relaxed_agent, file=sys.stderr)
 
         agent_colored_boxes = self.get_agent_boxes(relaxed_agent.color)
@@ -49,7 +49,7 @@ class State:
         return State([relaxed_agent], agent_colored_boxes, relaxed_walls)
 
 
-    def get_agent_by_id(self, agentId) -> Agent:
+    def get_agent_by_uid(self, agentId) -> Agent:
         for agent in self.agents:
             if agentId == agent.uid:
                 return Agent(agent.pos, agent.value, agent.uid, agent.color)
@@ -62,6 +62,8 @@ class State:
         for box in self.boxes:
             if boxId == box.uid:
                 return box
+            
+        return Box(None, None, None, None)
 
 
     def result(self, joint_action: list[Action]) -> 'State':

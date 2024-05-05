@@ -42,7 +42,7 @@ class HTNResolver:
                 # Create agent_tasks for each agent
                 if agent.uid not in self.agent_tasks:
                     self.agent_tasks[agent.uid] = deque()
-
+                print(f"HERE: {self.agent_tasks}", file=sys.stderr)
                 goal_uid = HTNHelper.get_closest_goal_uid_to_box(box, self.agent_tasks)
                 self.agent_tasks[agent.uid].append(Task(box.uid, goal_uid))
 
@@ -50,6 +50,7 @@ class HTNResolver:
         for agent in initial_state.agents:
             if agent.uid not in self.agent_tasks:
                 self.agent_tasks[agent.uid] = deque()
+            print(f"HERE: {self.agent_tasks}", file=sys.stderr)
             goal_uid = HTNHelper.get_closest_goal_uid_to_agent(agent, self.agent_tasks)
             self.agent_tasks[agent.uid].append(Task(-1, goal_uid))
 

@@ -22,15 +22,23 @@ def conflict_based_search(current_state: State, round):
     # initial_positions format should like as follows : 
     # [(0, Position(x=3, y=1), 'A', Position(x=3, y=2)), (1, Position(x=5, y=3), 'B', Position(x=4, y=3))]
     # print(f"---round:{round}", file=sys.stderr)
-    # for agent, task in round.items():
-        
-        
+    
+    problem_list = []
+    for agent_uid, task in round.items():
+        agent = current_state.get_agent_by_uid(agent_uid)
+        box = current_state.get_box_by_uid(task.box_uid)
+        problem_list.append((agent.uid, agent.pos, box.uid, box.pos))
+
+    # initial_positions = []
+    # for problem in problem_list:
+    #     initial_positions.append(problem)
+
     # initial_positions = []
     # for problem in round:
     #     print(f"----problem:{problem}",file=sys.stderr)
     #     for agent in problem.agents:
     #         box = next((b for b in problem.boxes if b.color == agent.color), None)
-    #         initial_position = (agent.id, agent.pos, box.id if box else None, box.pos if box else None)
+    #         initial_position = (agent.uid, agent.pos, box.id if box else None, box.pos if box else None)
     #         initial_positions.append(initial_position)
 
     for agent in current_state.agents:
@@ -49,7 +57,7 @@ def conflict_based_search(current_state: State, round):
         # conflict = find_first_conflict_box_box(node.solution, round, initial_box_positions)
         #conflict = find_first_conflict_agt_agt(node.solution, initial_agent_positions)
         #conflict = find_first_conflict_agt_box(node.solution, problem_list, initial_agent_positions, initial_box_positions)
-        conflict = find_first_conflict(node.solution, initial_positions)
+        conflict = find_first_conflict(node.solution, problem_list)
         if conflict is None:
             print('I am here, no conflict found.', file=sys.stderr)
             executable_plan = merge_plans(node.solution)
@@ -58,17 +66,17 @@ def conflict_based_search(current_state: State, round):
             print(f"---conflict--{conflict}", file=sys.stderr)
         for problem in round:
            for agent in problem.agents:
-                if agent.id in [conflict.ai, conflict.aj]:
-                    print(f"----------------------------agent.id--{agent.id}")
+                if agent.uid in [conflict.ai, conflict.aj]:
+                    print(f"----------------------------agent.uid--{agent.uid}", file=sys.stderr)
                     m = node.copy()
-                    m.constraints.append(Constraint(agent.id, Position(conflict.pos.x, conflict.pos.y), conflict.t))
-                    m.constraints.append(Constraint(agent.id, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
-                    m.constraints.append(Constraint(agent.id, Position(conflict.pos.x, conflict.pos.y), conflict.t+2))
-                    print(f"---m.constraints--{m.constraints}")
-                    m.solution[agent.id] = space_time_a_star(problem, m.constraints)
-                    print(f"---m.solution--{m.solution[agent.id]}")
+                    m.constraints.append(Constraint(agent.uid, Position(conflict.pos.x, conflict.pos.y), conflict.t))
+                    m.constraints.append(Constraint(agent.uid, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
+                    m.constraints.append(Constraint(agent.uid, Position(conflict.pos.x, conflict.pos.y), conflict.t+2))
+                    print(f"---m.constraints--{m.constraints}", file=sys.stderr)
+                    m.solution[agent.uid] = space_time_a_star(problem, m.constraints)
+                    print(f"---m.solution--{m.solution[agent.uid]}", file=sys.stderr)
                     m.node_cost = cost(m.solution)
-                    print(f"---m.node_cost--{m.node_cost}")
+                    print(f"---m.node_cost--{m.node_cost}", file=sys.stderr)
                     # When putting a node into the priority queue, include the tiebreaker
                     # To be able to solve the issue when the costs are equal
                     if m.node_cost < sys.maxsize:
@@ -80,18 +88,18 @@ def conflict_based_search(current_state: State, round):
                     # TODO: Optimize here when there is new problem structure
                     # Get corresponding box id
                     box = next((b for b in problem.boxes if b.color == agent.color), None)
-                    print(f"-------------------------------box.id--{box.id}")
-                    print(f"-------------------------------agent.id--{agent.id}")
+                    print(f"-------------------------------box.id--{box.id}", file=sys.stderr)
+                    print(f"-------------------------------agent.uid--{agent.uid}", file=sys.stderr)
                     if box.id in [conflict.ai, conflict.aj]:
                         m = node.copy()
                         m.constraints.append(Constraint(box.id, Position(conflict.pos.x, conflict.pos.y), conflict.t))
                         m.constraints.append(Constraint(box.id, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
                         m.constraints.append(Constraint(box.id, Position(conflict.pos.x, conflict.pos.y), conflict.t+2))
-                        print(f"---m.constraints--{m.constraints}")
-                        m.solution[agent.id] = space_time_a_star(problem, m.constraints)
-                        print(f"---m.solution--{m.solution[agent.id]}")
+                        print(f"---m.constraints--{m.constraints}", file=sys.stderr)
+                        m.solution[agent.uid] = space_time_a_star(problem, m.constraints)
+                        print(f"---m.solution--{m.solution[agent.uid]}", file=sys.stderr)
                         m.node_cost = cost(m.solution)
-                        print(f"---m.node_cost--{m.node_cost}")
+                        print(f"---m.node_cost--{m.node_cost}", file=sys.stderr)
                         if m.node_cost < sys.maxsize:
                             count_next = next(tiebreaker)
                             frontier.put((m.node_cost, count_next, m))  # Include the tiebreaker in the tuple
@@ -121,20 +129,20 @@ def find_first_conflict(solution, initial_positions):
     positions = {}
 
     for agent_id, path in solution.items():
-        print(f"---agent_id--{agent_id}")
-        print(f'---box is--{initial_positions[agent_id][2]}')
-        print(f'---path is--{path}')
+        print(f"---agent_id--{agent_id}", file=sys.stderr)
+        print(f'---box is--{initial_positions[agent_id][2]}', file=sys.stderr)
+        print(f'---path is--{path}', file=sys.stderr)
 
         # agent-agent conflict
         if initial_positions[agent_id][2] is None:
             current_position = initial_positions[agent_id][1]
-            print(f"---current_position--{current_position}")
-            print(f"---agent_id--{agent_id}")
-            print(f"---path--{path}")
+            print(f"---current_position--{current_position}", file=sys.stderr)
+            print(f"---agent_id--{agent_id}", file=sys.stderr)
+            print(f"---path--{path}", file=sys.stderr)
             time_step = 1 # Start the first step at 1
             for action_list in path:
                 action = action_list[0]
-                print(f"---action--{action}")
+                print(f"---action--{action}", file=sys.stderr)
                 # Calculate the resulting position of the agent after the action
                 resulting_position = Position(
                     current_position.x + action.agent_rel_pos.x,
@@ -143,9 +151,9 @@ def find_first_conflict(solution, initial_positions):
                 if (resulting_position, time_step) in positions:
                     # Conflict detected, return information about the conflict
                     other_agent_id = positions[(resulting_position, time_step)]
-                    print(f"---agent_id--{agent_id}")
-                    print(f"---other_agent_id--{other_agent_id}")
-                    print(f"---Conflict--{Conflict(agent_id, other_agent_id, resulting_position, time_step)}")
+                    print(f"---agent_id--{agent_id}", file=sys.stderr)
+                    print(f"---other_agent_id--{other_agent_id}", file=sys.stderr)
+                    print(f"---Conflict--{Conflict(agent_id, other_agent_id, resulting_position, time_step)}", file=sys.stderr)
                     return Conflict(agent_id, other_agent_id, resulting_position, time_step)
                 positions[(resulting_position, time_step)] = agent_id
                 print(f"---positions--{positions}")
@@ -158,13 +166,13 @@ def find_first_conflict(solution, initial_positions):
             current_agent_position = initial_positions[agent_id][1]
             box_id = initial_positions[agent_id][2]
             current_box_position = initial_positions[agent_id][3]
-            print(f"---current_agent_position--{current_agent_position}")
-            print(f"---current_box_position--{current_box_position}")
-            print(f"---box_id--{box_id}")
+            print(f"---current_agent_position--{current_agent_position}", file=sys.stderr)
+            print(f"---current_box_position--{current_box_position}", file=sys.stderr)
+            print(f"---box_id--{box_id}", file=sys.stderr)
             time_step = 1
             for action_list in path:
                 action = action_list[0]
-                print(f"---action--{action}")
+                print(f"---action--{action}", file=sys.stderr)
                 resulting_agent_position = Position(
                     current_agent_position.x + action.agent_rel_pos.x,
                     current_agent_position.y + action.agent_rel_pos.y
@@ -173,19 +181,19 @@ def find_first_conflict(solution, initial_positions):
                     current_box_position.x + action.box_rel_pos.x,
                     current_box_position.y + action.box_rel_pos.y
                 )
-                print(f"---resulting_agent_position--{resulting_agent_position}")
-                print(f"---resulting_box_position--{resulting_box_position}")
+                print(f"---resulting_agent_position--{resulting_agent_position}", file=sys.stderr)
+                print(f"---resulting_box_position--{resulting_box_position}", file=sys.stderr)
                 if (resulting_agent_position, time_step) in positions:
                     other_entity_id = positions[(resulting_agent_position, time_step)]
-                    print(f"---Conflict--{Conflict(agent_id, other_entity_id, resulting_agent_position, time_step)}")
+                    print(f"---Conflict--{Conflict(agent_id, other_entity_id, resulting_agent_position, time_step)}", file=sys.stderr)
                     return Conflict(agent_id, other_entity_id, resulting_agent_position, time_step)
                 elif (resulting_box_position, time_step) in positions:
                     other_entity_id = positions[(resulting_box_position, time_step)]
-                    print(f"---Conflict--{Conflict(box_id, other_entity_id, resulting_box_position, time_step)}")
+                    print(f"---Conflict--{Conflict(box_id, other_entity_id, resulting_box_position, time_step)}", file=sys.stderr)
                     return Conflict(box_id, other_entity_id, resulting_box_position, time_step)
                 positions[(resulting_agent_position, time_step)] = agent_id
                 positions[(resulting_box_position, time_step)] = box_id
-                print(f"---positions--{positions}")
+                print(f"---positions--{positions}", file=sys.stderr)
                 current_agent_position = resulting_agent_position
                 current_box_position = resulting_box_position
                 time_step += 1

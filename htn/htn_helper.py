@@ -37,9 +37,12 @@ class HTNHelper:
             for task in queue:
                 existing_goal_uids.append(task.goal_uid)
  
+        print(f"existing_goal_uids: {existing_goal_uids}", file=sys.stderr)
+
         # Filter box_goals_uids to exclude those that are already in existing_goal_uids
         available_box_goals_uids = [goal.uid for goal in State.goals if goal.value == box.value and goal.uid not in existing_goal_uids]
 
+        print(f"available_box_goals_uids: {available_box_goals_uids}", file=sys.stderr)
         for goal_uid in available_box_goals_uids:
             dist = State.goal_map[goal_uid][box.pos.y][box.pos.x]
             if dist < min_dist:
@@ -61,9 +64,14 @@ class HTNHelper:
         for queue in agent_tasks.values():
             for task in queue:
                 existing_goal_uids.append(task.goal_uid)
-
+        
+        print(f"existing_goal_uids: {existing_goal_uids}", file=sys.stderr)
         # Filter box_goals_uids to exclude those that are already in existing_goal_uids
-        available_agent_goals_uids = [goal.uid for goal in State.goals if goal.value == agent.value and goal.uid not in existing_goal_uids]
+        print(f"State.goals: {State.goals}", file=sys.stderr)
+        print(f"HTNHelper.agent_goals(): {HTNHelper.agent_goals()}", file=sys.stderr)
+        available_agent_goals_uids = [goal.uid for goal in HTNHelper.agent_goals() if int(goal.value) == agent.value and goal.uid not in existing_goal_uids]
+        
+        print(f"available_agent_goals_uids: {available_agent_goals_uids}", file=sys.stderr)
         
         for goal_uid in available_agent_goals_uids:
             dist = State.goal_map[goal_uid][agent.pos.y][agent.pos.x]
@@ -73,6 +81,10 @@ class HTNHelper:
 
         return closest_goal_uid
     
+    @staticmethod
+    def agent_goals():
+        return [goal for goal in State.goals if goal.value.isdigit()]
+
     @staticmethod
     def get_closest_box_uid_to_agent(agent_boxes, agent):
         min_dist = float('inf')

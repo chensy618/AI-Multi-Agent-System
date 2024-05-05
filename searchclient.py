@@ -17,10 +17,10 @@ from domain.goal import Goal
 # debugpy.listen(("localhost", 12345)) # Open a debugging server at localhost:1234
 # debugpy.wait_for_client() # Wait for the debugger to connect
 # debugpy.breakpoint() # Ensure the program starts paused
-import debugpy
-debugpy.listen(("localhost", 1234)) # Open a debugging server at localhost:1234
-debugpy.wait_for_client() # Wait for the debugger to connect
-debugpy.breakpoint() # Ensure the program starts paused
+# import debugpy
+# debugpy.listen(("localhost", 1234)) # Open a debugging server at localhost:1234
+# debugpy.wait_for_client() # Wait for the debugger to connect
+# debugpy.breakpoint() # Ensure the program starts paused
 
 # data structure for agent, box, goal
 layout_rows = 0

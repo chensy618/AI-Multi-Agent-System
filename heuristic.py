@@ -25,6 +25,7 @@ class Heuristic(metaclass=ABCMeta):
 
             task = round[agent.uid]
 
+            
             if(task.box_uid == None or task.goal_uid == None):
                 raise RuntimeError(f"Box_uid is None or goal_uid is None, this should not be happening")
 
