@@ -234,8 +234,8 @@ def find_first_conflict(solution, initial_positions):
                         return Conflict(agent_id, other_entity_id, resulting_agent_position, time_step)
                     # Means the other conflict agent has finished its goal, and can try to move out the way
                     else:
-                        # Can not move to the same position as other agent at current timestep, box, and cannot go to own/other agent's goal position
-                        avoid_pos_list = {pos: agent_id for pos, agent_id in positions.items() if pos[1] == time_step-1}
+                        # Can not move to the same position as other agent at current/next timestep, box, and cannot go to own/other agent's goal position
+                        avoid_pos_list = {pos: agent_id for pos, agent_id in positions.items() if (pos[1] == time_step-1 or pos[1] == time_step)}
                         avoid_pos_list[(initial_positions[agent_id]['goal_position'], time_step)] = {'id': initial_positions[agent_id]['goal_id']}
                         avoid_pos_list[(initial_positions[other_entity_id]['goal_position'], time_step)] = {'id': initial_positions[other_entity_id]['goal_id']}
                         print(f'---avoid_pos_list 1--{avoid_pos_list}')
@@ -250,8 +250,8 @@ def find_first_conflict(solution, initial_positions):
                         return Conflict(box_id, other_entity_id, resulting_box_position, time_step)
                     # Means the other conflict agent has finished its goal, and can try to move out the way
                     else:
-                        # Can not move to the same position as other agent at current timestep, box, and cannot go to own/other agent's goal position
-                        avoid_pos_list = {pos: agent_id for pos, agent_id in positions.items() if pos[1] == time_step-1}
+                        # Can not move to the same position as other agent at current/next timestep, box, and cannot go to own/other agent's goal position
+                        avoid_pos_list = {pos: agent_id for pos, agent_id in positions.items() if (pos[1] == time_step-1 or pos[1] == time_step)}
                         avoid_pos_list[(initial_positions[agent_id]['goal_position'], time_step)] = {'id': initial_positions[agent_id]['goal_id']}
                         avoid_pos_list[(initial_positions[other_entity_id]['goal_position'], time_step)] = {'id': initial_positions[other_entity_id]['goal_id']}
                         print(f'---avoid_pos_list 2--{avoid_pos_list}')
