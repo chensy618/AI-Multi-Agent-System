@@ -141,8 +141,8 @@ class Heuristic(metaclass=ABCMeta):
 
         self.goal_agents = list(zip(self.goal_name_agent, self.goal_position_agent))
         self.goal_boxes = list(zip(self.goal_name_box, self.goal_position_box))
-        print(f"---goal_agents--- {self.goal_agents}")
-        print(f"---goal_boxes--- {self.goal_boxes}")
+        # print(f"---goal_agents--- {self.goal_agents}")
+        # print(f"---goal_boxes--- {self.goal_boxes}")
 
     def h(self, state: 'State') -> 'int':
         #return self.goal_count_heuristic(state)

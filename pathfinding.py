@@ -86,7 +86,7 @@ class SpaceTimeAstar:
     def st_astar(self,initial_state):
         frontier = AStarFrontier(HeuristicAStar(initial_state))
         frontier.add(initial_state)
-        
+
         explored = set()
 
         while True:
@@ -131,8 +131,8 @@ class Heuristic(metaclass=ABCMeta):
 
         self.goal_agents = list(zip(self.goal_name_agent, self.goal_position_agent))
         self.goal_boxes = list(zip(self.goal_name_box, self.goal_position_box))
-        print(f"---goal_agents--- {self.goal_agents}")
-        print(f"---goal_boxes--- {self.goal_boxes}")
+        # print(f"---goal_agents--- {self.goal_agents}")
+        # print(f"---goal_boxes--- {self.goal_boxes}")
 
     def h(self, state: 'State') -> 'int':
         return self.calculate_distance(state)
@@ -292,11 +292,11 @@ class AStarFrontier(Frontier):
 #         for box in copy_boxes:
 #             self.grid[box.pos.x][box.pos.y] = box # Mark the box as occupied
 #         return grid
-    
+
 #     def is_available(self, x, y, t):
 #         #Check if a cell is available at a given time.
 #         return (x,y,t) not in self.reservation_table and not self.grid[x][y]
-    
+
 #     def reserve_cell(self, x, y, t):
 #         #Reserve a cell at a given time.
 #         self.reservation_table[(x,y,t)] = True
@@ -304,7 +304,7 @@ class AStarFrontier(Frontier):
 #     def heuristic(self, current, goal):
 #         #Calculate the heuristic value.
 #         return abs(current.x - goal.x) + abs(current.y - goal.y)
-    
+
 #     def get_neighbors(self, x, y, t):
 #         #Get the neighbors of a cell in the space-time grid.
 #         neighbors = []
@@ -315,7 +315,7 @@ class AStarFrontier(Frontier):
 #             if 0 <= nei_x < len(self.grid) and 0 <= nei_y < len(self.grid[0]) and (nei_x, nei_y) not in self.walls:
 #                 neighbors.append((nei_x, nei_y, nei_t))
 #         return neighbors
-    
+
 #     def st_astar_search(self, agent, goal):
 #         #Perform space-time A* search.
 #         open_list = []

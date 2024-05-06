@@ -5,7 +5,7 @@ from astar import astar
 from cbs.node import Node
 
 from domain.action import Action, ActionType
-from domain.conflict import Conflict, MoveAwayConflict
+from domain.conflict import Conflict, MoveAwayConflict, FollowConflict
 from domain.constraint import Constraint
 from domain.position import Position
 from queue import PriorityQueue
@@ -68,6 +68,18 @@ def conflict_based_search(problem_list):
             moveaway_agent_id = conflict.ai
             blocked_agent_id = conflict.aj
             m.solution[moveaway_agent_id], m.solution[blocked_agent_id] = solve_moveaway_conflict(node, conflict)
+            # Check if there is conflict for the new plans, if not, merge the plans, else continue
+            conflict = find_first_conflict(m.solution, initial_positions)
+            if conflict is None:
+                executable_plan = merge_plans(m.solution)
+                return executable_plan
+            else:
+                continue
+        # Special handling for FollowConflict
+        elif isinstance(conflict, FollowConflict):
+            print(f"---Follow conflict--{conflict}")
+            m = node.copy()
+            m.solution[conflict.ai] = solve_follow_conflict(node, conflict)
             # Check if there is conflict for the new plans, if not, merge the plans, else continue
             conflict = find_first_conflict(m.solution, initial_positions)
             if conflict is None:
@@ -193,6 +205,11 @@ def find_first_conflict(solution, initial_positions):
             print(f"---current_agent_position--{current_agent_position}")
             print(f"---current_box_position--{current_box_position}")
             print(f"---box_id--{box_id}")
+            # Add initial positions to the positions dictionary as time step 0, and as resulting positions
+            positions[(current_agent_position, 0)] = {'id': agent_id, 'tag': 'fixed'}
+            positions[(current_box_position, 0)] = {'id': box_id, 'tag': 'fixed'}
+            print(f"---positions--{positions}")
+
             time_step = 1
             # Iterate for max_path_length steps
             for time_step in range(1, max_path_length + 1):
@@ -224,7 +241,7 @@ def find_first_conflict(solution, initial_positions):
                     # Box cannot move after reaching the goal
                     box_tag = 'fixed'
 
-                ### Judge conflicts ###
+                ### Judge Vertex conflict ###
                 if (resulting_agent_position, time_step) in positions:
                     tag = positions[(resulting_agent_position, time_step)]['tag']
                     other_entity_id = positions[(resulting_agent_position, time_step)]['id']
@@ -257,6 +274,31 @@ def find_first_conflict(solution, initial_positions):
                         print(f'---avoid_pos_list 2--{avoid_pos_list}')
                         print(f"---MoveAwayConflict 2 --{MoveAwayConflict(other_entity_id, agent_id, resulting_box_position, avoid_pos_list, time_step-1)}")
                         return MoveAwayConflict(other_entity_id, agent_id, resulting_box_position, avoid_pos_list, time_step-1)
+                ### Following conflict one way ###
+                # Means the other agent is moving into the current agent's/box's position at the timestep-1
+                elif ((current_agent_position, time_step) or (current_box_position, time_step)) in positions:
+                    print(f'---agent_id--{agent_id}')
+                    print(f'---current_agent_position--{current_agent_position}')
+                    print(f'---current_box_position--{current_box_position}')
+                    other_entity_id = positions[(current_agent_position, time_step)]['id']
+                    print(f'---other_entity_id--{other_entity_id}')
+                    # In case the other entity is a box, get its agent id, so that the later handling of the conflict can get agent directly
+                    other_agent_id = get_actual_agent_id(initial_positions, other_entity_id)
+                    print(f"---Follow Conflict 1--{FollowConflict(other_agent_id, time_step-1)}")
+                    return FollowConflict(other_agent_id, time_step-1)
+                #################### Need to think about if below section is needed ####################
+                ### Following conflict the other way ###
+                # Means the current agent/box is moving into the other agent's/box's position at the timestep
+                elif ((resulting_agent_position, time_step-1) or (resulting_box_position, time_step-1)) in positions:
+                    other_entity_id = positions[(resulting_agent_position, time_step-1)]['id']
+                    # eliminate the situation that the agent is moving into its own box or the other way around
+                    if (other_entity_id != agent_id and other_entity_id != box_id):
+                        print(f'---other_entity_id--{other_entity_id}')
+                        print(f'---resulting_agent_position--{resulting_agent_position}')
+                        print(f'---resulting_box_position--{resulting_box_position}')
+                        print(f"---Follow Conflict 2--{FollowConflict(agent_id, time_step)}")
+                        return FollowConflict(agent_id, time_step)
+                ########################################################################################
 
                 # Store the explored agent and box positions in the positions dictionary
                 positions[(resulting_agent_position, time_step)] = {'id': agent_id, 'tag': agent_tag}
@@ -339,3 +381,23 @@ def solve_moveaway_conflict(node, conflict):
 
     # Return the new solution for the agent that needs to move away.
     return node.solution[agent_id], node.solution[blocked_agent_id]
+
+
+def get_actual_agent_id(initial_positions, entity_id):
+    # If the entity_id is a box, return its corresponding agent_id
+    for agent_id, pos in initial_positions.items():
+        if pos['box_id'] == entity_id:
+            return agent_id
+    # If the entity_id is already an agent_id, return it as is
+    return agent_id
+
+
+def solve_follow_conflict(node, conflict):
+    agent_id = conflict.ai
+    time_step = conflict.t
+    # Insert the NoOp action at the time step, so that the agent can wait for 1 step and then move
+    node.solution[agent_id].insert(time_step, [Action.NoOp])
+
+    # Return the new solution for the agent that needs to move away.
+    print(f"---node.solution[agent_id]--{node.solution[agent_id]}")
+    return node.solution[agent_id]
