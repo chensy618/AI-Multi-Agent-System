@@ -167,6 +167,7 @@ def find_first_conflict(solution, initial_positions):
         print(f'---box is--{initial_positions[agent_id]["box_id"]}')
         print(f'---path is--{path}')
 
+        #################### TODO: Need to add agent following conflict logic ####################
         # Agent only conflict
         if initial_positions[agent_id]['box_id'] is None:
             current_position = initial_positions[agent_id]['agent_position']
@@ -286,7 +287,8 @@ def find_first_conflict(solution, initial_positions):
                     other_agent_id = get_actual_agent_id(initial_positions, other_entity_id)
                     print(f"---Follow Conflict 1--{FollowConflict(other_agent_id, time_step-1)}")
                     return FollowConflict(other_agent_id, time_step-1)
-                #################### Need to think about if below section is needed ####################
+
+                #################### TODO: Need to think about if below section is needed ####################
                 ### Following conflict the other way ###
                 # Means the current agent/box is moving into the other agent's/box's position at the timestep
                 elif ((resulting_agent_position, time_step-1) or (resulting_box_position, time_step-1)) in positions:
