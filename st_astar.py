@@ -10,7 +10,6 @@ def space_time_a_star(inital_state, constraints, task: Task):
     box = inital_state.boxes
     wall = inital_state.walls
 
-    print(f"---constraints--- {constraints}", file=sys.stderr)
     initial_time = 0
     initial_state = SpaceTimeState(agents, box, wall, initial_time, constraints, 0)
 
