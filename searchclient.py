@@ -2,10 +2,11 @@ import io
 import argparse
 import pprint
 import sys
+from domain.action import Action
 from htn.htn_resolver import HTNResolver
 import memory
 
-from cbs_wen import conflict_based_search
+from cbs.cbs import conflict_based_search
 from domain.position import Position
 from domain.color import Color
 from state import State
@@ -203,6 +204,10 @@ class SearchClient:
             # set current_state to the state after executing the plan.
 
         print("-----------Problem-------------\n", file=sys.stderr)
+
+
+        # for time_step in final_plan:
+        #     time_step.append(Action.NoOp)
 
         if final_plan is None:
             print('Unable to solve level.', file=sys.stderr, flush=True)
