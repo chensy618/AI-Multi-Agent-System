@@ -1,0 +1,36 @@
+#domain
+hospital
+#levelname
+MALecture
+#colors
+blue: 0, A
+red: 1, B
+Cyan: 2, C
+purple: 3, D
+Orange: 4, F
+Pink: 5, G
+Grey: 6, H
+Lightblue: 7, I
+#initial
+++++++++++++++++++++
++ AA 0  ++ ++      +
++             4 FF +
++ BB 1  ++ ++      +
++             5 GG +
++ CC 2  +   +      +
++        + +  6 HH +
++ DD 3             +
++       ++ ++ 7 II +
+++++++++++++++++++++
+#goal
+++++++++++++++++++++
++F      ++ ++     A+
++F                A+
++G      ++ ++     D+
++G                D+
++H      +   +     C+
++H       + +      C+
++I                B+
++I      ++ ++     B+
+++++++++++++++++++++
+#end
