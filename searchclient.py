@@ -137,7 +137,9 @@ class SearchClient:
         layout_cols = max(len(row) for row in initial_layout)
 
         State.goals = goals
-        return State(agents, boxes, walls)
+
+        box_map = {box.uid: box for box in boxes}
+        return State(agents, box_map, walls)
 
     @staticmethod
     def main(args) -> None:
@@ -150,7 +152,7 @@ class SearchClient:
         print("\nINITIAL STATE", file=sys.stderr)
         for agent in initial_state.agents:
             print(f"Agent - {agent.value} ---> ", agent, file=sys.stderr)
-        for box in initial_state.boxes:
+        for box in initial_state.boxes.values():
             print(f"Box - {box.value} ---> ", box, file=sys.stderr)
         for goal in State.goals:
             print(f"Goal - {goal.value} ---> ", goal, file=sys.stderr)
@@ -159,7 +161,7 @@ class SearchClient:
         for goal in State.goals:
             print(f"Goal - {goal.value} ---> ", goal, file=sys.stderr)
             State.goal_map[goal.uid] = State.initialize_goal_map(initial_state.walls, goal.pos)
-        for box in initial_state.boxes:
+        for box in initial_state.boxes.values():
             State.box_goal_map[box.uid] = State.initialize_goal_map(initial_state.walls, box.pos)
         
         for goal_id in State.goal_map.keys():

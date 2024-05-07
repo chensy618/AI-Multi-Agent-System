@@ -1,6 +1,8 @@
 from collections import deque
+import copy
 import random
 import sys
+from typing import Dict
 
 from domain.action import Action, ActionType
 from domain.agent import Agent
@@ -20,7 +22,7 @@ class State:
 
     # agents: list of Agents
     # boxes: list of Boxes
-    def __init__(self, agents: list[Agent], boxes: list[Box], walls):
+    def __init__(self, agents: list[Agent], boxes: Dict[str, Box], walls):
         self.agents = agents
         self.boxes = boxes
         self.walls = walls
@@ -55,15 +57,11 @@ class State:
                 return Agent(agent.pos, agent.value, agent.uid, agent.color)
         
 
-    def get_agent_boxes(self, color) -> list[Box]:
-        return [Box(box.pos, box.value, box.uid, box.color) for box in self.boxes if box.color == color]
+    def get_agent_boxes(self, color) -> Dict[str, Box]:
+        return {box.uid: Box(box.pos, box.value, box.uid, box.color) for box in self.boxes.values() if box.color == color}
 
-    def get_box_by_uid(self, boxId) -> Box:
-        for box in self.boxes:
-            if boxId == box.uid:
-                return box
-            
-        return Box(None, None, None, None)
+    def get_box_by_uid(self, box_uid) -> Box:
+        return self.boxes.get(box_uid, Box(None, None, None, None))
 
 
     def result(self, joint_action: list[Action]) -> 'State':
@@ -72,7 +70,7 @@ class State:
         Precondition: Joint action must be applicable and non-conflicting in this state.
         '''
         copy_agents = [Agent(agent.pos, agent.value, agent.uid, agent.color) for agent in self.agents]
-        copy_boxes = [Box(box.pos, box.value, box.uid, box.color) for box in self.boxes]
+        copy_boxes = copy.deepcopy(self.boxes)
         for agent_index, action in enumerate(joint_action):
             copied_agent = copy_agents[agent_index]
             if action.type == ActionType.Move:
@@ -86,8 +84,10 @@ class State:
                     box_pos = copied_agent.pos - action.box_rel_pos
 
                 # Find the box object with the matching position
-                copied_box = next(box for box in copy_boxes if box.pos == box_pos)
+                copied_box = next((box for box in copy_boxes.values() if box.pos == box_pos), None)
 
+                if(copied_box is None):
+                    raise RuntimeError(f"Box not found at position {box_pos} in the boxes list")
                 # Update the box's position
                 copied_box.pos += action.box_rel_pos
                 copied_agent.pos += action.agent_rel_pos
@@ -134,32 +134,32 @@ class State:
                     
         return distance_grid
 
-    def is_goal_state(self) -> bool:
-        '''
-        Checks if this state is a goal state.
-        '''
-        # Create a mapping of box positions to their corresponding IDs
-        #box_positions = {box.pos: box.uid for box in self.boxes}
-        box_positions = {box.pos: box.value for box in self.boxes}
-        print("box_positions ->", box_positions, file=sys.stderr)
-        # Create a mapping of agent positions to their corresponding IDs
-        agent_positions = {agent.pos: agent.uid for agent in self.agents}
-        print("agent_positions ->", agent_positions, file=sys.stderr)
-        # Check if all goals are satisfied by boxes and agents
-        for goal in State.goals:
-            if 'A' <= goal.value <= 'Z':
-                # Check if there's a box at the goal position with the matching ID
-                if box_positions.get(goal.pos) != (goal.value):
-                    return False
-            elif '0' <= goal.value <= '9':
-                # Check if there's an agent at the goal position with the matching ID
-                if agent_positions.get(goal.pos) != int(goal.value):
-                    return False
-            else:
-                # If the goal ID is not recognized as a box or agent, return False
-                print('There is something wrong with the goal id set up, please', file=sys.stderr)
-                return False
-        return True
+    # def is_goal_state(self) -> bool:
+    #     '''
+    #     Checks if this state is a goal state.
+    #     '''
+    #     # Create a mapping of box positions to their corresponding IDs
+    #     #box_positions = {box.pos: box.uid for box in self.boxes}
+    #     box_positions = {box.pos: box.value for box in self.boxes}
+    #     print("box_positions ->", box_positions, file=sys.stderr)
+    #     # Create a mapping of agent positions to their corresponding IDs
+    #     agent_positions = {agent.pos: agent.uid for agent in self.agents}
+    #     print("agent_positions ->", agent_positions, file=sys.stderr)
+    #     # Check if all goals are satisfied by boxes and agents
+    #     for goal in State.goals:
+    #         if 'A' <= goal.value <= 'Z':
+    #             # Check if there's a box at the goal position with the matching ID
+    #             if box_positions.get(goal.pos) != (goal.value):
+    #                 return False
+    #         elif '0' <= goal.value <= '9':
+    #             # Check if there's an agent at the goal position with the matching ID
+    #             if agent_positions.get(goal.pos) != int(goal.value):
+    #                 return False
+    #         else:
+    #             # If the goal ID is not recognized as a box or agent, return False
+    #             print('There is something wrong with the goal id set up, please', file=sys.stderr)
+    #             return False
+    #     return True
 
     def is_goal_state_for_subgoal(self, task: Task, agent: Agent) -> bool:
         if(task.box_uid == -1):
@@ -167,7 +167,7 @@ class State:
                 return True
         else:
             box = self.get_box_by_uid(task.box_uid)
-            if State.box_goal_map[task.goal_uid][box.pos.y][box.pos.x] == 0:
+            if State.goal_map[task.goal_uid][box.pos.y][box.pos.x] == 0:
                 return True
         return False
 
@@ -221,7 +221,7 @@ class State:
 
         elif action.type is ActionType.Push:
             # Check if there is a box at the agent's destination to push
-            box_to_push = next((box for box in self.boxes if box.pos == agent_destination), None)
+            box_to_push = next((box for box in self.boxes.values() if box.pos == agent_destination), None)
             if box_to_push and box_to_push.color == agent.color:
                 # Calculate the box's destination position
                 box_destination = agent_destination + action.box_rel_pos
@@ -234,7 +234,7 @@ class State:
             # Calculate the box's current position that the agent wants to pull
             box_position = agent.pos - action.box_rel_pos
             # Check if there is a box to pull at the calculated position
-            box_to_pull = next((box for box in self.boxes if box.pos == box_position), None)
+            box_to_pull = next((box for box in self.boxes.values() if box.pos == box_position), None)
             if box_to_pull and box_to_pull.color == agent.color:
                 # Check if the agent's destination is free to move into
                 return self.is_free(agent_destination)
@@ -288,28 +288,21 @@ class State:
 
     def is_free(self, position) -> bool:
         # print(f"---walls---{self.walls}")
-        return not self.walls[position.y][position.x] and self.box_at(position) is None and self.agent_at(position) is None
+        return not self.walls[position.y][position.x] and not self.box_at(position) and not self.agent_at(position)
 
     def agent_at(self, position: Position) -> Agent:
         for agent in self.agents:
             #if agent.pos.x == position.x and agent.pos.y == position.y:
             if agent.pos == position:
-                return agent
-        return None
+                return True
+        return False
 
     def box_at(self, position: Position) -> Box:
-        for box in self.boxes:
+        for box in self.boxes.values():
             #if box.pos.x == position.x and box.pos.y == position.y:
             if box.pos == position:
-                return box
-        return None
-
-    def goal_at(self, position: Position) -> Goal:
-        for goal in State.goals:
-            #if goal.pos.x == position.x and goal.pos.y == position.y:
-            if goal.pos.postion == position:
-                return goal
-        return None
+                return True
+        return False
 
     def extract_plan(self) -> list[Action]:
         plan = [None for _ in range(self.g)]
@@ -327,8 +320,8 @@ class State:
             _hash = 1
             _hash = _hash * prime + hash(tuple(agent.pos for agent in self.agents))
             _hash = _hash * prime + hash(tuple(agent.color for agent in self.agents))
-            _hash = _hash * prime + hash(tuple(box.pos for box in self.boxes))
-            _hash = _hash * prime + hash(tuple(box.color for box in self.boxes))
+            _hash = _hash * prime + hash(tuple(box.pos for box in self.boxes.values()))
+            _hash = _hash * prime + hash(tuple(box.color for box in self.boxes.values()))
             _hash = _hash * prime + hash(tuple((goal.pos, goal.value, goal.uid) for goal in State.goals))
             flattened_walls = tuple(tuple(row) for row in self.walls)
             _hash = _hash * prime + hash(flattened_walls)
@@ -342,7 +335,7 @@ class State:
             return False
         if any(a1.pos != a2.pos or a1.color != a2.color for a1, a2 in zip(self.agents, other.agents)):
             return False
-        if any(b1.pos != b2.pos or b1.color != b2.color for b1, b2 in zip(self.boxes, other.boxes)):
+        if any(b1.pos != b2.pos or b1.color != b2.color for b1, b2 in zip(self.boxes.values(), other.boxes.values())):
             return False
         return True
 
@@ -396,7 +389,7 @@ class SpaceTimeState(State):
 
         elif action.type is ActionType.Push:
             # Check if there is a box at the agent's destination to push
-            box_to_push = next((box for box in self.boxes if box.pos == agent_destination), None)
+            box_to_push = next((box for box in self.boxes.values() if box.pos == agent_destination), None)
             if box_to_push and box_to_push.color == agent.color:
                 # Calculate the box's destination position
                 box_destination = agent_destination + action.box_rel_pos
@@ -409,7 +402,7 @@ class SpaceTimeState(State):
             # Calculate the box's current position that the agent wants to pull
             box_position = agent.pos - action.box_rel_pos
             # Check if there is a box to pull at the calculated position
-            box_to_pull = next((box for box in self.boxes if box.pos == box_position), None)
+            box_to_pull = next((box for box in self.boxes.values() if box.pos == box_position), None)
             if box_to_pull and box_to_pull.color == agent.color:
                 # Check if the agent's destination is free and not constrained
                 return self.is_free(agent_destination) and not self.is_constrained(agent.value, agent_destination, self.time + 1)
@@ -425,7 +418,7 @@ class SpaceTimeState(State):
         Precondition: Joint action must be applicable and non-conflicting in this state.
         '''
         copy_agents = [Agent(agent.pos, agent.value, agent.uid, agent.color) for agent in self.agents]
-        copy_boxes = [Box(box.pos, box.value, box.uid, box.color) for box in self.boxes]
+        copy_boxes = copy.deepcopy(self.boxes)
         for agent_index, action in enumerate(joint_action):
             copied_agent = copy_agents[agent_index]
             if action.type == ActionType.Move:
@@ -439,8 +432,11 @@ class SpaceTimeState(State):
                     box_pos = copied_agent.pos - action.box_rel_pos
 
                 # Find the box object with the matching position
-                copied_box = next(box for box in copy_boxes if box.pos == box_pos)
+                copied_box = next((box for box in copy_boxes.values() if box.pos == box_pos), None)
 
+                if(copied_box is None):
+                    raise RuntimeError(f"Box not found at position {box_pos} in the boxes list")
+                
                 # Update the box's position
                 copied_box.pos += action.box_rel_pos
                 copied_agent.pos += action.agent_rel_pos
@@ -448,7 +444,7 @@ class SpaceTimeState(State):
         # Create a new state with the updated agents and boxes
         copy_state = SpaceTimeState(copy_agents, copy_boxes, self.walls, self.goals, self.time + 1, self.constraints, self.g + 1)
         copy_state.parent = self
-        copy_state.joint_action = joint_action[:]
+        copy_state.joint_action = joint_action[0]
         return copy_state
 
 

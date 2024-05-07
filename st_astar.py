@@ -5,16 +5,15 @@ import sys
 
 
 def space_time_a_star(inital_state, constraints, task: Task):
-    print("\n\n=============SPACE_TIME_ASTAR===============", file=sys.stderr)
-    agent = inital_state.agents
+    agents = inital_state.agents
+    print(f"\n\n=============SPACE_TIME_ASTAR - {agents[0].uid}===============", file=sys.stderr)
     box = inital_state.boxes
     goal = State.goals
     wall = inital_state.walls
 
+    print(f"---constraints--- {constraints}", file=sys.stderr)
     initial_time = 0
-    initial_state = SpaceTimeState(agent, box, wall, goal, initial_time, constraints, 0)
-    # print(f"---initial_state--{initial_state}",file=sys.stderr)
-    # print(f"---initial_state.constraints--{initial_state.constraints}",file=sys.stderr)
+    initial_state = SpaceTimeState(agents, box, wall, goal, initial_time, constraints, 0)
 
     frontier = AStarFrontier(HeuristicAStar(initial_state))
     frontier.add(initial_state, task)
@@ -35,5 +34,5 @@ def space_time_a_star(inital_state, constraints, task: Task):
                 frontier.add(state, task)
 
     print("No solution found", file=sys.stderr)
-    print("\n\n=============SPACE_TIME_ASTAR===============", file=sys.stderr)
+    print(f"\n\n=============SPACE_TIME_ASTAR - {agents[0].uid}===============", file=sys.stderr)
     return None  # No solution found

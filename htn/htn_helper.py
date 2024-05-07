@@ -16,7 +16,7 @@ class HTNHelper:
     @staticmethod
     def categorize_boxes_by_color(boxes):
         boxes_by_color = {}
-        for box in boxes:
+        for box in boxes.values():
             if box.color not in boxes_by_color:
                 boxes_by_color[box.color] = []
             boxes_by_color[box.color].append(box)

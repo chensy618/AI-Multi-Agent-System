@@ -1,5 +1,6 @@
 import itertools
 import sys
+import time
 
 from astar import astar
 from cbs.node import Node
@@ -17,7 +18,7 @@ tiebreaker = itertools.count()
 
 def conflict_based_search(current_state: State, round):
     root = Node()
-    root.constraints = []
+    root.constraints = set()
     initial_positions = {}
     #round--{0: Task(box_uid=-1 goal_uid=1), 1: Task(box_uid=-1 goal_uid=0)}
     print(f"--round--{round}", file=sys.stderr)
@@ -81,31 +82,41 @@ def conflict_based_search(current_state: State, round):
         else:
             print(f"---conflict--{conflict}", file=sys.stderr)
             # TODO : check how to merge-------------------------------------
-            for agent_uid in [conflict.ai, conflict.aj]:
-                m = node.copy()
-                m.constraints.append(Constraint(agent_uid, Position(conflict.pos.x, conflict.pos.y), conflict.t))
-                m.constraints.append(Constraint(agent_uid, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
-                m.constraints.append(Constraint(agent_uid, Position(conflict.pos.x, conflict.pos.y), conflict.t+2))
-                relaxed_state = current_state.from_agent_perspective(agent_uid)
-                st_solution = space_time_a_star(relaxed_state, m.constraints, task)
-                print(f"---st_solution--{st_solution}", file=sys.stderr)
-                m.solution[agent_uid] = st_solution
+            # conflict between agent - agent, agent - box
+            for agent_uid, task in round.items():
+                if(agent_uid in [conflict.ai, conflict.aj]):
+
+                
+                    m = node.copy()
                     
-                #m.solution[agent_id] = space_time_a_star(current_state, m.constraints, round)
-                m.node_cost = cost(m.solution)
-                if m.node_cost < sys.maxsize:
-                    count_next = next(tiebreaker)
-                    frontier.put((m.node_cost, count_next, m))
+                    m.constraints.add(Constraint(agent_uid, Position(conflict.pos.x, conflict.pos.y), conflict.t))
+                    m.constraints.add(Constraint(agent_uid, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
+                    m.constraints.add(Constraint(agent_uid, Position(conflict.pos.x, conflict.pos.y), conflict.t+2))
+                    relaxed_state = current_state.from_agent_perspective(agent_uid)
+                    st_solution = space_time_a_star(relaxed_state, m.constraints, round[agent_uid])
+                    print(f"---st_solution--{st_solution}", file=sys.stderr)
+                    m.solution[agent_uid] = st_solution
+                        
+                    #m.solution[agent_id] = space_time_a_star(current_state, m.constraints, round)
+                    m.node_cost = cost(m.solution)
+                    if m.node_cost < sys.maxsize:
+                        count_next = next(tiebreaker)
+                        frontier.put((m.node_cost, count_next, m))
+
+                # conflict between box - box
                 else:
-                    for box_id in [conflict.ai, conflict.aj]:
-                    #box = current_state.get_box_by_uid(task.box_uid)
-                    #for box.uid in [conflict.ai, conflict.aj]:
+                    box = current_state.get_box_by_uid(task.box_uid)
+                    print(f"box_uid {box.uid}")
+                    print(f"conflict.ai {conflict.ai}")
+                    print(f"conflict.aj {conflict.aj}")
+                    if(box.uid in [conflict.ai, conflict.aj]):
+                #for box.uid in [conflict.ai, conflict.aj]:
                         m = node.copy()
-                        m.constraints.append(Constraint(box_id, Position(conflict.pos.x, conflict.pos.y), conflict.t))
-                        m.constraints.append(Constraint(box_id, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
-                        m.constraints.append(Constraint(box_id, Position(conflict.pos.x, conflict.pos.y), conflict.t+2))
+                        m.constraints.add(Constraint(box.uid, Position(conflict.pos.x, conflict.pos.y), conflict.t))
+                        m.constraints.add(Constraint(box.uid, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
+                        m.constraints.add(Constraint(box.uid, Position(conflict.pos.x, conflict.pos.y), conflict.t+2))
                         relaxed_state = current_state.from_agent_perspective(agent_uid)
-                        m.solution[agent_uid] = space_time_a_star(relaxed_state, m.constraints, task)
+                        m.solution[agent_uid] = space_time_a_star(relaxed_state, m.constraints, round[agent_uid])
                         m.node_cost = cost(m.solution)
                         if m.node_cost < sys.maxsize:
                             count_next = next(tiebreaker)
@@ -155,7 +166,7 @@ def find_first_conflict(solution, initial_positions):
         # print(f'---path is--{path}', file=sys.stderr)
 
         # agent-agent conflict
-        if initial_positions[agent_id]['box_id'] is None:
+        if initial_positions[agent_id]['box_id'] is -1:
             current_position = initial_positions[agent_id]['agent_position']
             # print(f"---current_position--{current_position}", file=sys.stderr)
             # print(f"---agent_id--{agent_id}", file=sys.stderr)

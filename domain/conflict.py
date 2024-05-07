@@ -9,7 +9,6 @@ class Conflict:
     def __repr__(self):
         return f"Conflict(ai={self.ai}, aj={self.aj}, pos={self.pos}, t={self.t})"
 
-
 class MoveAwayConflict:
     # ai has to move away from the position list
     # aj was blocked

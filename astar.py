@@ -12,7 +12,6 @@ start_time = time.perf_counter()
 
 def astar(initial_state, task):
     print("\n=============ASTAR===============", file=sys.stderr)
-    print(f"---initial_state---{initial_state.boxes} {task}", file=sys.stderr)
     frontier = AStarFrontier(HeuristicAStar(initial_state))
     frontier.add(initial_state, task)
     
