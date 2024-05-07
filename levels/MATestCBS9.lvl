@@ -1,0 +1,22 @@
+#domain
+hospital
+#levelname
+MATestCBS9
+#colors
+red: 0, A
+green: 1, B
+#initial
++++++
++   +
++   +
++1B0+
++  A+
++++++
+#goal
++++++
++  B+
++   +
++   +
++ A +
++++++
+#end
