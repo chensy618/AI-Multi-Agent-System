@@ -8,12 +8,11 @@ def space_time_a_star(inital_state, constraints, task: Task):
     agents = inital_state.agents
     print(f"\n\n=============SPACE_TIME_ASTAR - {agents[0].uid}===============", file=sys.stderr)
     box = inital_state.boxes
-    goal = State.goals
     wall = inital_state.walls
 
     print(f"---constraints--- {constraints}", file=sys.stderr)
     initial_time = 0
-    initial_state = SpaceTimeState(agents, box, wall, goal, initial_time, constraints, 0)
+    initial_state = SpaceTimeState(agents, box, wall, initial_time, constraints, 0)
 
     frontier = AStarFrontier(HeuristicAStar(initial_state))
     frontier.add(initial_state, task)

@@ -27,7 +27,7 @@ def conflict_based_search(current_state: State, round):
         box = current_state.get_box_by_uid(task.box_uid)
         initial_positions[agent.uid] = {
                 'agent_position': agent.pos,
-                'box_id': box.uid if box else -1,
+                'box_id': box.uid if box else None,
                 'box_position': box.pos if box else None
             }
     print(f"---initial_positions--{initial_positions}", file=sys.stderr)
@@ -166,7 +166,7 @@ def find_first_conflict(solution, initial_positions):
         # print(f'---path is--{path}', file=sys.stderr)
 
         # agent-agent conflict
-        if initial_positions[agent_id]['box_id'] is -1:
+        if initial_positions[agent_id]['box_id'] is None:
             current_position = initial_positions[agent_id]['agent_position']
             # print(f"---current_position--{current_position}", file=sys.stderr)
             # print(f"---agent_id--{agent_id}", file=sys.stderr)

@@ -8,6 +8,7 @@ from domain.action import Action, ActionType
 from domain.agent import Agent
 from domain.box import Box
 from domain.color import Color
+from domain.constraint import Constraint
 from domain.goal import Goal
 from domain.position import Position
 from domain.task import Task
@@ -365,15 +366,36 @@ class State:
 
 
 class SpaceTimeState(State):
-    def __init__(self, agents, boxes, walls, goals, time, constraints, g):
+    def __init__(self, agents, boxes, walls, time, constraints, g):
         super().__init__(agents, boxes, walls)
-        self.time = time  # Add a time component to the state
-        self.goals = goals
-        self.constraints = constraints
         self.parent = None
         self.joint_action = None
+        self.constraints = constraints
+        self.time = time  # Add a time component to the state
         self.g = g
         self._hash = None
+
+    def from_agent_perspective(self, agent_id) -> 'SpaceTimeState': 
+        # print("from_agent_perspective - ", agent_id, file=sys.stderr)
+
+        relaxed_agent = self.get_agent_by_uid(agent_id)
+        # print("relaxed_agent", relaxed_agent, file=sys.stderr)
+
+        agent_colored_boxes = self.get_agent_boxes(relaxed_agent.color)
+        # print("agent_colored_boxes", agent_colored_boxes, file=sys.stderr)
+        
+        relaxed_walls = [row[:] for row in self.walls]
+
+        relaxed_constraints = [Constraint(constraint.agentId, constraint.pos, constraint.t) for constraint in self.constraints]
+        relaxed_time = self.time
+
+        # for relaxed_box in agent_colored_boxes:
+        #     for box in self.boxes:
+        #         if relaxed_box.color != box.color: # different colored box so it should be wall for the agent, because it can't pass through it
+        #             relaxed_walls[box.pos.y][box.pos.x] = True 
+
+        # print("from_agent_perspective", file=sys.stderr)
+        return SpaceTimeState([relaxed_agent], agent_colored_boxes, relaxed_walls, relaxed_time, relaxed_constraints, self.g)
 
     # Modify is_applicable function to include constraints judgement
     def is_applicable(self, agent: int, action: Action) -> bool:
@@ -442,7 +464,7 @@ class SpaceTimeState(State):
                 copied_agent.pos += action.agent_rel_pos
 
         # Create a new state with the updated agents and boxes
-        copy_state = SpaceTimeState(copy_agents, copy_boxes, self.walls, self.goals, self.time + 1, self.constraints, self.g + 1)
+        copy_state = SpaceTimeState(copy_agents, copy_boxes, self.walls, self.time + 1, self.constraints, self.g + 1)
         copy_state.parent = self
         copy_state.joint_action = joint_action[0]
         return copy_state
