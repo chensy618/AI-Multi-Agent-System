@@ -57,3 +57,6 @@ class Action(Enum):
         self.type = type
         self.agent_rel_pos = agent_rel_pos # displacement of agent by position
         self.box_rel_pos = box_rel_pos # displacement of box by position
+
+    def __repr__(self):
+        return self.name

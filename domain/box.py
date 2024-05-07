@@ -14,4 +14,7 @@ class Box:
         return f"Box(pos={self.pos}, value={self.value}, uid={self.uid} color={self.color})"
     
     def getRealBoxId(self):
-        return chr(self.value)
+        if isinstance(self.uid, int):
+            return chr(self.uid)
+        else:
+            return self.uid
