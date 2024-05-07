@@ -31,17 +31,19 @@ class Heuristic(metaclass=ABCMeta):
                 distance += agent_to_goal_dist
             # If not, then agent needs to go to box
             else:
+                # print(f"task.box_uid: {task.box_uid}", file=sys.stderr)
+                # print(f"state.boxes: {state.boxes}", file=sys.stderr)
                 agent_box = state.boxes[task.box_uid]
-                print(f"task.box_uid: {task.box_uid}", file=sys.stderr)
-                print(f"state.boxes: {state.boxes}", file=sys.stderr)
-                print(f"---agent_box---{agent_box}", file=sys.stderr)
+                # print(f"task.box_uid: {task.box_uid}", file=sys.stderr)
+                # print(f"state.boxes: {state.boxes}", file=sys.stderr)
+                # print(f"---agent_box---{agent_box}", file=sys.stderr)
                 
                 if(State.box_goal_map[agent_box.uid] == None):
                     continue
 
                 agent_to_box_dist = DistanceCalc.pos_to_box_distance(agent_box, agent.pos)
                 distance += agent_to_box_dist
-                print(f"---agent_to_box_dist---{agent_to_box_dist}", file=sys.stderr)
+                # print(f"---agent_to_box_dist---{agent_to_box_dist}", file=sys.stderr)
         for box in state.boxes:
             if(State.goal_map[task.goal_uid] == None):
                 continue

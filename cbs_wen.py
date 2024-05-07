@@ -26,34 +26,32 @@ def conflict_based_search(current_state: State, round):
         box = current_state.get_box_by_uid(task.box_uid)
         initial_positions[agent.uid] = {
                 'agent_position': agent.pos,
-                'box_id': box.uid if box else None,
+                'box_id': box.uid if box else -1,
                 'box_position': box.pos if box else None
             }
     print(f"---initial_positions--{initial_positions}", file=sys.stderr)
-    solution = astar(current_state, round)
-    print(f"---solution--{solution}", file=sys.stderr)
-    if solution is None:
-        print('astar failed to find a solution.', file=sys.stderr)
-        return None
+    
     for agent in current_state.agents:
-        print(f"---agent--{agent}", file=sys.stderr)
-        print(f"--current_state--{current_state}", file=sys.stderr)
-        agent = current_state.get_agent_by_uid(agent.uid)
-        #solution--[[MoveE, MoveN], [MoveE, MoveN], [MoveE, MoveN]]
+        # print(f"---agent--{agent}", file=sys.stderr)
+        # print(f"--current_state--{current_state}", file=sys.stderr)
+        # agent = current_state.get_agent_by_uid(agent.uid)
+        # solution--[[MoveE, MoveN], [MoveE, MoveN], [MoveE, MoveN]]
         # Convert solution list to dictionary {agent.uid: [actions]}
         # Take out the action of each agent separately and put it under the corresponding agent.uid
         # The actions here include the first action of all agents, so the first action needs to be taken
         # Suppose we have two agents, agent1’s action is MoveE, and agent2’s action is MoveN.
         # then root.solution = {0: [MoveE], 1: [MoveN]}
         # In this way, you need to loop through the actions in the solution and put them under the corresponding agent.uid.
-        root.solution[agent.uid] = [actions[agent.uid] for actions in solution]
-        print(f"---root.solution--{root.solution}", file=sys.stderr)
+        # root.solution[agent.uid] = [actions[agent.uid] for actions in solution]
+        # print(f"---root.solution--{root.solution}", file=sys.stderr)
         # root.solution = {0: [MoveE,MoveE,MoveE], 1: [MoveN,MoveN,MoveN]}
     
         relaxed_state = current_state.from_agent_perspective(agent.uid)
-        something = astar(relaxed_state, round[agent.uid])
-        root.solution[agent.uid] = something
-        print(f'root.solution[{agent.uid}]', root.solution[agent.uid], file=sys.stderr)
+        print(f"---relaxed_state.boxes--{relaxed_state.boxes} {agent.uid}", file=sys.stderr)
+        plan = astar(relaxed_state, round[agent.uid])
+        root.solution[agent.uid] = plan
+    
+    print(f'solution: ', root.solution, file=sys.stderr)
         
     root.cost = cost(root.solution)
     frontier = PriorityQueue()
@@ -63,7 +61,7 @@ def conflict_based_search(current_state: State, round):
         node_cost, tiebreaker_value, node = frontier.get()
         conflict = find_first_conflict(node.solution, initial_positions)
         if conflict is None:
-            print('I am here, no conflict found.', file=sys.stderr)
+            print(f"No conflict found. We are extracting plan... -> {node.solution}", file=sys.stderr)
             executable_plan = merge_plans(node.solution,round)
             return executable_plan
         elif isinstance(conflict, MoveAwayConflict):
@@ -75,6 +73,7 @@ def conflict_based_search(current_state: State, round):
             # Check if there is conflict for the new plans, if not, merge the plans, else continue
             conflict = find_first_conflict(m.solution, initial_positions)
             if conflict is None:
+                print(f"No conflict found. We are extracting plan... -> {m.solution}", file=sys.stderr)
                 executable_plan = merge_plans(m.solution,round)
                 return executable_plan
             else:
@@ -82,30 +81,31 @@ def conflict_based_search(current_state: State, round):
         else:
             print(f"---conflict--{conflict}", file=sys.stderr)
             # TODO : check how to merge-------------------------------------
-            for agent_id, task in round.items():
-                if agent_id in [conflict.ai, conflict.aj]:
-                    m = node.copy()
-                    m.constraints.append(Constraint(agent_id, Position(conflict.pos.x, conflict.pos.y), conflict.t))
-                    m.constraints.append(Constraint(agent_id, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
-                    m.constraints.append(Constraint(agent_id, Position(conflict.pos.x, conflict.pos.y), conflict.t+2))
-                    st_solution = space_time_a_star(current_state, m.constraints, round)
-                    print(f"---st_solution--{st_solution}", file=sys.stderr)
-                    for agent in current_state.agents:
-                        agent = current_state.get_agent_by_uid(agent.uid)
-                        m.solution[agent.uid] = [actions[agent.uid] for actions in st_solution]
-                    #m.solution[agent_id] = space_time_a_star(current_state, m.constraints, round)
-                    m.node_cost = cost(m.solution)
-                    if m.node_cost < sys.maxsize:
-                        count_next = next(tiebreaker)
-                        frontier.put((m.node_cost, count_next, m))
+            for agent_uid in [conflict.ai, conflict.aj]:
+                m = node.copy()
+                m.constraints.append(Constraint(agent_uid, Position(conflict.pos.x, conflict.pos.y), conflict.t))
+                m.constraints.append(Constraint(agent_uid, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
+                m.constraints.append(Constraint(agent_uid, Position(conflict.pos.x, conflict.pos.y), conflict.t+2))
+                relaxed_state = current_state.from_agent_perspective(agent_uid)
+                st_solution = space_time_a_star(relaxed_state, m.constraints, task)
+                print(f"---st_solution--{st_solution}", file=sys.stderr)
+                m.solution[agent_uid] = st_solution
+                    
+                #m.solution[agent_id] = space_time_a_star(current_state, m.constraints, round)
+                m.node_cost = cost(m.solution)
+                if m.node_cost < sys.maxsize:
+                    count_next = next(tiebreaker)
+                    frontier.put((m.node_cost, count_next, m))
                 else:
-                    box = current_state.get_box_by_uid(task.box_uid)
-                    if box.uid in [conflict.ai, conflict.aj]:
+                    for box_id in [conflict.ai, conflict.aj]:
+                    #box = current_state.get_box_by_uid(task.box_uid)
+                    #for box.uid in [conflict.ai, conflict.aj]:
                         m = node.copy()
-                        m.constraints.append(Constraint(box.uid, Position(conflict.pos.x, conflict.pos.y), conflict.t))
-                        m.constraints.append(Constraint(box.uid, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
-                        m.constraints.append(Constraint(box.uid, Position(conflict.pos.x, conflict.pos.y), conflict.t+2))
-                        m.solution[agent_id] = space_time_a_star(current_state, m.constraints, round)
+                        m.constraints.append(Constraint(box_id, Position(conflict.pos.x, conflict.pos.y), conflict.t))
+                        m.constraints.append(Constraint(box_id, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
+                        m.constraints.append(Constraint(box_id, Position(conflict.pos.x, conflict.pos.y), conflict.t+2))
+                        relaxed_state = current_state.from_agent_perspective(agent_uid)
+                        m.solution[agent_uid] = space_time_a_star(relaxed_state, m.constraints, task)
                         m.node_cost = cost(m.solution)
                         if m.node_cost < sys.maxsize:
                             count_next = next(tiebreaker)
@@ -122,7 +122,6 @@ def cost(solution):
     """
     total_cost = 0
     for path in solution.values():
-        print(f"---path--{path}", file=sys.stderr)
         if path is not None:
             total_cost += len(path)  # Add the length of this agent's path to the total cost
     return total_cost
@@ -138,30 +137,29 @@ def find_first_conflict(solution, initial_positions):
         print('No solution found from astar.', file=sys.stderr)
         return None
     # the format of solution is {agent.uid: [action1,action2,action3], agent.uid: [action1,action2,action3]}
-    print(f"---solution--{solution}", file=sys.stderr)
-    print(f"---initial_positions--{initial_positions}", file=sys.stderr)
+    # print(f"---initial_positions--{initial_positions}", file=sys.stderr)
     
     # Create a dictionary to track positions of each entity at each time step
     positions = {}
     avoid_pos_list = {}
     # Find the maximum path length to know how many time steps to check
     max_path_length = max(len(path) for path in solution.values())
-    print(f"---max_path_length--{max_path_length}", file=sys.stderr)
+    # print(f"---max_path_length--{max_path_length}", file=sys.stderr)
 
     # sort agent by their path length, so that we always start from short path
     sorted_agents = sorted(solution.items(), key=lambda item: len(item[1]))
-    print(f"---sorted_agents--{sorted_agents}", file=sys.stderr)
+    # print(f"---sorted_agents--{sorted_agents}", file=sys.stderr)
     for agent_id, path in sorted_agents:
-        print(f"---agent_id--{agent_id}", file=sys.stderr)
-        print(f'---box is--{initial_positions[agent_id]["box_id"]}', file=sys.stderr)
-        print(f'---path is--{path}', file=sys.stderr)
+        # print(f"---agent_id--{agent_id}", file=sys.stderr)
+        # print(f'---box is--{initial_positions[agent_id]["box_id"]}', file=sys.stderr)
+        # print(f'---path is--{path}', file=sys.stderr)
 
         # agent-agent conflict
         if initial_positions[agent_id]['box_id'] is None:
             current_position = initial_positions[agent_id]['agent_position']
-            print(f"---current_position--{current_position}", file=sys.stderr)
-            print(f"---agent_id--{agent_id}", file=sys.stderr)
-            print(f"---path--{path}", file=sys.stderr)
+            # print(f"---current_position--{current_position}", file=sys.stderr)
+            # print(f"---agent_id--{agent_id}", file=sys.stderr)
+            # print(f"---path--{path}", file=sys.stderr)
             time_step = 1 # Start the first step at 1
             # Loop over the max path length to avoid situation that one agent reach the goal and stop moving, but still block the other agents
             while time_step < max_path_length:
@@ -176,11 +174,11 @@ def find_first_conflict(solution, initial_positions):
                         current_position.x + action.agent_rel_pos.x,
                         current_position.y + action.agent_rel_pos.y
                     )
-                    print(f"---resulting_position--{resulting_position}",file=sys.stderr)
+                    # print(f"---resulting_position--{resulting_position}",file=sys.stderr)
                     if (resulting_position, time_step) in positions:
                         # Conflict detected, return information about the conflict
                         other_agent_id = positions[(resulting_position, time_step)]
-                        print(f"---Conflict--{Conflict(agent_id, other_agent_id, resulting_position, time_step)}", file=sys.stderr)
+                        # print(f"---Conflict--{Conflict(agent_id, other_agent_id, resulting_position, time_step)}", file=sys.stderr)
                         return Conflict(agent_id, other_agent_id, resulting_position, time_step)
 
                 # If the agent has reached the goal, still extend its path to avoid blocking other agents
@@ -189,11 +187,11 @@ def find_first_conflict(solution, initial_positions):
                     if (resulting_position, time_step) in positions:
                         # Conflict detected, return information about the conflict
                         other_agent_id = positions[(resulting_position, time_step)]
-                        print(f"---MoveAwayConflict--{MoveAwayConflict(agent_id, resulting_agent_position, avoid_pos_list, time_step-1)}", file=sys.stderr)
+                        # print(f"---MoveAwayConflict--{MoveAwayConflict(agent_id, resulting_agent_position, avoid_pos_list, time_step-1)}", file=sys.stderr)
                         return MoveAwayConflict(agent_id, resulting_agent_position, avoid_pos_list, time_step-1)
 
                 positions[(resulting_position, time_step)] = agent_id
-                print(f"---positions--{positions}", file=sys.stderr)
+                # print(f"---positions--{positions}", file=sys.stderr)
                 # Update the current position of the agent
                 current_position = resulting_position
                 time_step += 1
@@ -204,13 +202,13 @@ def find_first_conflict(solution, initial_positions):
             current_agent_position = initial_positions[agent_id]['agent_position']
             box_id = initial_positions[agent_id]['box_id']
             current_box_position = initial_positions[agent_id]['box_position']
-            print(f"---current_agent_position--{current_agent_position}", file=sys.stderr)
-            print(f"---current_box_position--{current_box_position}", file=sys.stderr)
-            print(f"---box_id--{box_id}", file=sys.stderr)
+            # print(f"---current_agent_position--{current_agent_position}", file=sys.stderr)
+            # print(f"---current_box_position--{current_box_position}", file=sys.stderr)
+            # print(f"---box_id--{box_id}", file=sys.stderr)
             time_step = 1
             # Iterate for max_path_length steps
             for time_step in range(1, max_path_length + 1):
-                print(f"---time_step--{time_step}", file=sys.stderr)
+                # print(f"---time_step--{time_step}", file=sys.stderr)
                 # Agent is within its path
                 if time_step < len(path)+1:
                     # action_list = path[time_step - 1]
@@ -225,15 +223,15 @@ def find_first_conflict(solution, initial_positions):
                         current_box_position.x + action.box_rel_pos.x,
                         current_box_position.y + action.box_rel_pos.y
                     )
-                    print(f"---resulting_agent_position--{resulting_agent_position}", file=sys.stderr)
-                    print(f"---resulting_box_position--{resulting_box_position}", file=sys.stderr)
+                    # print(f"---resulting_agent_position--{resulting_agent_position}", file=sys.stderr)
+                    # print(f"---resulting_box_position--{resulting_box_position}", file=sys.stderr)
                     if (resulting_agent_position, time_step) in positions:
                         other_entity_id = positions[(resulting_agent_position, time_step)]
-                        print(f"---Conflict--{Conflict(agent_id, other_entity_id, resulting_agent_position, time_step)}", file=sys.stderr)
+                        # print(f"---Conflict--{Conflict(agent_id, other_entity_id, resulting_agent_position, time_step)}", file=sys.stderr)
                         return Conflict(agent_id, other_entity_id, resulting_agent_position, time_step)
                     elif (resulting_box_position, time_step) in positions:
                         other_entity_id = positions[(resulting_box_position, time_step)]
-                        print(f"---Conflict--{Conflict(box_id, other_entity_id, resulting_box_position, time_step)}", file=sys.stderr)
+                        # print(f"---Conflict--{Conflict(box_id, other_entity_id, resulting_box_position, time_step)}", file=sys.stderr)
                         return Conflict(box_id, other_entity_id, resulting_box_position, time_step)
 
                 # Agent has reached the goal, but still extend its path to avoid blocking other agents
@@ -242,22 +240,22 @@ def find_first_conflict(solution, initial_positions):
                     resulting_box_position = current_box_position
                     if (resulting_agent_position, time_step) in positions:
                         other_entity_id = positions[(resulting_agent_position, time_step)]
-                        print(f'###### positions--{positions}########', file=sys.stderr)
+                        # print(f'###### positions--{positions}########', file=sys.stderr)
                         avoid_pos_list = {pos: agent_id for pos, agent_id in positions.items() if pos[1] >= time_step-1}
-                        print(f'---avoid_pos_list 1--{avoid_pos_list}', file=sys.stderr)
-                        print(f"---MoveAwayConflict 1 --{MoveAwayConflict(agent_id, resulting_agent_position, avoid_pos_list, time_step-1)}", file=sys.stderr)
+                        # print(f'---avoid_pos_list 1--{avoid_pos_list}', file=sys.stderr)
+                        # print(f"---MoveAwayConflict 1 --{MoveAwayConflict(agent_id, resulting_agent_position, avoid_pos_list, time_step-1)}", file=sys.stderr)
                         return MoveAwayConflict(agent_id, resulting_agent_position, avoid_pos_list, time_step-1)
                     # box cannot move away when it reaches the goal, so need to return normal conflict for the other agent to replan
                     elif (resulting_box_position, time_step) in positions:
                         other_entity_id = positions[(resulting_box_position, time_step)]
-                        print(f"---Conflict--{Conflict(box_id, other_entity_id, resulting_box_position, time_step)}", file=sys.stderr)
+                        # print(f"---Conflict--{Conflict(box_id, other_entity_id, resulting_box_position, time_step)}", file=sys.stderr)
                         return Conflict(box_id, other_entity_id, resulting_box_position, time_step)
-                    print(f"---resulting_agent_position in else--{resulting_agent_position}", file=sys.stderr)
-                    print(f"---resulting_box_position in else--{resulting_box_position}", file=sys.stderr)
+                    # print(f"---resulting_agent_position in else--{resulting_agent_position}", file=sys.stderr)
+                    # print(f"---resulting_box_position in else--{resulting_box_position}", file=sys.stderr)
 
                 positions[(resulting_agent_position, time_step)] = agent_id
                 positions[(resulting_box_position, time_step)] = box_id
-                print(f"---positions--{positions}", file=sys.stderr)
+                # print(f"---positions--{positions}", file=sys.stderr)
                 current_agent_position = resulting_agent_position
                 current_box_position = resulting_box_position
                 time_step += 1
@@ -326,9 +324,9 @@ def merge_plans(plans, round):
         merged_plan.append(joint_action)
     print(f"---merged_plan--{merged_plan}", file=sys.stderr)
     for task in round.values():
-        print(f"---task--{task}", file=sys.stderr)
+        # print(f"---task--{task}", file=sys.stderr)
         task.is_completed = True
-    print(f"round--{round}", file=sys.stderr)
+    # print(f"round--{round}", file=sys.stderr)
     return merged_plan
 
 def solve_moveaway_conflict(node, conflict):
@@ -346,8 +344,8 @@ def solve_moveaway_conflict(node, conflict):
             if is_destination_occupied:
                 continue
             else:
-                print(f"---agent_destination--{agent_destination}", file=sys.stderr)
-                print(f"---action--{action}", file=sys.stderr)
+                # print(f"---agent_destination--{agent_destination}", file=sys.stderr)
+                # print(f"---action--{action}", file=sys.stderr)
                 insert_action = [action]
                 break
     # print(f"---insert_action--{insert_action}")

@@ -92,7 +92,7 @@ class SearchClient:
         agent_colors, box_colors = LevelParser.parse_colors(server_messages)
         # print(f"---agent_colors, box_colors--{agent_colors, box_colors}")
         initial_layout, goal_layout = LevelParser.parse_initial_and_goal_states(server_messages)
-        print(f"---initial_layout, goal_layout--{initial_layout, goal_layout}", file=sys.stderr)
+        # print(f"---initial_layout, goal_layout--{initial_layout, goal_layout}", file=sys.stderr)
         #print(f"---initial_layout, goal_layout--{initial_layout, goal_layout}")
         # agents, boxes, goals, walls initialization : empty lists
         # iterate through the initial_layout and goal_layout
