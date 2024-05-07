@@ -194,9 +194,7 @@ class SearchClient:
         while(resolver.has_any_task_left()):
             print("Round -> ", resolver.round_counter, file=sys.stderr)
             resolver.create_round()
-            print(f"---current round---{resolver.round}", file=sys.stderr)
             
-            # Resolve plans conflicts with cbs
             plan = conflict_based_search(current_state, resolver.round)
             final_plan = plan
             # - final_plan.append(plan)

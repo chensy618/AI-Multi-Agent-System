@@ -38,7 +38,7 @@ def astar(initial_state, round):
             print_search_status(explored, frontier)
             print('Maximum memory usage exceeded.', file=sys.stderr)
             return None
-    
+    print(f"frontier is empty", file=sys.stderr)
     print("=============ASTAR===============\n\n", file=sys.stderr)
     
 def print_search_status(explored, frontier):

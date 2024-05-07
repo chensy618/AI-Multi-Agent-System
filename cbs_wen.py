@@ -31,6 +31,10 @@ def conflict_based_search(current_state: State, round):
             }
     print(f"---initial_positions--{initial_positions}", file=sys.stderr)
     solution = astar(current_state, round)
+    print(f"---solution--{solution}", file=sys.stderr)
+    if solution is None:
+        print('astar failed to find a solution.', file=sys.stderr)
+        return None
     for agent in current_state.agents:
         print(f"---agent--{agent}", file=sys.stderr)
         print(f"--current_state--{current_state}", file=sys.stderr)
@@ -55,7 +59,7 @@ def conflict_based_search(current_state: State, round):
         conflict = find_first_conflict(node.solution, initial_positions)
         if conflict is None:
             print('I am here, no conflict found.', file=sys.stderr)
-            executable_plan = merge_plans(node.solution)
+            executable_plan = merge_plans(node.solution,round)
             return executable_plan
         elif isinstance(conflict, MoveAwayConflict):
             print(f"---Moveaway conflict--{conflict}", file=sys.stderr)
@@ -66,7 +70,7 @@ def conflict_based_search(current_state: State, round):
             # Check if there is conflict for the new plans, if not, merge the plans, else continue
             conflict = find_first_conflict(m.solution, initial_positions)
             if conflict is None:
-                executable_plan = merge_plans(m.solution)
+                executable_plan = merge_plans(m.solution,round)
                 return executable_plan
             else:
                 continue
@@ -125,6 +129,9 @@ def find_first_conflict(solution, initial_positions):
     :param solution: A dictionary mapping entity(agent/box) IDs to their respective paths (lists of actions).
     :return: A conflict object with details about the conflict, or None if no conflict is found.
     """
+    if not solution:
+        print('No solution found from astar.', file=sys.stderr)
+        return None
     # the format of solution is {agent.uid: [action1,action2,action3], agent.uid: [action1,action2,action3]}
     print(f"---solution--{solution}", file=sys.stderr)
     print(f"---initial_positions--{initial_positions}", file=sys.stderr)
@@ -139,7 +146,6 @@ def find_first_conflict(solution, initial_positions):
     # sort agent by their path length, so that we always start from short path
     sorted_agents = sorted(solution.items(), key=lambda item: len(item[1]))
     print(f"---sorted_agents--{sorted_agents}", file=sys.stderr)
-
     for agent_id, path in sorted_agents:
         print(f"---agent_id--{agent_id}", file=sys.stderr)
         print(f'---box is--{initial_positions[agent_id]["box_id"]}', file=sys.stderr)
@@ -254,18 +260,48 @@ def find_first_conflict(solution, initial_positions):
     return None
 
 
-def merge_plans(plans):
+# def merge_plans(plans):
+#     """
+#     Merge the individual plans of the agents into a single executable plan.
+
+#     :param solution: A dictionary mapping agent IDs to their respective paths (lists of actions).
+#     :return: A list of joint actions that represents the executable plan.
+#     """
+#     # Initialize the merged plan
+#     merged_plan = []
+#     # Find the maximum length of the individual agent plans
+#     max_length = max(len(plan) for plan in plans.values())
+
+#     # Iterate over each time step
+#     for step in range(max_length):
+#         joint_action = []
+
+#         # For each agent, get the action at the current step or use NoOp if the plan is shorter
+#         for agent_id, plan in plans.items():
+#             if step < len(plan):
+#                 #action = plan[step][0]  # Each action is a list, take the first element
+#                 action = plan[step]
+#             else:
+#                 # Assuming NoOp is represented as None or a specific NoOp action
+#                 action = Action.NoOp
+#             joint_action.append(action)
+
+#         # Append the joint action to the merged plan
+#         merged_plan.append(joint_action)
+#     print(f"---merged_plan--{merged_plan}", file=sys.stderr)
+#     return merged_plan
+
+def merge_plans(plans, round):
     """
     Merge the individual plans of the agents into a single executable plan.
 
     :param solution: A dictionary mapping agent IDs to their respective paths (lists of actions).
     :return: A list of joint actions that represents the executable plan.
     """
-    # Find the maximum length of the individual agent plans
-    max_length = max(len(plan) for plan in plans.values())
-
     # Initialize the merged plan
     merged_plan = []
+    # Find the maximum length of the individual agent plans
+    max_length = max(len(plan) for plan in plans.values())
 
     # Iterate over each time step
     for step in range(max_length):
@@ -284,6 +320,10 @@ def merge_plans(plans):
         # Append the joint action to the merged plan
         merged_plan.append(joint_action)
     print(f"---merged_plan--{merged_plan}", file=sys.stderr)
+    for task in round.values():
+        print(f"---task--{task}", file=sys.stderr)
+        task.is_completed = True
+    print(f"round--{round}", file=sys.stderr)
     return merged_plan
 
 def solve_moveaway_conflict(node, conflict):

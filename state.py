@@ -108,9 +108,12 @@ class State:
 
         # Define movements (up, down, right, left)
         movements = [(0, -1), (0, 1), (1, 0), (-1, 0)]
-
+        print("walls ->", walls, file=sys.stderr)
         max_col = len(walls[0])
+        #max_col = max(len(row) for row in walls)
         max_row = len(walls)
+        print("max_row ->", max_row, file=sys.stderr)
+        print("max_col ->", max_col, file=sys.stderr)
 
         distance_grid = [[None] * max_col for _ in range(max_row)]
 
@@ -136,7 +139,9 @@ class State:
         Checks if this state is a goal state.
         '''
         # Create a mapping of box positions to their corresponding IDs
-        box_positions = {box.pos: box.uid for box in self.boxes}
+        #box_positions = {box.pos: box.uid for box in self.boxes}
+        box_positions = {box.pos: box.value for box in self.boxes}
+        print("box_positions ->", box_positions, file=sys.stderr)
         # Create a mapping of agent positions to their corresponding IDs
         agent_positions = {agent.pos: agent.uid for agent in self.agents}
         print("agent_positions ->", agent_positions, file=sys.stderr)
@@ -144,7 +149,7 @@ class State:
         for goal in State.goals:
             if 'A' <= goal.value <= 'Z':
                 # Check if there's a box at the goal position with the matching ID
-                if box_positions.get(goal.pos) != goal.value:
+                if box_positions.get(goal.pos) != (goal.value):
                     return False
             elif '0' <= goal.value <= '9':
                 # Check if there's an agent at the goal position with the matching ID
@@ -343,7 +348,7 @@ class State:
 
     def __repr__(self):
         lines = []
-        print(f"---self.walls---{self.walls}",file=sys.stderr)
+        #print(f"---self.walls---{self.walls}",file=sys.stderr)
         max_row = len(self.walls)
         max_col = len(self.walls[0])
         for row in range(max_row + 1):
