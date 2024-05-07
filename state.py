@@ -64,7 +64,9 @@ class State:
     def get_box_by_uid(self, box_uid) -> Box:
         return self.boxes.get(box_uid, Box(None, None, None, None))
 
-
+    def get_goal_by_uid(self, goal_uid) -> Goal:
+        return next((goal for goal in State.goals if goal.uid == goal_uid), None)
+    
     def result(self, joint_action: list[Action]) -> 'State':
         '''
         Returns the state resulting from applying joint_action in this state.

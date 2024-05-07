@@ -1,0 +1,22 @@
+#domain
+hospital
+#levelname
+MATestCBSAgent
+#colors
+red: 0
+green: 1
+#initial
+++++++
++++ ++
++0   +
++++ ++
++++1++
+++++++
+#goal
+++++++
++++1++
++   0+
++++ ++
++++ ++
+++++++
+#end
