@@ -167,29 +167,48 @@ def find_first_conflict(solution, initial_positions):
         print(f'---box is--{initial_positions[agent_id]["box_id"]}')
         print(f'---path is--{path}')
 
-        #################### TODO: Need to add agent following conflict logic ####################
         # Agent only conflict
         if initial_positions[agent_id]['box_id'] is None:
             current_position = initial_positions[agent_id]['agent_position']
             print(f"---current_position--{current_position}")
             print(f"---agent_id--{agent_id}")
             print(f"---path--{path}")
+            # Add initial position to the positions dictionary as time step 0
+            positions[(current_position, 0)] = agent_id
             time_step = 1 # Start the first step at 1
             # Agent only won't have issue with MoveAwayConflict
             while time_step < len(path)+1:
                 action_list = path[time_step - 1]
                 action = action_list[0]
+                print(f'---time_step--{time_step}')
                 print(f"---action--{action}")
                 # Calculate the resulting position of the agent after the action
                 resulting_position = Position(
                     current_position.x + action.agent_rel_pos.x,
                     current_position.y + action.agent_rel_pos.y
                 )
+                ### Vertex conflict ###
                 if (resulting_position, time_step) in positions:
                     # Conflict detected, return information about the conflict
                     other_agent_id = positions[(resulting_position, time_step)]
                     print(f"---Conflict--{Conflict(agent_id, other_agent_id, resulting_position, time_step)}")
                     return Conflict(agent_id, other_agent_id, resulting_position, time_step)
+                ### Following conflict one way ###
+                # Other agent is moving into the current agent's position at the timestep
+                if (current_position, time_step) in positions:
+                    other_agent_id = positions[(current_position, time_step)]
+                    # remove situation that the agent id is itself because of NoOp action
+                    if other_agent_id != agent_id:
+                        print(f"---Follow Conflict Agent 1--{FollowConflict(other_agent_id, time_step-1)}")
+                        return FollowConflict(other_agent_id, time_step-1)
+                ### Following conflict the other way ###
+                # Current agent is moving into the other agent's position at the timestep
+                if (resulting_position, time_step-1) in positions:
+                    other_agent_id = positions[(resulting_position, time_step-1)]
+                    # remove situation that the agent id is itself because of NoOp action
+                    if other_agent_id != agent_id:
+                        print(f"---Follow Conflict Agent 2--{FollowConflict(agent_id, time_step-1)}")
+                        return FollowConflict(agent_id, time_step-1)
 
                 positions[(resulting_position, time_step)] = agent_id
                 print(f"---positions--{positions}")
@@ -241,10 +260,6 @@ def find_first_conflict(solution, initial_positions):
                     agent_tag = 'movable'
                     # Box cannot move after reaching the goal
                     box_tag = 'fixed'
-                print(f"Checking if {(resulting_box_position, time_step-1)} exists in positions")
-                print(f"Exists: {((resulting_box_position, time_step-1)) in positions}")
-                print(f"Time step: {time_step}")
-                print(f"Positions keys: {positions.keys()}")
                 ### Judge Vertex conflict ###
                 if (resulting_agent_position, time_step) in positions:
                     tag = positions[(resulting_agent_position, time_step)]['tag']
