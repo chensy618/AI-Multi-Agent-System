@@ -21,7 +21,7 @@ class HTNResolver:
         boxes = initial_state.boxes
         
         if not boxes:
-             # If the task is to get agent to goal
+            # If the task is to get agent to goal
             for agent in initial_state.agents:
                 if agent.uid not in self.agent_tasks:
                     self.agent_tasks[agent.uid] = deque()
@@ -74,6 +74,10 @@ class HTNResolver:
         
     def has_any_task_left(self):
         for _, tasks in self.agent_tasks.items():
-            if len(tasks) > 0: return True
+            
+            if len(tasks) > 0:
+                for task in tasks:
+                    if(task.goal_uid != None):
+                        return True
 
         return False
