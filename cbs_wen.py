@@ -241,7 +241,10 @@ def find_first_conflict(solution, initial_positions):
                     agent_tag = 'movable'
                     # Box cannot move after reaching the goal
                     box_tag = 'fixed'
-
+                print(f"Checking if {(resulting_box_position, time_step-1)} exists in positions")
+                print(f"Exists: {((resulting_box_position, time_step-1)) in positions}")
+                print(f"Time step: {time_step}")
+                print(f"Positions keys: {positions.keys()}")
                 ### Judge Vertex conflict ###
                 if (resulting_agent_position, time_step) in positions:
                     tag = positions[(resulting_agent_position, time_step)]['tag']
@@ -277,7 +280,7 @@ def find_first_conflict(solution, initial_positions):
                         return MoveAwayConflict(other_entity_id, agent_id, resulting_box_position, avoid_pos_list, time_step-1)
                 ### Following conflict one way ###
                 # Means the other agent is moving into the current agent's/box's position at the timestep-1
-                elif ((current_agent_position, time_step) or (current_box_position, time_step)) in positions:
+                if ((current_agent_position, time_step) or (current_box_position, time_step)) in positions:
                     print(f'---agent_id--{agent_id}')
                     print(f'---current_agent_position--{current_agent_position}')
                     print(f'---current_box_position--{current_box_position}')
@@ -287,21 +290,20 @@ def find_first_conflict(solution, initial_positions):
                     other_agent_id = get_actual_agent_id(initial_positions, other_entity_id)
                     print(f"---Follow Conflict 1--{FollowConflict(other_agent_id, time_step-1)}")
                     return FollowConflict(other_agent_id, time_step-1)
-
-                #################### TODO: Need to think about if below section is needed ####################
                 ### Following conflict the other way ###
                 # Means the current agent/box is moving into the other agent's/box's position at the timestep
-                elif ((resulting_agent_position, time_step-1) or (resulting_box_position, time_step-1)) in positions:
-                    other_entity_id = positions[(resulting_agent_position, time_step-1)]['id']
-                    # eliminate the situation that the agent is moving into its own box or the other way around
-                    if (other_entity_id != agent_id and other_entity_id != box_id):
-                        print(f'---other_entity_id--{other_entity_id}')
-                        print(f'---resulting_agent_position--{resulting_agent_position}')
-                        print(f'---resulting_box_position--{resulting_box_position}')
-                        print(f"---Follow Conflict 2--{FollowConflict(agent_id, time_step)}")
-                        return FollowConflict(agent_id, time_step)
-                ########################################################################################
-
+                positions_to_check = [(resulting_agent_position, time_step-1), (resulting_box_position, time_step-1)]
+                for pos, t in positions_to_check:
+                    if (pos, t) in positions:
+                        other_entity_id = positions[(pos, t)]['id']
+                        print(f'###other_entity_id 1--{other_entity_id}')
+                        # eliminate the situation that the agent is moving into its own box or the other way around
+                        if (other_entity_id != agent_id and other_entity_id != box_id):
+                            print(f'---other_entity_id--{other_entity_id}')
+                            print(f'---resulting_agent_position--{resulting_agent_position}')
+                            print(f'---resulting_box_position--{resulting_box_position}')
+                            print(f"---Follow Conflict 2--{FollowConflict(agent_id, time_step-1)}")
+                            return FollowConflict(agent_id, time_step-1)
                 # Store the explored agent and box positions in the positions dictionary
                 positions[(resulting_agent_position, time_step)] = {'id': agent_id, 'tag': agent_tag}
                 positions[(resulting_box_position, time_step)] = {'id': box_id, 'tag': box_tag}
