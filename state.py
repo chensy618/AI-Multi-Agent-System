@@ -102,6 +102,21 @@ class State:
         # print(f"---copy state joint_action---{copy_state.joint_action}")
         return copy_state
 
+    def agents_without_round(self, round):
+        agents_not_in_round = set()
+        for agent in self.agents:
+            for agent_in_round_uid in self.round.keys():
+                is_agent_in_round = False 
+                if(agent_in_round_uid == agent.uid):
+                    is_agent_in_round = True
+                    break
+                
+                if(not is_agent_in_round):
+                    agent = self.get_agent_by_uid(agent.uid)
+                    agents_not_in_round.add(agent.value)
+
+        return agents_not_in_round
+
     @staticmethod
     def initialize_goal_map(walls, goal_pos: Position):
         queue = deque([(goal_pos.x, goal_pos.y, 0)])  # (position, dist)
