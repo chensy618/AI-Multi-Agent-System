@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 import heapq
+import sys
 import time
 import sys
 
@@ -12,24 +13,17 @@ class Heuristic(metaclass=ABCMeta):
     def __init__(self, initial_state: 'State'):
         self.initial_state = initial_state
 
-    def h(self, state: 'State', round) -> 'int':
-        return self.calculate_heuristic_value(state, round)
+    def h(self, state: 'State', task) -> 'int':
+        return self.calculate_heuristic_value(state, task)
 
 
-    def calculate_heuristic_value(self, state, round) -> 'int':
+    def calculate_heuristic_value(self, state, task) -> 'int':
         distance = 0
         
         for agent in state.agents:
-            # Check if the agent has a task
-            if(round[agent.uid] == None):
-                continue
-
-            task = round[agent.uid]
-            print(f"---task---{task}", file=sys.stderr)
-
-            # maybe don't need this check
-            # if(task.box_uid == None or task.goal_uid == None):
-            #     raise RuntimeError(f"Box_uid is None or goal_uid is None, this should not be happening")
+            
+            if(task.box_uid == None or task.goal_uid == None):
+                raise RuntimeError(f"Box_uid is None or goal_uid is None, this should not be happening")
 
             # Check if agent needs to go to its agent goal
             if(task.box_uid == -1):
@@ -57,7 +51,7 @@ class Heuristic(metaclass=ABCMeta):
         return distance
 
     @abstractmethod
-    def f(self, state: 'State') -> 'int': pass
+    def f(self, state: 'State', task) -> 'int': pass
 
     @abstractmethod
     def __repr__(self): raise NotImplementedError
@@ -66,9 +60,9 @@ class HeuristicAStar(Heuristic):
     def __init__(self, initial_state: 'State'):
         super().__init__(initial_state)
 
-    def f(self, state: 'State', problem) -> 'int':
+    def f(self, state: 'State', task) -> 'int':
         g = state.g
-        h = self.h(state, problem)
+        h = self.h(state, task)
         return g + h
 
     def __repr__(self):
@@ -125,8 +119,8 @@ class AStarFrontier(Frontier):
         self.heuristic = heuristic
         self.priority_queue = PriorityQueue()
 
-    def add(self, state: 'State', round):
-        self.priority_queue.push(state, state.g + self.heuristic.f(state, round))
+    def add(self, state: 'State', task):
+        self.priority_queue.push(state, state.g + self.heuristic.f(state, task))
 
     def pop(self) -> 'State':
         return self.priority_queue.pop()

@@ -10,10 +10,10 @@ import memory
 globals().update(Action.__members__)
 start_time = time.perf_counter()
 
-def astar(initial_state, round):
+def astar(initial_state, task):
     print("\n\n=============ASTAR===============", file=sys.stderr)
     frontier = AStarFrontier(HeuristicAStar(initial_state))
-    frontier.add(initial_state, round)
+    frontier.add(initial_state, task)
     
     explored = set()
 
@@ -21,7 +21,9 @@ def astar(initial_state, round):
         current_state = frontier.pop()
         # print(f"---current_state--- {[agent.pos for agent in current_state.agents]}", file=sys.stderr)
 
-        if current_state.is_goal_state():
+        # print("current_state.agents: " + current_state.agents[0].uid, file=sys.stderr)
+
+        if current_state.is_goal_state_for_subgoal(task, current_state.agents[0]):
             print("WE EXTRACTED PLAN", file=sys.stderr)
             return current_state.extract_plan()  # Return the plan to reach the goal state
 
@@ -29,7 +31,7 @@ def astar(initial_state, round):
 
         for state in current_state.get_expanded_states():
             if state not in explored and not frontier.contains(state):
-                frontier.add(state, round)
+                frontier.add(state, task)
 
         if len(explored) % 1000 == 0:
             print_search_status(explored, frontier)

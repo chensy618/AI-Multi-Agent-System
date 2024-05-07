@@ -50,6 +50,11 @@ def conflict_based_search(current_state: State, round):
         print(f"---root.solution--{root.solution}", file=sys.stderr)
         # root.solution = {0: [MoveE,MoveE,MoveE], 1: [MoveN,MoveN,MoveN]}
     
+        relaxed_state = current_state.from_agent_perspective(agent.uid)
+        something = astar(relaxed_state, round[agent.uid])
+        root.solution[agent.uid] = something
+        print(f'root.solution[{agent.uid}]', root.solution[agent.uid], file=sys.stderr)
+        
     root.cost = cost(root.solution)
     frontier = PriorityQueue()
     count_next = next(tiebreaker)

@@ -95,7 +95,7 @@ class State:
         # Create a new state with the updated agents and boxes
         copy_state = State(copy_agents, copy_boxes, self.walls)
         copy_state.parent = self
-        copy_state.joint_action = joint_action[:]
+        copy_state.joint_action = joint_action[0]
         copy_state.g = self.g + 1
         # print(f"---copy state g---{copy_state.g}")
         # print(f"---copy state joint_action---{copy_state.joint_action}")
@@ -186,8 +186,8 @@ class State:
             for agentIdx in range(num_agents):
                 joint_action[agentIdx] = applicable_actions[agentIdx][actions_permutation[agentIdx]]
                 # print(f'---agentIdx---{agentIdx}')
-                # print(f"---joint_action---{joint_action}")
             # if not self.is_conflicting(joint_action):
+
             expanded_states.append(self.result(joint_action))
 
             # Advance permutation.
