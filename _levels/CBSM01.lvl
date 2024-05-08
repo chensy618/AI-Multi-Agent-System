@@ -3,7 +3,7 @@ hospital
 #levelname
 MAPF03
 #colors
-blue: 0,1,A,B,C
+blue: 0,1,A,B
 #initial
 +++++++++++++
 +0   A      +
@@ -15,7 +15,7 @@ blue: 0,1,A,B,C
 #goal
 +++++++++++++
 +           +
-+  C     ++++
++        ++++
 +           +
 +        ++ +
 +     B   +A+
