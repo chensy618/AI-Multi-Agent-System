@@ -27,10 +27,10 @@ def space_time_a_star(inital_state, constraints, task: Task):
 
         explored.add(current_state)
 
-        for state in current_state.get_expanded_states():
+        for state in current_state.get_expanded_states(task):
             if state not in explored and not frontier.contains(state):
                 frontier.add(state, task)
 
     print("No solution found", file=sys.stderr)
     print(f"\n\n=============SPACE_TIME_ASTAR - {agents[0].uid}===============", file=sys.stderr)
-    return None  # No solution found
+    raise RuntimeError("Space Time A* cannot find solution for this problem, check HTN")  # No solution found

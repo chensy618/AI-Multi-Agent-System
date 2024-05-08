@@ -2,6 +2,7 @@ from collections import deque
 import copy
 import random
 import sys
+import time
 from typing import Dict
 
 from domain.action import Action, ActionType
@@ -126,12 +127,8 @@ class State:
 
         # Define movements (up, down, right, left)
         movements = [(0, -1), (0, 1), (1, 0), (-1, 0)]
-        print("walls ->", walls, file=sys.stderr)
         max_col = len(walls[0])
-        #max_col = max(len(row) for row in walls)
         max_row = len(walls)
-        print("max_row ->", max_row, file=sys.stderr)
-        print("max_col ->", max_col, file=sys.stderr)
 
         distance_grid = [[None] * max_col for _ in range(max_row)]
 
@@ -189,13 +186,12 @@ class State:
                 return True
         return False
 
-    def get_expanded_states(self) -> 'list[State]':
+    def get_expanded_states(self, task: Task) -> 'list[State]':
         num_agents = len(self.agents)
         # print(f"---num_agents---{num_agents}")
 
         # Determine list of applicable action for each individual agent.
-        applicable_actions = [[action for action in Action if self.is_applicable(agentIdx, action)] for agentIdx in range(num_agents)]
-        # print(f"---applicable_actions---{applicable_actions}")
+        applicable_actions = [[action for action in Action if self.is_applicable(agentIdx, action, task)] for agentIdx in range(num_agents)]
         # Iterate over joint actions, check conflict and generate child states.
         joint_action = [None for _ in range(num_agents)]
         actions_permutation = [0 for _ in range(num_agents)]
@@ -226,7 +222,7 @@ class State:
         # print(f'---in the end the expanded_states---{expanded_states}')
         return expanded_states
 
-    def is_applicable(self, agent_id: int, action: Action) -> bool:
+    def is_applicable(self, agent_id: int, action: Action, task: Task) -> bool:
         agent = self.agents[agent_id]
         #print(f"---agent---{agent}")
         agent_destination = agent.pos + action.agent_rel_pos
@@ -240,7 +236,7 @@ class State:
         elif action.type is ActionType.Push:
             # Check if there is a box at the agent's destination to push
             box_to_push = next((box for box in self.boxes.values() if box.pos == agent_destination), None)
-            if box_to_push and box_to_push.color == agent.color:
+            if box_to_push and box_to_push.uid == task.box_uid and box_to_push.color == agent.color:
                 # Calculate the box's destination position
                 box_destination = agent_destination + action.box_rel_pos
                 # Check if the box's destination is free
@@ -253,7 +249,7 @@ class State:
             box_position = agent.pos - action.box_rel_pos
             # Check if there is a box to pull at the calculated position
             box_to_pull = next((box for box in self.boxes.values() if box.pos == box_position), None)
-            if box_to_pull and box_to_pull.color == agent.color:
+            if box_to_pull and box_to_pull.uid == task.box_uid and box_to_pull.color == agent.color:
                 # Check if the agent's destination is free to move into
                 return self.is_free(agent_destination)
             else:
@@ -415,7 +411,7 @@ class SpaceTimeState(State):
         return SpaceTimeState([relaxed_agent], agent_colored_boxes, relaxed_walls, relaxed_time, relaxed_constraints, self.g)
 
     # Modify is_applicable function to include constraints judgement
-    def is_applicable(self, agent: int, action: Action) -> bool:
+    def is_applicable(self, agent: int, action: Action, task: Task) -> bool:
         agent = self.agents[agent]
         #print(f"---agent---{agent}", file=sys.stderr)
         agent_destination = agent.pos + action.agent_rel_pos
@@ -429,7 +425,7 @@ class SpaceTimeState(State):
         elif action.type is ActionType.Push:
             # Check if there is a box at the agent's destination to push
             box_to_push = next((box for box in self.boxes.values() if box.pos == agent_destination), None)
-            if box_to_push and box_to_push.color == agent.color:
+            if box_to_push and box_to_push.uid == task.box_uid and  box_to_push.color == agent.color:
                 # Calculate the box's destination position
                 box_destination = agent_destination + action.box_rel_pos
                 # Check if both the agent's and the box's destinations are free and not constrained
@@ -442,7 +438,7 @@ class SpaceTimeState(State):
             box_position = agent.pos - action.box_rel_pos
             # Check if there is a box to pull at the calculated position
             box_to_pull = next((box for box in self.boxes.values() if box.pos == box_position), None)
-            if box_to_pull and box_to_pull.color == agent.color:
+            if box_to_pull and box_to_pull.uid == task.box_uid and box_to_pull.color == agent.color:
                 # Check if the agent's destination is free and not constrained
                 return self.is_free(agent_destination) and not self.is_constrained(agent.value, agent_destination, self.time + 1)
             else:

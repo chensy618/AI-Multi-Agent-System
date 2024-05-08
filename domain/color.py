@@ -38,3 +38,11 @@ class Color(Enum):
             return Color.Brown
         else:
             return None
+
+    def __eq__(self, other):
+        if isinstance(other, Color):
+            return self.value == other.value
+        return False
+
+    def __hash__(self):
+        return hash(self.value)

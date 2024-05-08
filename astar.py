@@ -11,12 +11,11 @@ globals().update(Action.__members__)
 start_time = time.perf_counter()
 
 def astar(initial_state, task):
-    print("\n=============ASTAR===============", file=sys.stderr)
+    print(f"\n=============ASTAR - {initial_state.agents[0].uid}===============", file=sys.stderr)
     frontier = AStarFrontier(HeuristicAStar(initial_state))
     frontier.add(initial_state, task)
-    
     explored = set()
-
+    print(f"task - {task}", file=sys.stderr)
     while not frontier.is_empty():
         current_state = frontier.pop()
         # print(f"---current_state--- {[agent.pos for agent in current_state.agents]}", file=sys.stderr)
@@ -30,7 +29,7 @@ def astar(initial_state, task):
 
         explored.add(current_state)
 
-        for state in current_state.get_expanded_states():
+        for state in current_state.get_expanded_states(task):
             if state not in explored and not frontier.contains(state):
                 frontier.add(state, task)
 
@@ -44,7 +43,7 @@ def astar(initial_state, task):
         
     print("No solution found", file=sys.stderr)
     print("=============ASTAR===============\n", file=sys.stderr)
-    return None  # No solution found
+    raise RuntimeError("A* cannot find solution for this problem, check HTN")  # No solution found
     
 def print_search_status(explored, frontier):
     status_template = '#Expanded: {:8,}, #Frontier: {:8,}, #Generated: {:8,}, Time: {:3.3f} s\n[Alloc: {:4.2f} MB, MaxAlloc: {:4.2f} MB]'
