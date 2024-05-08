@@ -10,6 +10,7 @@ from domain.conflict import Conflict, MoveAwayConflict,FollowConflict
 from domain.constraint import Constraint
 from domain.position import Position
 from queue import PriorityQueue
+from htn.htn_resolver import HTNResolver
 from st_astar import space_time_a_star
 from state import State
 
@@ -21,7 +22,7 @@ def conflict_based_search(current_state: State, round):
     root.constraints = set()
     initial_positions = {}
     #round--{0: Task(box_uid=-1 goal_uid=1), 1: Task(box_uid=-1 goal_uid=0)}
-    print(f"--round--{round}", file=sys.stderr)
+    # print(f"--round--{round}", file=sys.stderr)
     for agent_uid, task in round.items():
         agent = current_state.get_agent_by_uid(agent_uid)
         box = current_state.get_box_by_uid(task.box_uid)
@@ -33,7 +34,7 @@ def conflict_based_search(current_state: State, round):
                 'goal_id': goal.value if goal else None,
                 'goal_position': goal.pos if goal else None
             }
-    print(f"---initial_positions--{initial_positions}", file=sys.stderr)
+    # print(f"---initial_positions--{initial_positions}", file=sys.stderr)
     
     for agent in current_state.agents:
         if(round[agent.uid].goal_uid == None):
@@ -43,7 +44,7 @@ def conflict_based_search(current_state: State, round):
         plan = astar(relaxed_state, round[agent.uid])
         root.solution[agent.uid] = plan
     
-    print(f'astar solution: ', root.solution, file=sys.stderr)
+    print(f'CBS solution: ', root.solution, file=sys.stderr)
         
     root.cost = cost(root.solution)
     frontier = PriorityQueue()
@@ -203,7 +204,7 @@ def find_first_conflict(solution, initial_positions):
         else:
             current_agent_position = initial_positions[agent_id]['agent_position']
             box_id = initial_positions[agent_id]['box_id']
-            print(f"--box_id--{box_id}", file=sys.stderr)
+            # print(f"--box_id--{box_id}", file=sys.stderr)
             current_box_position = initial_positions[agent_id]['box_position']
             # print(f"---current_agent_position--{current_agent_position}", file=sys.stderr)
             # print(f"---current_box_position--{current_box_position}", file=sys.stderr)
@@ -333,7 +334,7 @@ def merge_plans(current_state, solutions, round):
 
     for step in range(max_length):
         joint_action = []
-        for i, agent in enumerate(sorted_agents):
+        for agent in sorted_agents:
             if(agent.uid in solutions.keys()):
                 solution = solutions[agent.uid]
                 if step < len(solution):
@@ -350,9 +351,10 @@ def merge_plans(current_state, solutions, round):
         merged_plan.append(joint_action)
     print(f"---merged_plan--{merged_plan}", file=sys.stderr)
     
-    for task in round.values():
-        # print(f"---task--{task}", file=sys.stderr)
-        task.is_completed = True
+    for agent_uid, task in round.items():
+        if(HTNResolver.completed_tasks.get(agent_uid) is None):
+            HTNResolver.completed_tasks[agent_uid] = []
+        HTNResolver.completed_tasks[agent_uid].append(task)
     # print(f"round--{round}", file=sys.stderr)
     return merged_plan
 

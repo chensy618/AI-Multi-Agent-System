@@ -1,8 +1,11 @@
+from collections import deque
 import io
 import argparse
 import pprint
 import sys
+import time
 from domain.action import Action
+from domain.task import Task
 from htn.htn_resolver import HTNResolver
 import memory
 
@@ -150,64 +153,49 @@ class SearchClient:
         server_messages = io.TextIOWrapper(sys.stdin.buffer, encoding='ASCII')
         initial_state = SearchClient.parse_level(server_messages)
 
-        print("\nINITIAL STATE", file=sys.stderr)
+        print("\n========INITIAL STATE========\n", file=sys.stderr)
+        for goal in State.goals:
+            State.goal_map[goal.uid] = State.initialize_goal_map(initial_state.walls, goal.pos)
+            print(f"Goal - {goal.value} ---> ", goal, file=sys.stderr)
         for agent in initial_state.agents:
             print(f"Agent - {agent.value} ---> ", agent, file=sys.stderr)
         for box in initial_state.boxes.values():
-            print(f"Box - {box.value} ---> ", box, file=sys.stderr)
-        for goal in State.goals:
-            print(f"Goal - {goal.value} ---> ", goal, file=sys.stderr)
-        print("INITIAL STATE\n", file=sys.stderr)
-
-        for goal in State.goals:
-            print(f"Goal - {goal.value} ---> ", goal, file=sys.stderr)
-            State.goal_map[goal.uid] = State.initialize_goal_map(initial_state.walls, goal.pos)
-        for box in initial_state.boxes.values():
             State.box_goal_map[box.uid] = State.initialize_goal_map(initial_state.walls, box.pos)
+            print(f"Box - {box.value} ---> ", box, file=sys.stderr)
         
         for goal_id in State.goal_map.keys():
             print(f"\n----------Distance map for Goal - {goal_id}-------------", file=sys.stderr)
             goal_grid = State.goal_map[goal_id]
             for row in goal_grid:
                 print(' '.join(f"{cell if cell is not None else 'None':4}" for cell in row), file=sys.stderr)
-
         for box_id in State.box_goal_map.keys():
             print(f"\n----------Distance map for Box - {box_id}-------------", file=sys.stderr)
             goal_grid = State.box_goal_map[box_id]
             for row in goal_grid:
                 print(' '.join(f"{cell if cell is not None else 'None':4}" for cell in row), file=sys.stderr)
 
-        ### PSEUDO CODE for integrating CBS and HTN
-
-        # Initialize problems for each agent
-        # - Get same colored agents and boxes
-        # - Distribute the boxes between those agents
-        # - Store all tasks in a Map<agentId -> deque<Task>>
-        # - calculate BFS_from_goal / BFS_from_box for each goal / box: goal_map and box_map Map<goalId -> [][]>, Map<boxId -> [][]>
-        #   -> it has to be run in a state with only walls and free cells
+        print("\n========INITIAL STATE========\n", file=sys.stderr)
         
-        print("-----------Problem-------------\n", file=sys.stderr)
+        print("========PROBLEM========\n", file=sys.stderr)
         resolver = HTNResolver()
         resolver.initialize_problems(initial_state)
 
-        print(f"---agent_tasks---{resolver.agent_tasks}", file=sys.stderr)
-
-        final_plan = None
+        final_plan = []
         current_state = initial_state
-        while(resolver.has_any_task_left()):
+        while(resolver.has_any_task_left(current_state)):
             print("Round -> ", resolver.round_counter, file=sys.stderr)
-            resolver.create_round()
-            
+            resolver.create_round(current_state)
+
+            print(resolver.round, file=sys.stderr)
+            # time.sleep(100)
             plan = conflict_based_search(current_state, resolver.round)
-            final_plan = plan
-            # - final_plan.append(plan)
-            # set current_state to the state after executing the plan.
+            
+            for time_step in plan:
+                final_plan.append(time_step)
+                current_state = current_state.result(time_step)
 
-        print("-----------Problem-------------\n", file=sys.stderr)
 
-
-        # for time_step in final_plan:
-        #     time_step.append(Action.NoOp)
+        print("========PROBLEM========\n", file=sys.stderr)
 
         if final_plan is None:
             print('Unable to solve level.', file=sys.stderr, flush=True)

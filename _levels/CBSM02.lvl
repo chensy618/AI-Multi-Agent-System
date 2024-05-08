@@ -1,0 +1,23 @@
+#domain
+hospital
+#levelname
+MAPF03
+#colors
+blue: 0,1,A,B,C
+#initial
++++++++++++++
++0   A    1 +
++        ++++
++           +
++     B  ++ +
++ C       + +
++++++++++++++
+#goal
++++++++++++++
++           +
++        ++++
++           +
++  C     ++ +
++     B   +A+
++++++++++++++
+#end
