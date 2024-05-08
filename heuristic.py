@@ -28,6 +28,7 @@ class Heuristic(metaclass=ABCMeta):
 
         # Check if the task is a box-to-goal task or an agent-to-goal task
         if(task.box_uid == -1):
+            print(f"Agent {agent}, task {task.goal_uid}", file=sys.stderr)
             distance += DistanceCalc.calculate_agent_task(agent, task.goal_uid)
         else:
             agent_box = state.boxes[task.box_uid]
