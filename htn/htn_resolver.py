@@ -2,82 +2,68 @@ from collections import deque
 import sys
 
 from domain.task import Task
+from helper.distance_calc import DistanceCalc
 from htn.htn_helper import HTNHelper
 from state import State
 
 
 class HTNResolver:
+    completed_tasks = {}
+
     def __init__(self):
-        # Stores list of (agentId, boxId) tuples for each agent
-        self.agent_tasks = {}
-        
         # Stores current assigned task for an agent
         self.round = {}
-        
+        # Stores list of Box for each Colour
+        self.boxes_by_color = {}
+
+        # Stores list of Agent for each Colour
+        self.agents_by_color = {}
+
         self.round_counter = 0
 
     def initialize_problems(self, initial_state: State):
         agents = initial_state.agents
         boxes = initial_state.boxes
-        
-        if not boxes:
-            # If the task is to get agent to goal
-            for agent in initial_state.agents:
-                if agent.uid not in self.agent_tasks:
-                    self.agent_tasks[agent.uid] = deque()
-                goal_uid = HTNHelper.get_closest_goal_uid_to_agent(agent, self.agent_tasks)
-                self.agent_tasks[agent.uid].append(Task(-1, goal_uid))
-        else:
 
-            agents_by_color = HTNHelper.categorize_agents_by_color(agents)
-            boxes_by_color = HTNHelper.categorize_boxes_by_color(boxes)
-            for color, color_boxes in boxes_by_color.items():
-                # Retrieve the agents of the current box color
-                color_agents = agents_by_color.get(color, [])
+        self.agents_by_color = HTNHelper.categorize_agents_by_color(agents)
+        self.boxes_by_color = HTNHelper.categorize_boxes_by_color(boxes)
 
-                # If there are no agents of this color, skip to the next color
-                if not color_agents:
-                    continue  
-
-                # Distribute boxes equally among agents of the same color
-                for i, box in enumerate(color_boxes):
-                    # Determine which agent should receive this box based on a round-robin distribution
-                    # TODO Assign box to agent based on distance
-                    agent_index = i % len(color_agents)
-                    agent = color_agents[agent_index]
-
-                    # TODO Check if generating plan for agent -> box, is possible (not blocked)
-
-                    # Create agent_tasks for each agent
-                    if agent.uid not in self.agent_tasks:
-                        self.agent_tasks[agent.uid] = deque()
-                    goal_uid = HTNHelper.get_closest_goal_uid_to_box(box, self.agent_tasks)
-                    self.agent_tasks[agent.uid].append(Task(box.uid, goal_uid))
-
-            # # If the task is to get agent to goal
-            # for agent in initial_state.agents:
-            #     if agent.uid not in self.agent_tasks:
-            #         self.agent_tasks[agent.uid] = deque()
-            #     goal_uid = HTNHelper.get_closest_goal_uid_to_agent(agent, self.agent_tasks)
-            #     self.agent_tasks[agent.uid].append(Task(-1, goal_uid))
-
-    def create_round(self):
+    def create_round(self, current_state):
         self.round_counter += 1
-        print(f"Round {self.round_counter}", file=sys.stderr)
-        print(f"self.agent_tasks: {self.agent_tasks}", file=sys.stderr)
-        for agent_id in list(self.agent_tasks.keys()):
-            print(f"self.round.get(agent_id): {self.round.get(agent_id)}", file=sys.stderr)
-            if self.round.get(agent_id) is None:
-                task = self.agent_tasks[agent_id].popleft()
-                self.round[agent_id] = task 
 
+        boxes = current_state.boxes
         
-    def has_any_task_left(self):
-        for _, tasks in self.agent_tasks.items():
-            
-            if len(tasks) > 0:
-                for task in tasks:
-                    if(task.goal_uid != None):
-                        return True
+        for color, agents_by_color in self.agents_by_color.items():
+            boxes = self.boxes_by_color.get(color, [])
+
+            for agent in agents_by_color:
+                # Check if we have box
+                if boxes:
+                    min_box, goal_uid = min(
+                        [
+                            (
+                                box, 
+                                HTNHelper.get_closest_goal_uid_to_box(box)
+                            ) 
+                            for box in boxes
+                        ],
+                        key=lambda item: DistanceCalc.calculate_box_task(item[0], agent, item[1])
+                    )
+
+                    self.boxes_by_color[agent.color].remove(min_box)
+                    self.round[agent.uid] = Task(min_box.uid, min_box.value, goal_uid)
+                else:
+                    goal_uid = HTNHelper.get_closest_goal_uid_to_agent(agent)
+                    self.round[agent.uid] = Task(-1, None, goal_uid)
+        
+    def has_any_task_left(self, current_state):
+        for agent in current_state.agents:
+            goal_uid = HTNHelper.get_closest_goal_uid_to_agent(agent)
+            if(goal_uid != None):
+                if State.goal_map[goal_uid][agent.pos.y][agent.pos.x] != 0:
+                    return True
+        for _, boxes in self.boxes_by_color.items():
+            if len(boxes) > 0:
+                return True
 
         return False

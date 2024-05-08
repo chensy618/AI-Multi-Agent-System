@@ -5,6 +5,7 @@ import time
 import sys
 
 from helper.distance_calc import DistanceCalc
+from htn.htn_resolver import HTNResolver
 from state import State
 
 
@@ -25,29 +26,27 @@ class Heuristic(metaclass=ABCMeta):
         if(task.box_uid == None or task.goal_uid == None):
             raise RuntimeError(f"Box_uid is None or goal_uid is None, this should not be happening")
 
-        # Check if agent needs to go to its agent goal
+        # Check if the task is a box-to-goal task or an agent-to-goal task
         if(task.box_uid == -1):
-            agent_to_goal_dist = State.goal_map[task.goal_uid][agent.pos.y][agent.pos.x]
-            distance += agent_to_goal_dist
-        # If not, then agent needs to go to box
+            distance += DistanceCalc.calculate_agent_task(agent, task.goal_uid)
         else:
-            # print(f"task.box_uid: {task.box_uid}", file=sys.stderr)
-            # print(f"state.boxes: {state.boxes}", file=sys.stderr)
             agent_box = state.boxes[task.box_uid]
-            # print(f"task.box_uid: {task.box_uid}", file=sys.stderr)
-            # print(f"state.boxes: {state.boxes}", file=sys.stderr)
-            # print(f"---agent_box---{agent_box}", file=sys.stderr)
-            
-            agent_to_box_dist = DistanceCalc.pos_to_box_distance(agent_box, agent.pos)
-            distance += agent_to_box_dist
-                # print(f"---agent_to_box_dist---{agent_to_box_dist}", file=sys.stderr)
-        for box in state.boxes.values():
-            if(State.goal_map[task.goal_uid] == None):
-                continue
-            box_to_goal_dist = State.goal_map[task.goal_uid][box.pos.y][box.pos.x]
-            distance += box_to_goal_dist
+            distance += DistanceCalc.calculate_box_task(agent_box, agent, task.goal_uid)
 
         return distance
+
+        # if(HTNResolver.completed_tasks.get(agent.uid) == None):
+        #     HTNResolver.completed_tasks[agent.uid] = []
+        # completed_tasks = HTNResolver.completed_tasks[agent.uid]
+
+        # for task in completed_tasks:
+        #     if(task.box_uid == -1):
+        #         raise RuntimeError(f"There shouldn't be any agent goal tasks in completed_tasks list.")
+            
+        #     agent_box = state.boxes[task.box_uid]
+
+        #     box_to_goal_dist = State.goal_map[task.goal_uid][agent_box.pos.y][agent_box.pos.x]
+        #     distance += 1.5 * box_to_goal_dist
 
     @abstractmethod
     def f(self, state: 'State', task) -> 'int': pass
