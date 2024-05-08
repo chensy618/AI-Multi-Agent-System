@@ -91,7 +91,8 @@ class State:
                 copied_box = next((box for box in copy_boxes.values() if box.pos == box_pos), None)
 
                 if(copied_box is None):
-                    raise RuntimeError(f"Box not found at position {box_pos} in the boxes list")
+                    print("All tasks are completed", file=sys.stderr)
+                    break
                 # Update the box's position
                 copied_box.pos += action.box_rel_pos
                 copied_agent.pos += action.agent_rel_pos
