@@ -21,7 +21,7 @@ class MoveAwayConflict:
 
     def __repr__(self):
         return f"Conflict(ai={self.ai}, aj={self.aj}, current_pos={self.current_pos} ,avoid_pos_list={self.avoid_pos_list}, t={self.t})"
-    
+
 class FollowConflict:
     # ai is following another agent at the timestep t
     def __init__(self, ai, t):
@@ -30,3 +30,13 @@ class FollowConflict:
 
     def __repr__(self):
         return f"Conflict(ai={self.ai}, t={self.t})"
+
+
+class MetaAgentConflict:
+    # ai and aj has a lot of conflicts and can't be solved
+    def __init__(self, ai, aj):
+        self.ai = ai
+        self.aj = aj
+
+    def __repr__(self):
+        return f"Conflict(ai={self.ai}, aj={self.aj})"
