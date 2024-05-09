@@ -18,6 +18,7 @@ from state import State
 tiebreaker = itertools.count()
 
 def conflict_based_search(current_state: State, round):
+    print(f"\n=============CBS-begin===============", file=sys.stderr)
     root = Node()
     root.constraints = set()
     initial_positions = {}
@@ -57,9 +58,10 @@ def conflict_based_search(current_state: State, round):
         if conflict is None:
             print(f"No conflict found. We are extracting plan... -> {node.solution}", file=sys.stderr)
             executable_plan = merge_plans(current_state, node.solution, round)
+            print(f"=============CBS-end===============\n", file=sys.stderr)
             return executable_plan
         elif isinstance(conflict, MoveAwayConflict):
-            print(f"---Moveaway conflict--{conflict}", file=sys.stderr)
+            # print(f"---Moveaway conflict--{conflict}", file=sys.stderr)
             m = node.copy()
             moveaway_agent_id = conflict.ai
             blocked_agent_id = conflict.aj
@@ -69,18 +71,21 @@ def conflict_based_search(current_state: State, round):
             if conflict is None:
                 print(f"No conflict found. We are extracting plan... -> {m.solution}", file=sys.stderr)
                 executable_plan = merge_plans(current_state, m.solution, round)
+                print(f"=============CBS-end===============\n", file=sys.stderr)
                 return executable_plan
             else:
                 continue
         # Special handling for FollowConflict
         elif isinstance(conflict, FollowConflict):
-            print(f"---Follow conflict--{conflict}")
+            # print(f"---Follow conflict--{conflict}")
             m = node.copy()
             m.solution[conflict.ai] = solve_follow_conflict(node, conflict)
             # Check if there is conflict for the new plans, if not, merge the plans, else continue
             conflict = find_first_conflict(m.solution, initial_positions)
             if conflict is None:
+                print(f"No conflict found. We are extracting plan... -> {m.solution}", file=sys.stderr)
                 executable_plan = merge_plans(current_state, m.solution, round)
+                print(f"=============CBS-end===============\n", file=sys.stderr)
                 return executable_plan
             else:
                 continue
@@ -106,6 +111,10 @@ def conflict_based_search(current_state: State, round):
                 if m.node_cost < sys.maxsize:
                     count_next = next(tiebreaker)
                     frontier.put((m.node_cost, count_next, m))
+
+    print(f"CBS cannot resolve conflict", file=sys.stderr)
+    print(f"=============CBS-end===============\n", file=sys.stderr)
+    return None
 
         
         
@@ -331,7 +340,6 @@ def merge_plans(current_state, solutions, round):
 
     # For each agent, get the action at the current step or use NoOp if the plan is shorter
     sorted_agents = sorted(current_state.agents, key=lambda a: a.value)
-
     for step in range(max_length):
         joint_action = []
         for agent in sorted_agents:
@@ -346,7 +354,6 @@ def merge_plans(current_state, solutions, round):
                 joint_action.append(action)
             else:
                 joint_action.append(Action.NoOp)
-
         # Append the joint action to the merged plan
         merged_plan.append(joint_action)
     print(f"---merged_plan--{merged_plan}", file=sys.stderr)
