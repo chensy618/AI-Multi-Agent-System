@@ -74,6 +74,7 @@ class State:
         Precondition: Joint action must be applicable and non-conflicting in this state.
         '''
         copy_agents = [Agent(agent.pos, agent.value, agent.uid, agent.color) for agent in self.agents]
+        copy_agents = sorted(copy_agents, key=lambda agent: agent.value)
         copy_boxes = copy.deepcopy(self.boxes)
         for agent_index, action in enumerate(joint_action):
             copied_agent = copy_agents[agent_index]
@@ -189,7 +190,6 @@ class State:
 
     def get_expanded_states(self, task: Task) -> 'list[State]':
         num_agents = len(self.agents)
-        # print(f"---num_agents---{num_agents}")
 
         # Determine list of applicable action for each individual agent.
         applicable_actions = [[action for action in Action if self.is_applicable(agentIdx, action, task)] for agentIdx in range(num_agents)]
@@ -200,7 +200,6 @@ class State:
         while True:
             for agentIdx in range(num_agents):
                 joint_action[agentIdx] = applicable_actions[agentIdx][actions_permutation[agentIdx]]
-                # print(f'---agentIdx---{agentIdx}')
             # if not self.is_conflicting(joint_action):
 
             expanded_states.append(self.result(joint_action))
@@ -219,15 +218,11 @@ class State:
             if done:
                 break
         State._RNG.shuffle(expanded_states)
-        # print(f'---in the end the joint_action---{joint_action}')
-        # print(f'---in the end the expanded_states---{expanded_states}')
         return expanded_states
 
     def is_applicable(self, agent_id: int, action: Action, task: Task) -> bool:
         agent = self.agents[agent_id]
-        #print(f"---agent---{agent}")
         agent_destination = agent.pos + action.agent_rel_pos
-        #print(f"---agent_destination---{agent_destination}")
         if action.type is ActionType.NoOp:
             return True
 
