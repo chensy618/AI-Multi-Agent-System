@@ -21,9 +21,77 @@ def conflict_based_search(current_state: State, round):
     print(f"\n=============CBS-begin===============", file=sys.stderr)
     root = Node()
     root.constraints = set()
+    initial_positions = initialize_initial_positions(current_state, round)
+            
+    for agent in current_state.agents:
+        if(round[agent.uid].goal_uid == None):
+            continue
+        relaxed_state = current_state.from_agent_perspective(agent.uid)
+        plan = astar(relaxed_state, round[agent.uid])
+        root.solution[agent.uid] = plan
+    
+    print(f'CBS solution: ', root.solution, file=sys.stderr)
+        
+    root.cost = cost(root.solution)
+    frontier = PriorityQueue()
+    count_next = next(tiebreaker)
+    frontier.put((count_next, root))
+
+    conflict_special_solvers = {
+        MoveAwayConflict: solve_moveaway_conflict,
+        FollowConflict: solve_follow_conflict,
+    }
+
+    while not frontier.empty():
+        tiebreaker_value, node = frontier.get()
+        conflict = find_first_conflict(node.solution, initial_positions)
+        if conflict is None:
+            print(f"No conflict found. We are extracting plan... -> {node.solution}", file=sys.stderr)
+            executable_plan = merge_plans(current_state, node.solution, round)
+            print(f"=============CBS-end===============\n", file=sys.stderr)
+            return executable_plan
+        
+        handler = conflict_special_solvers.get(type(conflict), None)
+
+        if(handler):
+            new_node = handler(node.copy(), conflict)
+            if new_node.cost < sys.maxsize:
+                count_next = next(tiebreaker)
+                frontier.put((count_next, new_node))
+        else:
+            resolve_conflict(node, conflict, current_state, round, frontier)
+
+    print(f"CBS cannot resolve conflict", file=sys.stderr)
+    print(f"=============CBS-end===============\n", file=sys.stderr)
+    return None
+
+def resolve_conflict(node, conflict, current_state, round, frontier):
+    for agent_uid, task in round.items(): 
+        #round--{0: Task(box_uid=0 goal_uid=1), 1: Task(box_uid=1 goal_uid=0)}
+        entity_id = None
+        if(agent_uid in [conflict.ai, conflict.aj]):
+            entity_id = agent_uid
+        else:
+            box = current_state.get_box_by_uid(task.box_uid)
+            entity_id = box.value
+        m = node.copy()
+        m.constraints.add(Constraint(entity_id, Position(conflict.pos.x, conflict.pos.y), conflict.t))
+        m.constraints.add(Constraint(entity_id, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
+        m.constraints.add(Constraint(entity_id, Position(conflict.pos.x, conflict.pos.y), conflict.t+2))
+        relaxed_state = current_state.from_agent_perspective(agent_uid)
+        st_solution = space_time_a_star(relaxed_state, m.constraints, round[agent_uid])
+        m.solution[agent_uid] = st_solution
+        m.cost = cost(m.solution)
+        if m.cost < sys.maxsize:
+            count_next = next(tiebreaker)
+            frontier.put((count_next, m))
+    return m
+
+def initialize_initial_positions(current_state, round):
     initial_positions = {}
     #round--{0: Task(box_uid=-1 goal_uid=1), 1: Task(box_uid=-1 goal_uid=0)}
     # print(f"--round--{round}", file=sys.stderr)
+
     for agent_uid, task in round.items():
         agent = current_state.get_agent_by_uid(agent_uid)
         box = current_state.get_box_by_uid(task.box_uid)
@@ -35,88 +103,7 @@ def conflict_based_search(current_state: State, round):
                 'goal_id': goal.value if goal else None,
                 'goal_position': goal.pos if goal else None
             }
-    # print(f"---initial_positions--{initial_positions}", file=sys.stderr)
-    
-    for agent in current_state.agents:
-        if(round[agent.uid].goal_uid == None):
-            continue
-        relaxed_state = current_state.from_agent_perspective(agent.uid)
-        #print(f"---relaxed_state.boxes--{relaxed_state.boxes} {agent.uid}", file=sys.stderr)
-        plan = astar(relaxed_state, round[agent.uid])
-        root.solution[agent.uid] = plan
-    
-    print(f'CBS solution: ', root.solution, file=sys.stderr)
-        
-    root.cost = cost(root.solution)
-    frontier = PriorityQueue()
-    count_next = next(tiebreaker)
-    frontier.put((root.cost, count_next, root))
-    while not frontier.empty():
-        node_cost, tiebreaker_value, node = frontier.get()
-        conflict = find_first_conflict(node.solution, initial_positions)
-        # conflict : Conflict(object_i=B, object_j=A, pos=Position(x=3, y=3), t=1)
-        if conflict is None:
-            print(f"No conflict found. We are extracting plan... -> {node.solution}", file=sys.stderr)
-            executable_plan = merge_plans(current_state, node.solution, round)
-            print(f"=============CBS-end===============\n", file=sys.stderr)
-            return executable_plan
-        elif isinstance(conflict, MoveAwayConflict):
-            # print(f"---Moveaway conflict--{conflict}", file=sys.stderr)
-            m = node.copy()
-            moveaway_agent_id = conflict.ai
-            blocked_agent_id = conflict.aj
-            m.solution[moveaway_agent_id], m.solution[blocked_agent_id] = solve_moveaway_conflict(node, conflict)
-            # Check if there is conflict for the new plans, if not, merge the plans, else continue
-            conflict = find_first_conflict(m.solution, initial_positions)
-            if conflict is None:
-                print(f"No conflict found. We are extracting plan... -> {m.solution}", file=sys.stderr)
-                executable_plan = merge_plans(current_state, m.solution, round)
-                print(f"=============CBS-end===============\n", file=sys.stderr)
-                return executable_plan
-            else:
-                continue
-        # Special handling for FollowConflict
-        elif isinstance(conflict, FollowConflict):
-            # print(f"---Follow conflict--{conflict}")
-            m = node.copy()
-            m.solution[conflict.ai] = solve_follow_conflict(node, conflict)
-            # Check if there is conflict for the new plans, if not, merge the plans, else continue
-            conflict = find_first_conflict(m.solution, initial_positions)
-            if conflict is None:
-                print(f"No conflict found. We are extracting plan... -> {m.solution}", file=sys.stderr)
-                executable_plan = merge_plans(current_state, m.solution, round)
-                print(f"=============CBS-end===============\n", file=sys.stderr)
-                return executable_plan
-            else:
-                continue
-        else:
-            print(f"-Baisc conflict for --{conflict}", file=sys.stderr)
-            for agent_uid, task in round.items(): 
-                #round--{0: Task(box_uid=0 goal_uid=1), 1: Task(box_uid=1 goal_uid=0)}
-                entity_id = None
-                if(agent_uid in [conflict.ai, conflict.aj]):
-                    entity_id = agent_uid
-                else:
-                    box = current_state.get_box_by_uid(task.box_uid)
-                    entity_id = box.value
-                m = node.copy()
-                m.constraints.add(Constraint(entity_id, Position(conflict.pos.x, conflict.pos.y), conflict.t))
-                m.constraints.add(Constraint(entity_id, Position(conflict.pos.x, conflict.pos.y), conflict.t+1))
-                m.constraints.add(Constraint(entity_id, Position(conflict.pos.x, conflict.pos.y), conflict.t+2))
-                relaxed_state = current_state.from_agent_perspective(agent_uid)
-                st_solution = space_time_a_star(relaxed_state, m.constraints, round[agent_uid])
-                print(f"---st_solution : {st_solution}", file=sys.stderr)
-                m.solution[agent_uid] = st_solution
-                m.node_cost = cost(m.solution)
-                if m.node_cost < sys.maxsize:
-                    count_next = next(tiebreaker)
-                    frontier.put((m.node_cost, count_next, m))
-
-    print(f"CBS cannot resolve conflict", file=sys.stderr)
-    print(f"=============CBS-end===============\n", file=sys.stderr)
-    return None
-
-        
+    return initial_positions
         
 def cost(solution):
     """
@@ -371,6 +358,7 @@ def solve_moveaway_conflict(node, conflict):
     avoid_pos_list = conflict.avoid_pos_list
     agent_current_pos = conflict.current_pos
     time_step = conflict.t
+
     # Move E, W, N, S
     for action in Action:
         if action.type == ActionType.Move:
@@ -396,8 +384,20 @@ def solve_moveaway_conflict(node, conflict):
     # Insert a NoOp action for the blocked agent to wait the other agent move
     node.solution[blocked_agent_id].insert(time_step, Action.NoOp)
 
+    node.cost = cost(node.solution)
+    return node
+
+
+def solve_follow_conflict(node, conflict):
+    agent_id = conflict.ai
+    time_step = conflict.t
+    # Insert the NoOp action at the time step, so that the agent can wait for 1 step and then move
+    node.solution[agent_id].insert(time_step, Action.NoOp)
+    node.cost = cost(node.solution)
     # Return the new solution for the agent that needs to move away.
-    return node.solution[agent_id], node.solution[blocked_agent_id]
+    print(f"---node.solution[agent_id]--{node.solution[agent_id]}",file=sys.stderr)
+    return node
+
 
 def get_actual_agent_id(initial_positions, entity_id):
     # If the entity_id is a box, return its corresponding agent_id
@@ -406,15 +406,4 @@ def get_actual_agent_id(initial_positions, entity_id):
             return agent_id
     # If the entity_id is already an agent_id, return it as is
     return agent_id
-
-
-def solve_follow_conflict(node, conflict):
-    agent_id = conflict.ai
-    time_step = conflict.t
-    # Insert the NoOp action at the time step, so that the agent can wait for 1 step and then move
-    node.solution[agent_id].insert(time_step, Action.NoOp)
-
-    # Return the new solution for the agent that needs to move away.
-    print(f"---node.solution[agent_id]--{node.solution[agent_id]}",file=sys.stderr)
-    return node.solution[agent_id]
 
