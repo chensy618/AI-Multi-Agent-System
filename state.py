@@ -34,29 +34,20 @@ class State:
         self._hash = None
 
     def from_agent_perspective(self, agent_id):
-        # print("from_agent_perspective - ", agent_id, file=sys.stderr)
 
         relaxed_agent = self.get_agent_by_uid(agent_id)
-        # print("relaxed_agent", relaxed_agent, file=sys.stderr)
 
         agent_colored_boxes = self.get_agent_boxes(relaxed_agent.color)
-        # print("agent_colored_boxes", agent_colored_boxes, file=sys.stderr)
         
         relaxed_walls = [row[:] for row in self.walls]
 
-        # for relaxed_box in agent_colored_boxes:
-        #     for box in self.boxes:
-        #         if relaxed_box.color != box.color: # different colored box so it should be wall for the agent, because it can't pass through it
-        #             relaxed_walls[box.pos.y][box.pos.x] = True 
-
-        # print("from_agent_perspective", file=sys.stderr)
         return State([relaxed_agent], agent_colored_boxes, relaxed_walls)
 
 
     def get_agent_by_uid(self, agentId) -> Agent:
         for agent in self.agents:
-            if agentId == agent.uid:
-                return Agent(agent.pos, agent.value, agent.uid, agent.color)
+            if agentId == agent.value:
+                return Agent(agent.pos, agent.value, agent.color)
         
 
     def get_agent_boxes(self, color) -> Dict[str, Box]:
@@ -73,7 +64,7 @@ class State:
         Returns the state resulting from applying joint_action in this state.
         Precondition: Joint action must be applicable and non-conflicting in this state.
         '''
-        copy_agents = [Agent(agent.pos, agent.value, agent.uid, agent.color) for agent in self.agents]
+        copy_agents = [Agent(agent.pos, agent.value, agent.color) for agent in self.agents]
         copy_agents = sorted(copy_agents, key=lambda agent: agent.value)
         copy_boxes = copy.deepcopy(self.boxes)
         for agent_index, action in enumerate(joint_action):
@@ -103,8 +94,6 @@ class State:
         copy_state.parent = self
         copy_state.joint_action = joint_action[0]
         copy_state.g = self.g + 1
-        # print(f"---copy state g---{copy_state.g}")
-        # print(f"---copy state joint_action---{copy_state.joint_action}")
         return copy_state
 
     def agents_without_round(self, round):
@@ -297,19 +286,16 @@ class State:
     #     return False
 
     def is_free(self, position) -> bool:
-        # print(f"---walls---{self.walls}")
         return not self.walls[position.y][position.x] and not self.box_at(position) and not self.agent_at(position)
 
     def agent_at(self, position: Position) -> Agent:
         for agent in self.agents:
-            #if agent.pos.x == position.x and agent.pos.y == position.y:
             if agent.pos == position:
                 return True
         return False
 
     def box_at(self, position: Position) -> Box:
         for box in self.boxes.values():
-            #if box.pos.x == position.x and box.pos.y == position.y:
             if box.pos == position:
                 return True
         return False
@@ -318,7 +304,6 @@ class State:
         plan = [None for _ in range(self.g)]
         state = self
         while state.joint_action is not None:
-            # print(f"---state.joint_action---{state.joint_action}")
             plan[state.g - 1] = state.joint_action
             state = state.parent
         return plan
@@ -351,7 +336,6 @@ class State:
 
     def __repr__(self):
         lines = []
-        #print(f"---self.walls---{self.walls}",file=sys.stderr)
         max_row = len(self.walls)
         max_col = len(self.walls[0])
         for row in range(max_row + 1):
@@ -398,11 +382,6 @@ class SpaceTimeState(State):
         relaxed_constraints = [Constraint(constraint.agentId, constraint.pos, constraint.t) for constraint in self.constraints]
         relaxed_time = self.time
 
-        # for relaxed_box in agent_colored_boxes:
-        #     for box in self.boxes:
-        #         if relaxed_box.color != box.color: # different colored box so it should be wall for the agent, because it can't pass through it
-        #             relaxed_walls[box.pos.y][box.pos.x] = True 
-
         # print("from_agent_perspective", file=sys.stderr)
         return SpaceTimeState([relaxed_agent], agent_colored_boxes, relaxed_walls, relaxed_time, relaxed_constraints, self.g)
 
@@ -448,7 +427,8 @@ class SpaceTimeState(State):
         Returns the state resulting from applying joint_action in this state.
         Precondition: Joint action must be applicable and non-conflicting in this state.
         '''
-        copy_agents = [Agent(agent.pos, agent.value, agent.uid, agent.color) for agent in self.agents]
+        copy_agents = [Agent(agent.pos, agent.value, agent.color) for agent in self.agents]
+        copy_agents = sorted(copy_agents, key=lambda agent: agent.value)
         copy_boxes = copy.deepcopy(self.boxes)
         for agent_index, action in enumerate(joint_action):
             copied_agent = copy_agents[agent_index]
@@ -466,7 +446,8 @@ class SpaceTimeState(State):
                 copied_box = next((box for box in copy_boxes.values() if box.pos == box_pos), None)
 
                 if(copied_box is None):
-                    raise RuntimeError(f"Box not found at position {box_pos} in the boxes list")
+                    print("All tasks are completed", file=sys.stderr)
+                    break
                 
                 # Update the box's position
                 copied_box.pos += action.box_rel_pos
