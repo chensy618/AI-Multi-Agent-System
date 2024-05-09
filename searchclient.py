@@ -86,7 +86,7 @@ class LevelParser:
     def parse_goal(server_messages):
         goal_layout, line = LevelParser.parse_layout(server_messages, '#end')
         return goal_layout
-    
+
 class SearchClient:
     @staticmethod
     def parse_level(server_messages) -> 'State':
@@ -108,22 +108,19 @@ class SearchClient:
         # print(f"---nrows, ncols--{nrows, ncols}")
         walls = [[False] * ncols for _ in range(nrows)]
         # print(f"---walls--{walls[0]}")
-
-        agent_uid = 0
+        
         box_uid = 0
         for row_idx, row in enumerate(initial_layout):
             for col_idx, char in enumerate(row):
                 position = Position(col_idx, row_idx)
                 if char.isdigit():
-                    agents.append(Agent(pos=position, value=int(char), uid=agent_uid, color=agent_colors.get(int(char))))
-                    agent_uid += 1
+                    agents.append(Agent(pos=position, value=int(char), color=agent_colors.get(int(char))))
                 elif char.isupper():
                     boxes.append(Box(pos=position, value=char, uid=box_uid, color=box_colors.get(char)))
                     box_uid += 1
                 else:
                     if char == '+':
                         walls[row_idx][col_idx] = True
-                        # print(f"---row, col--{row_idx, col_idx}")
 
         # read position of goals
         goal_uid = 0
@@ -133,7 +130,7 @@ class SearchClient:
                 if char.isdigit() or char.isupper():
                     goals.append(Goal(pos=Position(col_idx, row_idx), value=char, uid=goal_uid))
                     goal_uid += 1
-                    
+
 
         # Calculate the dimensions of the level\
         global layout_rows, layout_cols
@@ -162,7 +159,7 @@ class SearchClient:
         for box in initial_state.boxes.values():
             State.box_goal_map[box.uid] = State.initialize_goal_map(initial_state.walls, box.pos)
             print(f"Box - v{box.value} ---> ", box, file=sys.stderr)
-        
+
         for goal_id in State.goal_map.keys():
             print(f"\n----------Distance map for Goal - {goal_id}-------------", file=sys.stderr)
             goal_grid = State.goal_map[goal_id]
@@ -175,7 +172,7 @@ class SearchClient:
                 print(' '.join(f"{cell if cell is not None else 'None':4}" for cell in row), file=sys.stderr)
 
         print("\n========INITIAL STATE========\n", file=sys.stderr)
-        
+
         resolver = HTNResolver()
         resolver.initialize_problems(initial_state)
 
@@ -186,7 +183,7 @@ class SearchClient:
             resolver.create_round(current_state)
 
             print(resolver.round, file=sys.stderr)
-            # time.sleep(100)
+            
             plan = conflict_based_search(current_state, resolver.round)
             for time_step in plan:
                 final_plan.append(time_step)
@@ -210,13 +207,13 @@ class SearchClient:
         # Prioritize tasks based on plausability and factor of blocking
         # - the tasks whose goal doesn't block any goal should be given more priority (priority + 100)
         # - If A* can solve a task it should be prioritized over the tasks that can't be solved (priority + 10)
-        # - the closest box to the agent should be given priority, if we can't choose between multiple boxes (priority + x, where x is based on the number of tasks with the same priority) 
+        # - the closest box to the agent should be given priority, if we can't choose between multiple boxes (priority + x, where x is based on the number of tasks with the same priority)
 
         # Heuristic function should change according to task priority
         # - h(n) = w1 * (distance_of_agent_to_box + distance_of_box_to_goal), (this is for the box, which is on priority)
         #   -> w1 should be set based on priority (e.g.: if an agent is blocking other agents it should be given high priority w1 = 100, w2 = 10, w3 = 1...)
         #   distance_of_agent_to_box is based on whether box has moved away, if it has moved we return manhattan_distance otherwise perfect heuristic from box_map
-        
+
         # Integrate CBS with HTN
         # - initialize agent_current_tasks
         # - current_state = initial_state

@@ -17,9 +17,6 @@ def astar(initial_state, task):
     explored = set()
     while not frontier.is_empty():
         current_state = frontier.pop()
-        # print(f"---current_state--- {[agent.pos for agent in current_state.agents]}", file=sys.stderr)
-
-        # print("current_state.agents: " + current_state.agents[0].uid, file=sys.stderr)
 
         if current_state.is_goal_state_for_subgoal(task, current_state.agents[0]):
             plan = current_state.extract_plan()

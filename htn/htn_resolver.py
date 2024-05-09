@@ -51,10 +51,10 @@ class HTNResolver:
                     )
 
                     self.boxes_by_color[agent.color].remove(min_box)
-                    self.round[agent.uid] = Task(min_box.uid, min_box.value, goal_uid)
+                    self.round[agent.value] = Task(min_box.uid, min_box.value, goal_uid)
                 else:
                     goal_uid = HTNHelper.get_closest_goal_uid_to_agent(agent)
-                    self.round[agent.uid] = Task(-1, None, goal_uid)
+                    self.round[agent.value] = Task(-1, None, goal_uid)
         
     def has_any_task_left(self, current_state):
         for agent in current_state.agents:
