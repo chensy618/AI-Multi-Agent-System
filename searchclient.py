@@ -108,22 +108,19 @@ class SearchClient:
         # print(f"---nrows, ncols--{nrows, ncols}")
         walls = [[False] * ncols for _ in range(nrows)]
         # print(f"---walls--{walls[0]}")
-
-        agent_uid = 0
+        
         box_uid = 0
         for row_idx, row in enumerate(initial_layout):
             for col_idx, char in enumerate(row):
                 position = Position(col_idx, row_idx)
                 if char.isdigit():
-                    agents.append(Agent(pos=position, value=int(char), uid=agent_uid, color=agent_colors.get(int(char))))
-                    agent_uid += 1
+                    agents.append(Agent(pos=position, value=int(char), color=agent_colors.get(int(char))))
                 elif char.isupper():
                     boxes.append(Box(pos=position, value=char, uid=box_uid, color=box_colors.get(char)))
                     box_uid += 1
                 else:
                     if char == '+':
                         walls[row_idx][col_idx] = True
-                        # print(f"---row, col--{row_idx, col_idx}")
 
         # read position of goals
         goal_uid = 0
@@ -186,7 +183,7 @@ class SearchClient:
             resolver.create_round(current_state)
 
             print(resolver.round, file=sys.stderr)
-            # time.sleep(100)
+            
             plan = conflict_based_search(current_state, resolver.round)
             for time_step in plan:
                 final_plan.append(time_step)

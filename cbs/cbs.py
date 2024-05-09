@@ -24,11 +24,11 @@ def conflict_based_search(current_state: State, round):
     initial_positions = initialize_initial_positions(current_state, round)
 
     for agent in current_state.agents:
-        if(round[agent.uid].goal_uid == None):
+        if(round[agent.value].goal_uid == None):
             continue
-        relaxed_state = current_state.from_agent_perspective(agent.uid)
-        plan = astar(relaxed_state, round[agent.uid])
-        root.solution[agent.uid] = plan
+        relaxed_state = current_state.from_agent_perspective(agent.value)
+        plan = astar(relaxed_state, round[agent.value])
+        root.solution[agent.value] = plan
 
     print(f'CBS solution: ', root.solution, file=sys.stderr)
 
@@ -135,14 +135,12 @@ def resolve_conflict(node, conflict, current_state, round, frontier):
 
 def initialize_initial_positions(current_state, round):
     initial_positions = {}
-    #round--{0: Task(box_uid=-1 goal_uid=1), 1: Task(box_uid=-1 goal_uid=0)}
-    # print(f"--round--{round}", file=sys.stderr)
 
     for agent_uid, task in round.items():
         agent = current_state.get_agent_by_uid(agent_uid)
         box = current_state.get_box_by_uid(task.box_uid)
         goal = current_state.get_goal_by_uid(task.goal_uid)
-        initial_positions[agent.uid] = {
+        initial_positions[agent.value] = {
                 'agent_position': agent.pos,
                 'box_id': box.value if box else None,
                 'box_position': box.pos if box else None,
@@ -174,7 +172,7 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
     if not solution:
         print('No solution found from astar.', file=sys.stderr)
         return None
-    # the format of solution is {agent.uid: [action1,action2,action3], agent.uid: [action1,action2,action3]}
+    # the format of solution is {agent_id: [action1,action2,action3], agent_id: [action1,action2,action3]}
     # print(f"---initial_positions--{initial_positions}", file=sys.stderr)
 
     # Create a dictionary to track positions of each entity at each time step
@@ -296,11 +294,11 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
                     if tag == 'fixed':
                         # If the same conflict agent pair happens more than 3 times, then it is a deadlock
                         if conflict_counts.get((agent_id, other_entity_id), 0) <= 3:
-                            print(f'conflict_counts original--{conflict_counts}',file=sys.stderr)
-                            print(f'agent_id--{agent_id}',file=sys.stderr)
-                            print(f'other_entity_id--{other_entity_id}',file=sys.stderr)
-                            print(f'conflict_counts--{conflict_counts.get((agent_id, other_entity_id), 0)}',file=sys.stderr)
-                            print(f"---Conflict 1--{Conflict(agent_id, other_entity_id, resulting_agent_position, time_step)}",file=sys.stderr)
+                            # print(f'conflict_counts original--{conflict_counts}',file=sys.stderr)
+                            # print(f'agent_id--{agent_id}',file=sys.stderr)
+                            # print(f'other_entity_id--{other_entity_id}',file=sys.stderr)
+                            # print(f'conflict_counts--{conflict_counts.get((agent_id, other_entity_id), 0)}',file=sys.stderr)
+                            # print(f"---Conflict 1--{Conflict(agent_id, other_entity_id, resulting_agent_position, time_step)}",file=sys.stderr)
                             return Conflict(agent_id, other_entity_id, resulting_agent_position, time_step)
                         else:
                             other_agent_id = get_actual_agent_id(initial_positions, other_entity_id)
@@ -321,11 +319,11 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
                     if tag == 'fixed':
                         # If the same conflict agent pair happens more than 3 times, then it is a deadlock
                         if conflict_counts.get((box_id, other_entity_id), 0) <= 3:
-                            print(f'conflict_counts original--{conflict_counts}',file=sys.stderr)
-                            print(f'agent_id--{agent_id}',file=sys.stderr)
-                            print(f'other_entity_id--{other_entity_id}',file=sys.stderr)
-                            print(f'conflict_counts--{conflict_counts.get((agent_id, other_entity_id), 0)}',file=sys.stderr)
-                            print(f"---Conflict 2--{Conflict(box_id, other_entity_id, resulting_box_position, time_step)}",file=sys.stderr)
+                            # print(f'conflict_counts original--{conflict_counts}',file=sys.stderr)
+                            # print(f'agent_id--{agent_id}',file=sys.stderr)
+                            # print(f'other_entity_id--{other_entity_id}',file=sys.stderr)
+                            # print(f'conflict_counts--{conflict_counts.get((agent_id, other_entity_id), 0)}',file=sys.stderr)
+                            # print(f"---Conflict 2--{Conflict(box_id, other_entity_id, resulting_box_position, time_step)}",file=sys.stderr)
                             return Conflict(box_id, other_entity_id, resulting_box_position, time_step)
                         else:
                             agent_id = get_actual_agent_id(initial_positions, box_id)
@@ -395,10 +393,9 @@ def merge_plans(current_state, solutions, round):
     for step in range(max_length):
         joint_action = []
         for agent in sorted_agents:
-            if(agent.uid in solutions.keys()):
-                solution = solutions[agent.uid]
+            if(agent.value in solutions.keys()):
+                solution = solutions[agent.value]
                 if step < len(solution):
-                    #action = plan[step][0]  # Each action is a list, take the first element
                     action = solution[step]
                 else:
                     # Assuming NoOp is represented as None or a specific NoOp action
@@ -460,7 +457,6 @@ def solve_follow_conflict(node, conflict):
     node.solution[agent_id].insert(time_step, Action.NoOp)
     node.cost = cost(node.solution)
     # Return the new solution for the agent that needs to move away.
-    print(f"---node.solution[agent_id]--{node.solution[agent_id]}",file=sys.stderr)
     return node
 
 
