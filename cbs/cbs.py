@@ -43,7 +43,7 @@ def conflict_based_search(current_state: State, round):
     }
 
     # Store the initial solution to be used in the long corridor situation
-    initial_solutions = root.solution
+    initial_solutions = root.solution.copy()
     # Create a dictionary to store the number of conflicts for each agent pair
     conflict_counts = {}
 
@@ -437,8 +437,8 @@ def solve_moveaway_conflict(node, conflict):
                 # print(f"---action--{action}", file=sys.stderr)
                 insert_action = action
                 break
-    # print(f"---insert_action--{insert_action}",file=sys.stderr)
-    # print(f"---node.solution[agent_id]--{node.solution[agent_id]}",file=sys.stderr)
+    print(f"---insert_action--{insert_action}",file=sys.stderr)
+    print(f"---node.solution[agent_id]--{node.solution[agent_id]}",file=sys.stderr)
 
     # Fill the solution with NoOp until the time step
     while len(node.solution[agent_id]) < time_step:
@@ -477,19 +477,20 @@ def solve_meta_agent_conflict(node, conflict, initial_solutions):
     agent_id = conflict.ai
     other_agent_id = conflict.aj
     # Use initial solutions for the 2 agents, as normally the initial solutions are the shortest paths
-    node.solution[agent_id] = initial_solutions[agent_id]
-    node.solution[other_agent_id] = initial_solutions[other_agent_id]
+    # Use copy to avoid modifying the original solutions
+    node.solution[agent_id] = initial_solutions[agent_id].copy()
+    node.solution[other_agent_id] = initial_solutions[other_agent_id].copy()
     len_agent_solution = len(node.solution[agent_id])
     len_other_agent_solution = len(node.solution[other_agent_id])
-    if len_agent_solution < len_other_agent_solution:
+    if len_agent_solution <= len_other_agent_solution:
         meta_agent_id = agent_id
         non_meta_agent_id = other_agent_id
     else:
         meta_agent_id = other_agent_id
         non_meta_agent_id = agent_id
-
+    print(f'len of meta agent solution: {len(node.solution[meta_agent_id])}', file=sys.stderr)
     for t in range(len(node.solution[meta_agent_id])):
         node.solution[non_meta_agent_id].insert(t, Action.NoOp)
 
-    print(f"---node.solution[non_meta_agent_id]--{node.solution[non_meta_agent_id]}",file=sys.stderr)
+    print(f"---updated node.solution[non_meta_agent_id]--{node.solution[non_meta_agent_id]}",file=sys.stderr)
     return node
