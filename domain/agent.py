@@ -9,7 +9,7 @@ class Agent:
         self.uid = uid
 
     def __repr__(self):
-        return f"Agent(pos={self.pos}, uid={self.uid} value={self.value}, color={self.color})"
+        return f"Agent(uid={self.uid}, value={self.value}, pos={self.pos}, color={self.color})"
     
     def move(self, dx, dy):
         self.pos = Position(self.pos.x + dx, self.pos.y + dy)

@@ -156,12 +156,12 @@ class SearchClient:
         print("\n========INITIAL STATE========\n", file=sys.stderr)
         for goal in State.goals:
             State.goal_map[goal.uid] = State.initialize_goal_map(initial_state.walls, goal.pos)
-            print(f"Goal - {goal.value} ---> ", goal, file=sys.stderr)
+            print(f"Goal - v{goal.value} ---> ", goal, file=sys.stderr)
         for agent in initial_state.agents:
-            print(f"Agent - {agent.value} ---> ", agent, file=sys.stderr)
+            print(f"Agent - v{agent.value} ---> ", agent, file=sys.stderr)
         for box in initial_state.boxes.values():
             State.box_goal_map[box.uid] = State.initialize_goal_map(initial_state.walls, box.pos)
-            print(f"Box - {box.value} ---> ", box, file=sys.stderr)
+            print(f"Box - v{box.value} ---> ", box, file=sys.stderr)
         
         for goal_id in State.goal_map.keys():
             print(f"\n----------Distance map for Goal - {goal_id}-------------", file=sys.stderr)
@@ -176,7 +176,6 @@ class SearchClient:
 
         print("\n========INITIAL STATE========\n", file=sys.stderr)
         
-        print("========PROBLEM========\n", file=sys.stderr)
         resolver = HTNResolver()
         resolver.initialize_problems(initial_state)
 
@@ -189,7 +188,6 @@ class SearchClient:
             print(resolver.round, file=sys.stderr)
             # time.sleep(100)
             plan = conflict_based_search(current_state, resolver.round)
-            
             for time_step in plan:
                 final_plan.append(time_step)
                 current_state = current_state.result(time_step)
