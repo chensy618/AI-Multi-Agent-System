@@ -15,7 +15,6 @@ class DistanceCalc:
     def pos_to_box_distance(box, pos) -> 'int':
         # print(f"state.box_goal_map[box.uid]: {State.box_goal_map[box.uid]}", file=sys.stderr)
         # Check if the box has already moved from its initial position
-        print(f"State.box_goal_map: {State.box_goal_map[box.uid][box.pos.y][box.pos.x]}", file=sys.stderr)
         if(State.box_goal_map[box.uid][box.pos.y][box.pos.x] != 0):
             return DistanceCalc.manhatten_distance(pos, box.pos)
         else:

@@ -22,7 +22,7 @@ def space_time_a_star(inital_state, constraints, task: Task):
         current_state = frontier.pop()
         if current_state.is_goal_state_for_subgoal(task, current_state.agents[0]):
             plan = current_state.extract_plan()
-            print(f"Extracted plan: {plan}", file=sys.stderr)
+            print(f"Conflict soved plan: {plan}", file=sys.stderr)
             print(f"\n\n=============SPACE_TIME_ASTAR - v{agents[0].value} - end===============", file=sys.stderr)
             return plan  # Return the plan to reach the goal state
 

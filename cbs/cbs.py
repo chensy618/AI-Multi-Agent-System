@@ -30,7 +30,7 @@ def conflict_based_search(current_state: State, round):
         plan = astar(relaxed_state, round[agent.value])
         root.solution[agent.value] = plan
 
-    print(f'CBS solution: ', root.solution, file=sys.stderr)
+    print(f'Astar solution: ', root.solution, file=sys.stderr)
 
     root.cost = cost(root.solution)
     frontier = PriorityQueue()
@@ -51,7 +51,7 @@ def conflict_based_search(current_state: State, round):
         tiebreaker_value, node = frontier.get()
         conflict = find_first_conflict(node.solution, initial_positions, conflict_counts)
         if conflict is None:
-            print(f"No conflict found. We are extracting plan... -> {node.solution}", file=sys.stderr)
+            print(f"Conflict solved. CBS solution... -> {node.solution}", file=sys.stderr)
             executable_plan = merge_plans(current_state, node.solution, round)
             print(f"=============CBS-end===============\n", file=sys.stderr)
             return executable_plan
@@ -67,7 +67,7 @@ def conflict_based_search(current_state: State, round):
             new_conflict = find_first_conflict(new_node.solution, initial_positions, conflict_counts)
             print(f"=======================new_conflict=================={new_conflict}", file=sys.stderr)
             if new_conflict is None:
-                print(f"No conflict found. We are extracting plan... -> {new_node.solution}", file=sys.stderr)
+                print(f"Conflict solved. CBS solution... -> {new_node.solution}", file=sys.stderr)
                 executable_plan = merge_plans(current_state, new_node.solution, round)
                 print(f"=============CBS-end===============\n", file=sys.stderr)
                 return executable_plan
@@ -81,10 +81,9 @@ def conflict_based_search(current_state: State, round):
         elif isinstance(conflict, MetaAgentConflict):
             m = node.copy()
             new_node = solve_meta_agent_conflict(node, conflict, initial_solutions)
-            print(f"---new_node.solution--{new_node.solution}", file=sys.stderr)
             new_conflict = find_first_conflict(new_node.solution, initial_positions, conflict_counts)
             if new_conflict is None:
-                print(f"No conflict found. We are extracting plan... -> {new_node.solution}", file=sys.stderr)
+                print(f"Conflict solved. CBS solution... -> {new_node.solution}", file=sys.stderr)
                 executable_plan = merge_plans(current_state, new_node.solution, round)
                 print(f"=============CBS-end===============\n", file=sys.stderr)
                 return executable_plan
@@ -405,7 +404,7 @@ def merge_plans(current_state, solutions, round):
                 joint_action.append(Action.NoOp)
         # Append the joint action to the merged plan
         merged_plan.append(joint_action)
-    print(f"---merged_plan--{merged_plan}", file=sys.stderr)
+    print(f"Merged_plan--{merged_plan}", file=sys.stderr)
 
     for agent_uid, task in round.items():
         if(HTNResolver.completed_tasks.get(agent_uid) is None):
@@ -434,8 +433,8 @@ def solve_moveaway_conflict(node, conflict):
                 # print(f"---action--{action}", file=sys.stderr)
                 insert_action = action
                 break
-    print(f"---insert_action--{insert_action}",file=sys.stderr)
-    print(f"---node.solution[agent_id]--{node.solution[agent_id]}",file=sys.stderr)
+    # print(f"---insert_action--{insert_action}",file=sys.stderr)
+    # print(f"---node.solution[agent_id]--{node.solution[agent_id]}",file=sys.stderr)
 
     # Fill the solution with NoOp until the time step
     while len(node.solution[agent_id]) < time_step:
