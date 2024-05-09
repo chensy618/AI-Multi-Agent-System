@@ -44,7 +44,6 @@ class HTNHelper:
         
         # Filter box_goals_uids to exclude those that are already in existing_goal_uids
         available_agent_goals_uids = [goal.uid for goal in HTNHelper.agent_goals() if int(goal.value) == agent.value]
-        
         for goal_uid in available_agent_goals_uids:
             dist = State.goal_map[goal_uid][agent.pos.y][agent.pos.x]
             if dist < min_dist:
