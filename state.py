@@ -40,7 +40,7 @@ class State:
         agent_colored_boxes = self.get_agent_boxes(relaxed_agent.color)
         
         relaxed_walls = [row[:] for row in self.walls]
-
+          
         return State([relaxed_agent], agent_colored_boxes, relaxed_walls)
 
 

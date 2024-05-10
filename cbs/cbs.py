@@ -61,7 +61,7 @@ def conflict_based_search(current_state: State, round):
                 print(f"=============CBS-end===============\n", file=sys.stderr)
                 return executable_plan
             else:
-                print('-----------Move away conflict not solved, adding to frontier.----------')
+                print('-----------Move away conflict not solved, adding to frontier.----------',file=sys.stderr)
                 print(f'-----new conflict is {new_conflict}', file=sys.stderr)
                 new_node.cost = cost(new_node.solution)
                 if new_node.cost < sys.maxsize:
@@ -78,7 +78,7 @@ def conflict_based_search(current_state: State, round):
                 print(f"=============CBS-end===============\n", file=sys.stderr)
                 return executable_plan
             else:
-                print('-----------Following conflict not solved, adding to frontier.----------')
+                print('-----------Following conflict not solved, adding to frontier.----------',file=sys.stderr)
                 new_node.cost = cost(new_node.solution)
                 if new_node.cost < sys.maxsize:
                     count_next = next(tiebreaker)
@@ -94,7 +94,7 @@ def conflict_based_search(current_state: State, round):
                 print(f"=============CBS-end===============\n", file=sys.stderr)
                 return executable_plan
             else:
-                print('-----------Meta agent conflict not solved, adding to frontier.----------')
+                print('-----------Meta agent conflict not solved, adding to frontier.----------', file=sys.stderr)
                 new_node.cost = cost(new_node.solution)
                 if new_node.cost < sys.maxsize:
                     count_next = next(tiebreaker)
@@ -535,4 +535,3 @@ def find_available_actions(current_pos, avoid_pos_list, walls):
             if not is_occupied(destination, avoid_pos_list, walls):
                 available_actions.append(action)
     return available_actions
-
