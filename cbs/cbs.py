@@ -4,7 +4,7 @@ import time
 
 from astar import astar
 from cbs.node import Node
-
+from cbs.agent_talk import ask_blocked_agent_help
 from domain.action import Action, ActionType
 from domain.conflict import Conflict, MoveAwayConflict,FollowConflict, MetaAgentConflict
 from domain.constraint import Constraint
@@ -19,6 +19,7 @@ tiebreaker = itertools.count()
 
 def conflict_based_search(current_state: State, round):
     print(f"\n=============CBS-begin===============", file=sys.stderr)
+    # print(f"Current state walls: {current_state.walls}", file=sys.stderr)
     root = Node()
     root.constraints = set()
     initial_positions = initialize_initial_positions(current_state, round)
@@ -29,18 +30,12 @@ def conflict_based_search(current_state: State, round):
         relaxed_state = current_state.from_agent_perspective(agent.value)
         plan = astar(relaxed_state, round[agent.value])
         root.solution[agent.value] = plan
-
     print(f'Astar solution: ', root.solution, file=sys.stderr)
 
     root.cost = cost(root.solution)
     frontier = PriorityQueue()
     count_next = next(tiebreaker)
     frontier.put((count_next, root))
-
-    conflict_special_solvers = {
-        MoveAwayConflict: solve_moveaway_conflict,
-        FollowConflict: solve_follow_conflict,
-    }
 
     # Store the initial solution to be used in the long corridor situation
     initial_solutions = root.solution.copy()
@@ -56,23 +51,34 @@ def conflict_based_search(current_state: State, round):
             print(f"=============CBS-end===============\n", file=sys.stderr)
             return executable_plan
 
-        handler = conflict_special_solvers.get(type(conflict), None)
-
-        if(handler):
-            new_node = handler(node.copy(), conflict)
-            # Immediately check if the special conflict is solved,
-            # else if the cost is more than the other nodes, the new solutions won't be prioritized
-            # The special conflict is supposed to be solved in one step,
-            # if not, then abandon the solution and try to solve the conflict in the next iteration
+        elif  isinstance(conflict, MoveAwayConflict):
+            m = node.copy()
+            new_node = solve_moveaway_conflict(node, conflict, current_state.walls)
             new_conflict = find_first_conflict(new_node.solution, initial_positions, conflict_counts)
-            print(f"=======================new_conflict=================={new_conflict}", file=sys.stderr)
             if new_conflict is None:
                 print(f"Conflict solved. CBS solution... -> {new_node.solution}", file=sys.stderr)
                 executable_plan = merge_plans(current_state, new_node.solution, round)
                 print(f"=============CBS-end===============\n", file=sys.stderr)
                 return executable_plan
             else:
-                print('-----------Special conflict not solved, adding to frontier.----------')
+                print('-----------Move away conflict not solved, adding to frontier.----------')
+                print(f'-----new conflict is {new_conflict}', file=sys.stderr)
+                new_node.cost = cost(new_node.solution)
+                if new_node.cost < sys.maxsize:
+                    count_next = next(tiebreaker)
+                    frontier.put((count_next, new_node))
+                continue
+        elif  isinstance(conflict, FollowConflict):
+            m = node.copy()
+            new_node = solve_follow_conflict(node, conflict)
+            new_conflict = find_first_conflict(new_node.solution, initial_positions, conflict_counts)
+            if new_conflict is None:
+                print(f"Conflict solved. CBS solution... -> {new_node.solution}", file=sys.stderr)
+                executable_plan = merge_plans(current_state, new_node.solution, round)
+                print(f"=============CBS-end===============\n", file=sys.stderr)
+                return executable_plan
+            else:
+                print('-----------Following conflict not solved, adding to frontier.----------')
                 new_node.cost = cost(new_node.solution)
                 if new_node.cost < sys.maxsize:
                     count_next = next(tiebreaker)
@@ -88,6 +94,7 @@ def conflict_based_search(current_state: State, round):
                 print(f"=============CBS-end===============\n", file=sys.stderr)
                 return executable_plan
             else:
+                print('-----------Meta agent conflict not solved, adding to frontier.----------')
                 new_node.cost = cost(new_node.solution)
                 if new_node.cost < sys.maxsize:
                     count_next = next(tiebreaker)
@@ -306,7 +313,7 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
                     else:
                         # Can not move to the same position as other agent at current/next timestep, box, and cannot go to own/other agent's goal position
                         avoid_pos_list = {pos: agent_id for pos, agent_id in positions.items() if (pos[1] == time_step-1 or pos[1] == time_step)}
-                        avoid_pos_list[(initial_positions[agent_id]['goal_position'], time_step)] = {'id': initial_positions[agent_id]['goal_id']}
+                        avoid_pos_list[(initial_positions[agent_id]['goal_position'], time_step)] = {'id': 'blocked_agent_goal'}
                         avoid_pos_list[(initial_positions[other_entity_id]['goal_position'], time_step)] = {'id': initial_positions[other_entity_id]['goal_id']}
                         #print(f'---avoid_pos_list 1--{avoid_pos_list}',file=sys.stderr)
                         print(f"---MoveAwayConflict 1 --{MoveAwayConflict(other_entity_id, agent_id, resulting_agent_position, avoid_pos_list, time_step-1)}",file=sys.stderr)
@@ -332,7 +339,7 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
                     else:
                         # Can not move to the same position as other agent at current/next timestep, box, and cannot go to own/other agent's goal position
                         avoid_pos_list = {pos: agent_id for pos, agent_id in positions.items() if (pos[1] == time_step-1 or pos[1] == time_step)}
-                        avoid_pos_list[(initial_positions[agent_id]['goal_position'], time_step)] = {'id': initial_positions[agent_id]['goal_id']}
+                        avoid_pos_list[(initial_positions[agent_id]['goal_position'], time_step)] = {'id': 'blocked_agent_goal'}
                         avoid_pos_list[(initial_positions[other_entity_id]['goal_position'], time_step)] = {'id': initial_positions[other_entity_id]['goal_id']}
                         #print(f'---avoid_pos_list 2--{avoid_pos_list}',file=sys.stderr)
                         print(f"---MoveAwayConflict 2 --{MoveAwayConflict(other_entity_id, agent_id, resulting_box_position, avoid_pos_list, time_step-1)}",file=sys.stderr)
@@ -413,40 +420,62 @@ def merge_plans(current_state, solutions, round):
     # print(f"round--{round}", file=sys.stderr)
     return merged_plan
 
-def solve_moveaway_conflict(node, conflict):
+def solve_moveaway_conflict(node, conflict, walls):
     agent_id = conflict.ai
     blocked_agent_id = conflict.aj
     avoid_pos_list = conflict.avoid_pos_list
     agent_current_pos = conflict.current_pos
     time_step = conflict.t
+    print(f"---agent_id--{agent_id}", file=sys.stderr)
+    print(f"---blocked_agent_id--{blocked_agent_id}", file=sys.stderr)
+    print(f"---avoid_pos_list--{avoid_pos_list}", file=sys.stderr)
+    print(f"---agent_current_pos--{agent_current_pos}", file=sys.stderr)
+    print(f"---time_step--{time_step}", file=sys.stderr)
 
-    # Move E, W, N, S
-    for action in Action:
-        if action.type == ActionType.Move:
-            agent_destination = agent_current_pos + action.agent_rel_pos
-            # Check if agent_destination is in avoid_pos_list
-            is_destination_occupied = any(pos == agent_destination for pos, _ in avoid_pos_list.keys())
-            if is_destination_occupied:
-                continue
-            else:
-                # print(f"---agent_destination--{agent_destination}", file=sys.stderr)
-                # print(f"---action--{action}", file=sys.stderr)
-                insert_action = action
-                break
-    # print(f"---insert_action--{insert_action}",file=sys.stderr)
-    # print(f"---node.solution[agent_id]--{node.solution[agent_id]}",file=sys.stderr)
+    # Helper function to find a valid move action
+    def find_valid_move(avoid_positions):
+        for action in Action:
+            if action.type == ActionType.Move:
+                agent_destination = agent_current_pos + action.agent_rel_pos
+                # Check if agent_destination is within the bounds of the walls matrix
+                if 0 <= agent_destination.x < len(walls[0]) and 0 <= agent_destination.y < len(walls):
+                    # Check if agent_destination is a wall or in avoid_positions
+                    is_destination_occupied = walls[agent_destination.y][agent_destination.x] or \
+                                              any(pos == agent_destination for pos, _ in avoid_positions.keys())
+                    if not is_destination_occupied:
+                        return action
+        return None
 
-    # Fill the solution with NoOp until the time step
-    while len(node.solution[agent_id]) < time_step:
-        node.solution[agent_id].append(Action.NoOp)
 
-    # Insert the new action at the time step
-    node.solution[agent_id].insert(time_step, insert_action)
-    # Insert a NoOp action for the blocked agent to wait the other agent move
-    node.solution[blocked_agent_id].insert(time_step, Action.NoOp)
+    # Attempt round 1 to find a valid move action considering the entire avoid_pos_list
+    insert_action = find_valid_move(avoid_pos_list)
+    print(f"---first attempt insert_action--{insert_action}", file=sys.stderr)
 
-    node.cost = cost(node.solution)
-    return node
+    # Attempt round 2 - If no valid move action is found, try again without blocked_agent_goal
+    if insert_action is None:
+        filtered_avoid_pos_list = {pos: info for pos, info in avoid_pos_list.items() if 'blocked_agent_goal' not in info.values()}
+        insert_action = find_valid_move(filtered_avoid_pos_list)
+    print(f"---second attempt insert_action--{insert_action}", file=sys.stderr)
+
+    if insert_action is not None:
+        # Fill the solution with NoOp until the time step
+        while len(node.solution[agent_id]) < time_step:
+            node.solution[agent_id].append(Action.NoOp)
+
+        # Insert the new action at the time step
+        node.solution[agent_id].insert(time_step, insert_action)
+        # Insert a NoOp action for the blocked agent to wait the other agent move
+        node.solution[blocked_agent_id].insert(time_step, Action.NoOp)
+
+        node.cost = cost(node.solution)
+        return node
+    else:
+        # Attempt round 3 - If the blocked agent can move away, then it temp moves away to let the agent move away
+        # Find out which action the agent takes to move into the blocked agent's position
+
+        node = ask_blocked_agent_help(agent_id, blocked_agent_id, agent_current_pos, time_step, node, filtered_avoid_pos_list, walls)
+        print(f'==================new node.solution is ========================{node.solution}', file=sys.stderr)
+        return node
 
 
 def solve_follow_conflict(node, conflict):
@@ -489,3 +518,21 @@ def solve_meta_agent_conflict(node, conflict, initial_solutions):
 
     print(f"---updated node.solution[non_meta_agent_id]--{node.solution[non_meta_agent_id]}",file=sys.stderr)
     return node
+
+
+
+def is_occupied(destination, avoid_pos_list, walls):
+    if 0 <= destination.x < len(walls[0]) and 0 <= destination.y < len(walls):
+        return walls[destination.y][destination.x] or \
+               any(pos == destination for pos, _ in avoid_pos_list.keys())
+    return True  # Out of bounds is considered occupied
+
+def find_available_actions(current_pos, avoid_pos_list, walls):
+    available_actions = []
+    for action in Action:
+        if action.type == ActionType.Move:
+            destination = current_pos + action.agent_rel_pos
+            if not is_occupied(destination, avoid_pos_list, walls):
+                available_actions.append(action)
+    return available_actions
+
