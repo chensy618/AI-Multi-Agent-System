@@ -18,11 +18,15 @@ class DistanceCalc:
         if(State.box_goal_map[box.uid][box.pos.y][box.pos.x] != 0):
             return DistanceCalc.manhatten_distance(pos, box.pos)
         else:
-                return State.box_goal_map[box.uid][pos.y][pos.x]
+            return State.box_goal_map[box.uid][pos.y][pos.x]
         
     def calculate_box_task(agent_box, agent, goal_uid) -> 'int':
         agent_to_box_dist = DistanceCalc.pos_to_box_distance(agent_box, agent.pos)
         box_to_goal_dist = State.goal_map[goal_uid][agent_box.pos.y][agent_box.pos.x]
+        if agent_to_box_dist == None:
+            return box_to_goal_dist
+        if box_to_goal_dist == None:
+            return agent_to_box_dist
 
         return agent_to_box_dist + box_to_goal_dist
     
