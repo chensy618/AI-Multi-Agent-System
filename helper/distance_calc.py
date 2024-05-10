@@ -25,7 +25,7 @@ class DistanceCalc:
         box_to_goal_dist = State.goal_map[goal_uid][agent_box.pos.y][agent_box.pos.x]
         if agent_to_box_dist == None:
             return box_to_goal_dist
-        if box_to_goal_dist == None:
+        elif box_to_goal_dist == None:
             return agent_to_box_dist
 
         return agent_to_box_dist + box_to_goal_dist
