@@ -291,14 +291,12 @@ class State:
     def agent_at(self, position: Position) -> Agent:
         for agent in self.agents:
             if agent.pos == position:
-                return True
-        return False
+                return agent
 
     def box_at(self, position: Position) -> Box:
         for box in self.boxes.values():
             if box.pos == position:
-                return True
-        return False
+                return box
 
     def extract_plan(self) -> list[Action]:
         plan = [None for _ in range(self.g)]
@@ -350,7 +348,7 @@ class State:
                 elif wall is not None:
                     line.append('+')
                 elif agent is not None:
-                    line.append(str(agent.uid))
+                    line.append(str(agent.value))
                 else:
                     line.append(' ')
             lines.append(''.join(line))
