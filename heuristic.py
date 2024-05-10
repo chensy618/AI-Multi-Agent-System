@@ -6,7 +6,7 @@ import sys
 
 from helper.distance_calc import DistanceCalc
 from htn.htn_resolver import HTNResolver
-from state import State
+from state import State, SpaceTimeState
 
 
 
@@ -65,7 +65,42 @@ class HeuristicAStar(Heuristic):
 
     def __repr__(self):
         return 'A* evaluation'
+    
+class HeuristicSpaceTimeAStar(Heuristic):
+    def __init__(self, initial_state: 'SpaceTimeState'):
+        super().__init__(initial_state)
 
+    def calculate_heuristic_value(self, state, task) -> int:
+        # initialize distance and time cost
+        distance = 0
+        time_cost = 0
+        agent = state.agents[0]
+
+        if task.box_uid is None or task.goal_uid is None:
+            raise RuntimeError("Box_uid or goal_uid is None, this should not be happening")
+
+        # Check if the task is a box-to-goal task or an agent-to-goal task
+        if task.box_uid == -1:
+            # Agent to goal task
+            distance = DistanceCalc.calculate_agent_task(agent, task.goal_uid)
+            time_cost = distance  # assume agent moves at 1 cell per time step
+        else:
+            # Box to goal task
+            agent_box = state.boxes[task.box_uid]
+            distance = DistanceCalc.calculate_box_task(agent_box, agent, task.goal_uid)
+            time_cost = distance * 1.5  # assume box moves at 1.5 cell per time step
+
+        # return the sum of distance and time cost
+        return distance + int(time_cost)
+    
+    def f(self, state: 'SpaceTimeState', task) -> 'int':
+        g = state.g
+        h = self.h(state, task)
+        return g + h
+
+    def __repr__(self):
+        return 'Space Time A* evaluation'
+    
 class PriorityQueue:
     def __init__(self):
         self._queue = []
