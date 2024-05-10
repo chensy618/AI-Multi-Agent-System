@@ -4,6 +4,10 @@ from domain.action import Action, ActionType
 
 
 def ask_blocked_agent_help(agent_id, blocked_agent_id, agent_current_pos, time_step, node, avoid_pos_list, walls):
+    """ The agent_id needs to move away so that blocked_agent_id can move.
+    However the agent_id doesn't have avaialble action to move away,
+    so this function is called to ask the blocked_agent_id to move away so that agent_id can move,
+    and make the path available for the blocked_agent_id."""
     print(f'original solution for agent {agent_id}: {node.solution[agent_id]}')
     print(f'original solution for blocked agent {blocked_agent_id}: {node.solution[blocked_agent_id]}')
     # Get the current position of the blocked agent
@@ -44,7 +48,7 @@ def ask_blocked_agent_help(agent_id, blocked_agent_id, agent_current_pos, time_s
                     node.solution[agent_id].insert(time_step, Action.NoOp)
                     print(f'node.solution[agent_id]: {node.solution[agent_id]}')
                     while count < 3:
-                        # Then find the next 2 move for the agent
+                        # Then find the next 3 move for the agent
                         for action_agent in Action:
                             if action_agent.type == ActionType.Move:
                                 agent_destination = agent_current_pos + action_agent.agent_rel_pos
