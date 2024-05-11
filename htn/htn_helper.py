@@ -10,8 +10,8 @@ def is_movable(layout, box):
         for ny, nx in neighbours:
             # Check if the neighbour position is within the layout boundaries
             if 0 <= nx < len(layout[0]) and 0 <= ny < len(layout):
-                # Check if the neighbour cell is a wall ('#') or another box ('B')
-                if layout[ny][nx] == '#' or layout[ny][nx] == 'B':
+                # Check if the neighbour cell is a wall ('+') or another box
+                if layout[ny][nx] == '+' or layout[ny][nx].isupper():
                     return False
         return True
 
