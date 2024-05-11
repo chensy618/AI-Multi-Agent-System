@@ -20,7 +20,7 @@ class MoveAwayConflict:
         self.t = t
 
     def __repr__(self):
-        return f"Conflict(ai={self.ai}, aj={self.aj}, current_pos={self.current_pos} ,avoid_pos_list={self.avoid_pos_list}, t={self.t})"
+        return f"MoveAwayConflict(ai={self.ai}, aj={self.aj}, current_pos={self.current_pos} ,avoid_pos_list={self.avoid_pos_list}, t={self.t})"
 
 class FollowConflict:
     # ai is following another agent at the timestep t
@@ -29,7 +29,7 @@ class FollowConflict:
         self.t = t
 
     def __repr__(self):
-        return f"Conflict(ai={self.ai}, t={self.t})"
+        return f"FollowConflict(ai={self.ai}, t={self.t})"
 
 
 class MetaAgentConflict:
@@ -39,4 +39,4 @@ class MetaAgentConflict:
         self.aj = aj
 
     def __repr__(self):
-        return f"Conflict(ai={self.ai}, aj={self.aj})"
+        return f"MetaAgentConflict(ai={self.ai}, aj={self.aj})"

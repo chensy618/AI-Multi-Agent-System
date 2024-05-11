@@ -102,21 +102,54 @@ def conflict_based_search(current_state: State, round):
                 return executable_plan
             else:
                 print(f'----------- New conflict is {new_conflict} -------------', file=sys.stderr)
-                # If meta agent cannot finish it's route, then it enters the communication mode to ask other agent's help
-                meta_agent_new_node = meta_agent_block_communication(new_node, initial_solutions, initial_positions, new_conflict, current_state, round)
-                meta_agent_new_conflict = find_first_conflict(meta_agent_new_node.solution, initial_positions, conflict_counts)
-                if meta_agent_new_conflict is None:
-                    print(f"Conflict solved. CBS solution... -> {meta_agent_new_node.solution}", file=sys.stderr)
-                    executable_plan = merge_plans(current_state, meta_agent_new_node.solution, round)
-                    print(f"=============CBS-end===============\n", file=sys.stderr)
-                    return executable_plan
+                if isinstance(new_conflict, FollowConflict):
+                    m = node.copy()
+                    new_sub_node = solve_follow_conflict(node, new_conflict)
+                    new_sub_conflict = find_first_conflict(new_sub_node.solution, initial_positions, conflict_counts)
+                    if new_sub_conflict is None:
+                        print(f"Conflict solved. CBS solution... -> {new_sub_node.solution}", file=sys.stderr)
+                        executable_plan = merge_plans(current_state, new_sub_node.solution, round)
+                        print(f"=============CBS-end===============\n", file=sys.stderr)
+                        return executable_plan
+                    else:
+                        print('-----------Following conflict not solved, adding to frontier.----------',file=sys.stderr)
+                        new_sub_node.cost = cost(new_sub_node.solution)
+                        if new_sub_node.cost < sys.maxsize:
+                            count_next = next(tiebreaker)
+                            frontier.put((count_next, new_sub_node))
+                        continue
+                elif isinstance(new_conflict, MoveAwayConflict):
+                    m = node.copy()
+                    new_sub_sub_node = solve_moveaway_conflict(node, new_conflict, current_state.walls)
+                    new_sub_sub_conflict = find_first_conflict(new_sub_sub_node.solution, initial_positions, conflict_counts)
+                    if new_sub_sub_conflict is None:
+                        print(f"Conflict solved. CBS solution... -> {new_sub_sub_node.solution}", file=sys.stderr)
+                        executable_plan = merge_plans(current_state, new_sub_sub_node.solution, round)
+                        print(f"=============CBS-end===============\n", file=sys.stderr)
+                        return executable_plan
+                    else:
+                        print('-----------Move away conflict not solved, adding to frontier.----------',file=sys.stderr)
+                        new_sub_sub_node.cost = cost(new_sub_sub_node.solution)
+                        if new_sub_sub_node.cost < sys.maxsize:
+                            count_next = next(tiebreaker)
+                            frontier.put((count_next, new_sub_sub_node))
+                        continue
                 else:
-                    print('-----------Meta agent conflict not solved, adding to frontier.----------', file=sys.stderr)
-                    new_node.cost = cost(new_node.solution)
-                    if new_node.cost < sys.maxsize:
-                        count_next = next(tiebreaker)
-                        frontier.put((count_next, new_node))
-                continue
+                    # If meta agent cannot finish it's route, then it enters the communication mode to ask other agent's help
+                    meta_agent_new_node = meta_agent_block_communication(new_node, initial_solutions, initial_positions, new_conflict, current_state, round)
+                    meta_agent_new_conflict = find_first_conflict(meta_agent_new_node.solution, initial_positions, conflict_counts)
+                    if meta_agent_new_conflict is None:
+                        print(f"Conflict solved. CBS solution... -> {meta_agent_new_node.solution}", file=sys.stderr)
+                        executable_plan = merge_plans(current_state, meta_agent_new_node.solution, round)
+                        print(f"=============CBS-end===============\n", file=sys.stderr)
+                        return executable_plan
+                    else:
+                        print('-----------Meta agent conflict not solved, adding to frontier.----------', file=sys.stderr)
+                        new_node.cost = cost(new_node.solution)
+                        if new_node.cost < sys.maxsize:
+                            count_next = next(tiebreaker)
+                            frontier.put((count_next, new_node))
+                    continue
         else:
             ai_aj_pair = (conflict.ai, conflict.aj)
             conflict_counts[ai_aj_pair] = conflict_counts.get(ai_aj_pair, 0) + 1
