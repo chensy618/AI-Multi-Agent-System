@@ -95,12 +95,6 @@ def meta_agent_block_communication(node, initial_solutions, initial_positions, c
     agent_id_j = get_actual_agent_id(initial_positions, entity_j)
     agent_i_pos_list, box_i_pos_list = get_pos_list(agent_id_i, initial_positions, initial_solutions)
     agent_j_pos_list, box_j_pos_list = get_pos_list(agent_id_j, initial_positions, initial_solutions)
-    # print(f'agent_id_i: {agent_id_i}',file=sys.stderr)
-    # print(f'agent_id_j: {agent_id_j}',file=sys.stderr)
-    # print(f'agent_i_pos_list: {agent_i_pos_list}',file=sys.stderr)
-    # print(f'box_i_pos_list: {box_i_pos_list}',file=sys.stderr)
-    # print(f'agent_j_pos_list: {agent_j_pos_list}',file=sys.stderr)
-    # print(f'box_j_pos_list: {box_j_pos_list}',file=sys.stderr)
 
     # Find the meta agent
     meta_agent_id = find_meta_agent(
@@ -189,12 +183,15 @@ def meta_agent_block_communication(node, initial_solutions, initial_positions, c
             if box.value == non_meta_box_id and box.uid == box_uid:
                 current_state.boxes[uid].pos = initial_positions[non_meta_agent_id]['box_position']
                 break
+    # Remove the temp walls
+    walls[initial_positions[meta_agent_id]['agent_position'].y][initial_positions[meta_agent_id]['agent_position'].x] = False
+    walls[initial_positions[meta_agent_id]['box_position'].y][initial_positions[meta_agent_id]['box_position'].x] = False
 
     # Once the agent/box moved out, insert the NoOp action to the agent/box that needs to move
     return node
 
 
-def find_temp_goal(non_meta_agent_id, initial_positions, avoid_pos_list, walls):
+def find_temp_goal(avoid_pos_list, walls):
     start_time_step = max([t for _, t in avoid_pos_list])
     pos_list = []
     print(f'start_time_step: {start_time_step}',file=sys.stderr)
@@ -219,48 +216,3 @@ def find_temp_goal(non_meta_agent_id, initial_positions, avoid_pos_list, walls):
                             return neighbor_pos
     return None
 
-
-
-
-# def calculate_move_out_plan(non_meta_agent_id, initial_positions, avoid_pos_list, walls):
-#     # Initialize the move plan for the non-meta agent and box
-#     move_plan = []
-#     box_flag = False
-#     # Get the initial position of the non meta agent/box
-#     non_meta_agent_pos = initial_positions[non_meta_agent_id]['agent_position']
-#     if initial_positions[non_meta_agent_id]['box_id'] is not None:
-#         non_meta_box_pos = initial_positions[non_meta_agent_id].get('box_position')
-#         box_flag = True
-#     # Loop while the agent/box is still in meta agent/box's way, Loop judging actions to get the available actions
-#     # Loop through actions to find a temporary path into the avoid_pos_list
-#     while non_meta_agent_pos in avoid_pos_list or (box_flag and non_meta_box_pos in avoid_pos_list):
-#         for action in Action:
-#             if action.type == ActionType.Move or action.type == ActionType.Push or action.type == ActionType.Pull:
-#                 print(f'action: {action}',file=sys.stderr)
-#                 non_meta_agent_destination = non_meta_agent_pos + action.agent_rel_pos
-#                 print(f'non_meta_agent_destination: {non_meta_agent_destination}',file=sys.stderr)
-#                 # Check if non_meta_agent_destination is within the bounds of the walls matrix
-#                 if 0 <= non_meta_agent_destination.x < len(walls[0]) and 0 <= non_meta_agent_destination.y < len(walls):
-#                     # Check if non_meta_agent_destination is a wall or in avoid_positions
-#                     is_destination_occupied_by_agent = walls[non_meta_agent_destination.y][non_meta_agent_destination.x]
-#                     print(f'is_destination_occupied_by_agent: {is_destination_occupied_by_agent}',file=sys.stderr)
-#                     if box_flag:
-#                         non_meta_box_destination = non_meta_box_pos + action.box_rel_pos
-#                         print(f'non_meta_box_destination: {non_meta_box_destination}',file=sys.stderr)
-#                         # Check if non_meta_box_destination is within the bounds of the walls matrix
-#                         if 0 <= non_meta_box_destination.x < len(walls[0]) and 0 <= non_meta_box_destination.y < len(walls):
-#                             # Check if non_meta_box_destination is a wall or in avoid_positions
-#                             is_destination_occupied_by_box = walls[non_meta_box_destination.y][non_meta_box_destination.x]
-#                             print(f'is_destination_occupied_by_box: {is_destination_occupied_by_box}',file=sys.stderr)
-#                     if not is_destination_occupied_by_agent and (not box_flag or not is_destination_occupied_by_box):
-#                                 # Add the position to the move_plan
-#                                 move_plan.append(action)
-#                                 # Update the current position of the agent
-#                                 non_meta_agent_pos = non_meta_agent_destination
-#                                 if box_flag:
-#                                     non_meta_box_pos = non_meta_box_destination
-#                                 print(f'move_plan: {move_plan}',file=sys.stderr)
-#                                 break
-#                     else:
-#                         print(f'not valid action',file=sys.stderr)
-#     return move_plan

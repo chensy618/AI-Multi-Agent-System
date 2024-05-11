@@ -477,10 +477,10 @@ def solve_meta_agent_conflict(node, conflict, initial_solutions):
     else:
         meta_agent_id = other_agent_id
         non_meta_agent_id = agent_id
-    print(f'len of meta agent solution: {len(node.solution[meta_agent_id])}', file=sys.stderr)
+    # print(f'len of meta agent solution: {len(node.solution[meta_agent_id])}', file=sys.stderr)
     for t in range(len(node.solution[meta_agent_id])):
         node.solution[non_meta_agent_id].insert(t, Action.NoOp)
 
-    print(f"---updated node.solution[non_meta_agent_id]--{node.solution[non_meta_agent_id]}",file=sys.stderr)
+    # print(f"---updated node.solution[non_meta_agent_id]--{node.solution[non_meta_agent_id]}",file=sys.stderr)
     return node
 
