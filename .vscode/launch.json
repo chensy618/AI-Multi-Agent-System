@@ -11,7 +11,7 @@
             },
             "pathMappings": [
                 {
-                    "localRoot": "D:\\Github\\02285-AI-MAS\\project-assignment-ai",
+                    "localRoot": "/Users/wegz/Documents/WEGZ_MAC/DTU/02285/final_project/cbs_test/project-assignment-ai",
                     "remoteRoot": "."
                 }
             ],
