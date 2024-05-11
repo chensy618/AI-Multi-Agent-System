@@ -6,13 +6,15 @@ from state import State
 def is_movable(layout, box):
         # the possible neighbour positions
         neighbours = [(box.pos.y-1, box.pos.x), (box.pos.y+1, box.pos.x), (box.pos.y, box.pos.x-1), (box.pos.y, box.pos.x+1)]
-        
+        blocked = 0
         for ny, nx in neighbours:
             # Check if the neighbour position is within the layout boundaries
             if 0 <= nx < len(layout[0]) and 0 <= ny < len(layout):
                 # Check if the neighbour cell is a wall ('+') or another box
                 if layout[ny][nx] == '+' or layout[ny][nx].isupper():
-                    return False
+                   blocked += 1
+                   if blocked == 4:
+                       return False 
         return True
 
 class HTNHelper:
@@ -54,10 +56,10 @@ class HTNHelper:
         # Sort boxes by x2 in descending order and then by y2 in descending order
         sorted_goals = sorted(available_goals, key=lambda available_goals: (-available_goals.x2, -available_goals.y2))
         first_priority_goal = sorted_goals[0]
-        return first_priority_goal.uid
+        return first_priority_goal
     
-    def prioritize_boxes_by_difficulty(boxes, goal_uid):
-        available_boxes = [box for box in boxes if goal_uid == box.uid and is_movable(State.box_goal_map, box)]
+    def prioritize_boxes_by_difficulty(boxes, goal):
+        available_boxes = [box for box in boxes if goal.value == box.value]
         first_priority_box = available_boxes[0]
         return first_priority_box
     

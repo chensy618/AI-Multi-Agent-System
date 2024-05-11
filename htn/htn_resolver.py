@@ -49,11 +49,11 @@ class HTNResolver:
                     #     ],
                     #     key=lambda item: DistanceCalc.calculate_box_task(item[0], agent, item[1])
                     # )
-                    goal_uid = HTNHelper.prioritize_goals_by_difficulty(boxes)
-                    box = HTNHelper.prioritize_boxes_by_difficulty(boxes, goal_uid)
+                    goal = HTNHelper.prioritize_goals_by_difficulty(boxes)
+                    box = HTNHelper.prioritize_boxes_by_difficulty(boxes, goal)
 
                     self.boxes_by_color[agent.color].remove(box)
-                    self.round[agent.value] = Task(box.uid, box.value, goal_uid)
+                    self.round[agent.value] = Task(box.uid, box.value, goal.uid)
                 else:
                     goal_uid = HTNHelper.get_closest_goal_uid_to_agent(agent)
                     self.round[agent.value] = Task(-1, None, goal_uid)
