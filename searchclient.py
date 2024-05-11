@@ -87,7 +87,37 @@ class LevelParser:
         goal_layout, line = LevelParser.parse_layout(server_messages, '#end')
         return goal_layout
 
+def goal_state_analysis(layout, r, c):
+        x1 = x2 = y1 = y2 = 0
+        # direct neighbour positions
+        direct_neighbours = [(r-1, c), (r+1, c), (r, c-1), (r, c+1)]
+        # diagonal neighbour positions
+        diagonal_neighbours = [(r-1, c-1), (r-1, c+1), (r+1, c-1), (r+1, c+1)]
+        #print(layout, file=sys.stderr)
+    
+        for pos in direct_neighbours:
+         # Check if the direct neighbour position is within the layout boundaries
+            #if 0 <= pos[0] < len(layout[0]) and 0 <= pos[1] < len(layout):
+                if layout[pos[0]][pos[1]] == '+':
+                    x2 = x2+1
+                if layout[pos[0]][pos[1]].isdigit() or layout[pos[0]][pos[1]].isupper():
+                    y2 = y2+1
+
+        for pos in diagonal_neighbours:
+            # Check if the diagonal neighbour position is within the layout boundaries
+            #if 0 <= pos[0] < len(layout[0]) and 0 <= pos[1] < len(layout):
+                if layout[pos[0]][pos[1]] == '+':
+                    x1 = x1+1
+                if layout[pos[0]][pos[1]].isdigit() or layout[pos[0]][pos[1]].isupper():
+                    y1 = y1+1
+        
+        x1 = x1 + x2
+        y1 = y1 + y2
+            
+        return x1, y1, x2, y2
+
 class SearchClient:
+
     @staticmethod
     def parse_level(server_messages) -> 'State':
         for _ in range(4):  # Skip domain and level name headers
@@ -128,7 +158,8 @@ class SearchClient:
         for row_idx, row in enumerate(goal_layout):
             for col_idx, char in enumerate(row):
                 if char.isdigit() or char.isupper():
-                    goals.append(Goal(pos=Position(col_idx, row_idx), value=char, uid=goal_uid))
+                    x1, y1, x2, y2 = goal_state_analysis(goal_layout, row_idx, col_idx)
+                    goals.append(Goal(pos=Position(col_idx, row_idx), value=char, uid=goal_uid, x1=x1, y1=y1, x2=x2, y2=y2))
                     goal_uid += 1
 
 
