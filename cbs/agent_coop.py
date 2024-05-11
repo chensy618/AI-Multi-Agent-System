@@ -124,7 +124,7 @@ def meta_agent_block_communication(node, initial_solutions, initial_positions, c
     # use avoid_pos_list to find the temporary goal for the non-meta agent/box
     avoid_pos_list = meta_agent_pos_list + meta_box_pos_list
     # print(f'avoid_pos_list: {avoid_pos_list}',file=sys.stderr)
-    temp_goal = find_temp_goal(non_meta_agent_id, initial_positions, avoid_pos_list, walls)
+    temp_goal = find_temp_goal(avoid_pos_list, walls)
     real_goal = current_state.goals[non_meta_agent_id].pos
     print(f'temp_goal: {temp_goal}',file=sys.stderr)
     print(f'real_goal: {real_goal}',file=sys.stderr)
