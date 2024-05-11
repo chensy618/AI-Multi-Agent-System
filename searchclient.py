@@ -108,7 +108,7 @@ class SearchClient:
         # print(f"---nrows, ncols--{nrows, ncols}")
         walls = [[False] * ncols for _ in range(nrows)]
         # print(f"---walls--{walls[0]}")
-        
+
         box_uid = 0
         for row_idx, row in enumerate(initial_layout):
             for col_idx, char in enumerate(row):
@@ -183,7 +183,7 @@ class SearchClient:
             resolver.create_round(current_state)
 
             print(resolver.round, file=sys.stderr)
-            
+
             plan = conflict_based_search(current_state, resolver.round)
             for time_step in plan:
                 final_plan.append(time_step)
