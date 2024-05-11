@@ -12,6 +12,9 @@ start_time = time.perf_counter()
 
 def astar(initial_state, task):
     print(f"\n=============ASTAR - v{initial_state.agents[0].value}===============", file=sys.stderr)
+    # print(f'------------------------initial agent state: {initial_state.agents}------------------------', file=sys.stderr)
+    # print(f'------------------------initial box state: {initial_state.boxes}------------------------', file=sys.stderr)
+    # print(f'------------------------initial goal state: {initial_state.goals}------------------------', file=sys.stderr)
     frontier = AStarFrontier(HeuristicAStar(initial_state))
     frontier.add(initial_state, task)
     explored = set()
@@ -37,11 +40,11 @@ def astar(initial_state, task):
             print_search_status(explored, frontier)
             print('Maximum memory usage exceeded.', file=sys.stderr)
             return None
-        
+
     print("No solution found", file=sys.stderr)
     print(f"\n=============ASTAR - v{initial_state.agents[0].value}===============", file=sys.stderr)
     raise RuntimeError("A* cannot find solution for this problem, check HTN")  # No solution found
-    
+
 def print_search_status(explored, frontier):
     status_template = '#Expanded: {:8,}, #Frontier: {:8,}, #Generated: {:8,}, Time: {:3.3f} s\n[Alloc: {:4.2f} MB, MaxAlloc: {:4.2f} MB]'
     elapsed_time = time.perf_counter() - start_time
