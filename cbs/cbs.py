@@ -4,13 +4,14 @@ import time
 
 from astar import astar
 from cbs.node import Node
-from cbs.agent_talk import ask_blocked_agent_help
+from cbs.agent_coop import ask_blocked_agent_help, meta_agent_block_communication
+from cbs.utils import get_actual_agent_id, merge_plans
 from domain.action import Action, ActionType
 from domain.conflict import Conflict, MoveAwayConflict,FollowConflict, MetaAgentConflict
 from domain.constraint import Constraint
 from domain.position import Position
 from queue import PriorityQueue
-from htn.htn_resolver import HTNResolver
+
 from st_astar import space_time_a_star
 from state import State
 
@@ -23,7 +24,7 @@ def conflict_based_search(current_state: State, round):
     root = Node()
     root.constraints = set()
     initial_positions = initialize_initial_positions(current_state, round)
-
+    print(f"=============Initial positions: =============\n{initial_positions}", file=sys.stderr)
     for agent in current_state.agents:
         if(round[agent.value].goal_uid == None):
             continue
@@ -39,6 +40,7 @@ def conflict_based_search(current_state: State, round):
 
     # Store the initial solution to be used in the long corridor situation
     initial_solutions = root.solution.copy()
+    print(f'"=============Initial solutions: =============\n{initial_solutions}', file=sys.stderr)
     # Create a dictionary to store the number of conflicts for each agent pair
     conflict_counts = {}
 
@@ -94,11 +96,21 @@ def conflict_based_search(current_state: State, round):
                 print(f"=============CBS-end===============\n", file=sys.stderr)
                 return executable_plan
             else:
-                print('-----------Meta agent conflict not solved, adding to frontier.----------', file=sys.stderr)
-                new_node.cost = cost(new_node.solution)
-                if new_node.cost < sys.maxsize:
-                    count_next = next(tiebreaker)
-                    frontier.put((count_next, new_node))
+                print(f'----------- New conflict is {new_conflict} -------------', file=sys.stderr)
+                # If meta agent cannot finish it's route, then it enters the communication mode to ask other agent's help
+                meta_agent_new_node = meta_agent_block_communication(new_node, initial_solutions, initial_positions, new_conflict, current_state, round)
+                meta_agent_new_conflict = find_first_conflict(meta_agent_new_node.solution, initial_positions, conflict_counts)
+                if meta_agent_new_conflict is None:
+                    print(f"Conflict solved. CBS solution... -> {meta_agent_new_node.solution}", file=sys.stderr)
+                    executable_plan = merge_plans(current_state, meta_agent_new_node.solution, round)
+                    print(f"=============CBS-end===============\n", file=sys.stderr)
+                    return executable_plan
+                else:
+                    print('-----------Meta agent conflict not solved, adding to frontier.----------', file=sys.stderr)
+                    new_node.cost = cost(new_node.solution)
+                    if new_node.cost < sys.maxsize:
+                        count_next = next(tiebreaker)
+                        frontier.put((count_next, new_node))
                 continue
         else:
             ai_aj_pair = (conflict.ai, conflict.aj)
@@ -299,15 +311,16 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
                     # Means the other conflict agent hasn't finished its goal yet
                     if tag == 'fixed':
                         # If the same conflict agent pair happens more than 3 times, then it is a deadlock
-                        if conflict_counts.get((agent_id, other_entity_id), 0) <= 3:
+                        if conflict_counts.get((agent_id, other_entity_id), 0) < 3:
                             # print(f'conflict_counts original--{conflict_counts}',file=sys.stderr)
                             # print(f'agent_id--{agent_id}',file=sys.stderr)
                             # print(f'other_entity_id--{other_entity_id}',file=sys.stderr)
                             # print(f'conflict_counts--{conflict_counts.get((agent_id, other_entity_id), 0)}',file=sys.stderr)
-                            # print(f"---Conflict 1--{Conflict(agent_id, other_entity_id, resulting_agent_position, time_step)}",file=sys.stderr)
+                            print(f"---Conflict 1--{Conflict(agent_id, other_entity_id, resulting_agent_position, time_step)}",file=sys.stderr)
                             return Conflict(agent_id, other_entity_id, resulting_agent_position, time_step)
                         else:
                             other_agent_id = get_actual_agent_id(initial_positions, other_entity_id)
+                            print(f"---MetaAgentConflict 1--{MetaAgentConflict(agent_id, other_agent_id)}",file=sys.stderr)
                             return MetaAgentConflict(agent_id, other_agent_id)
                     # Means the other conflict agent has finished its goal, and can try to move out the way
                     else:
@@ -324,12 +337,12 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
                     # Means the other conflict agent hasn't finished its goal yet
                     if tag == 'fixed':
                         # If the same conflict agent pair happens more than 3 times, then it is a deadlock
-                        if conflict_counts.get((box_id, other_entity_id), 0) <= 3:
+                        if conflict_counts.get((box_id, other_entity_id), 0) < 3:
                             # print(f'conflict_counts original--{conflict_counts}',file=sys.stderr)
                             # print(f'agent_id--{agent_id}',file=sys.stderr)
                             # print(f'other_entity_id--{other_entity_id}',file=sys.stderr)
                             # print(f'conflict_counts--{conflict_counts.get((agent_id, other_entity_id), 0)}',file=sys.stderr)
-                            # print(f"---Conflict 2--{Conflict(box_id, other_entity_id, resulting_box_position, time_step)}",file=sys.stderr)
+                            print(f"---Conflict 2--{Conflict(box_id, other_entity_id, resulting_box_position, time_step)}",file=sys.stderr)
                             return Conflict(box_id, other_entity_id, resulting_box_position, time_step)
                         else:
                             agent_id = get_actual_agent_id(initial_positions, box_id)
@@ -380,45 +393,6 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
 
     return None
 
-
-def merge_plans(current_state, solutions, round):
-    """
-    Merge the individual plans of the agents into a single executable plan.
-
-    :param solution: A dictionary mapping agent IDs to their respective paths (lists of actions).
-    :return: A list of joint actions that represents the executable plan.
-    """
-    # Initialize the merged plan
-    merged_plan = []
-    # Find the maximum length of the individual agent plans
-    max_length = max(len(plan) for plan in solutions.values())
-
-
-    # For each agent, get the action at the current step or use NoOp if the plan is shorter
-    sorted_agents = sorted(current_state.agents, key=lambda a: a.value)
-    for step in range(max_length):
-        joint_action = []
-        for agent in sorted_agents:
-            if(agent.value in solutions.keys()):
-                solution = solutions[agent.value]
-                if step < len(solution):
-                    action = solution[step]
-                else:
-                    # Assuming NoOp is represented as None or a specific NoOp action
-                    action = Action.NoOp
-                joint_action.append(action)
-            else:
-                joint_action.append(Action.NoOp)
-        # Append the joint action to the merged plan
-        merged_plan.append(joint_action)
-    print(f"Merged_plan--{merged_plan}", file=sys.stderr)
-
-    for agent_uid, task in round.items():
-        if(HTNResolver.completed_tasks.get(agent_uid) is None):
-            HTNResolver.completed_tasks[agent_uid] = []
-        HTNResolver.completed_tasks[agent_uid].append(task)
-    # print(f"round--{round}", file=sys.stderr)
-    return merged_plan
 
 def solve_moveaway_conflict(node, conflict, walls):
     agent_id = conflict.ai
@@ -488,15 +462,6 @@ def solve_follow_conflict(node, conflict):
     return node
 
 
-def get_actual_agent_id(initial_positions, entity_id):
-    # If the entity_id is a box, return its corresponding agent_id
-    for agent_id, pos in initial_positions.items():
-        if pos['box_id'] == entity_id:
-            return agent_id
-    # If the entity_id is already an agent_id, return it as is
-    return agent_id
-
-
 def solve_meta_agent_conflict(node, conflict, initial_solutions):
     agent_id = conflict.ai
     other_agent_id = conflict.aj
@@ -519,19 +484,3 @@ def solve_meta_agent_conflict(node, conflict, initial_solutions):
     print(f"---updated node.solution[non_meta_agent_id]--{node.solution[non_meta_agent_id]}",file=sys.stderr)
     return node
 
-
-
-def is_occupied(destination, avoid_pos_list, walls):
-    if 0 <= destination.x < len(walls[0]) and 0 <= destination.y < len(walls):
-        return walls[destination.y][destination.x] or \
-               any(pos == destination for pos, _ in avoid_pos_list.keys())
-    return True  # Out of bounds is considered occupied
-
-def find_available_actions(current_pos, avoid_pos_list, walls):
-    available_actions = []
-    for action in Action:
-        if action.type == ActionType.Move:
-            destination = current_pos + action.agent_rel_pos
-            if not is_occupied(destination, avoid_pos_list, walls):
-                available_actions.append(action)
-    return available_actions
