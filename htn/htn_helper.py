@@ -51,8 +51,7 @@ class HTNHelper:
 
         return closest_goal_uid
     
-    def prioritize_goals_by_difficulty(boxes):
-        available_goals = [goal for box in boxes for goal in State.goals if goal.value == box.value]
+    def prioritize_goals_by_difficulty(available_goals):
         # Sort boxes by x2 in descending order and then by y2 in descending order
         sorted_goals = sorted(available_goals, key=lambda available_goals: (-available_goals.x2, -available_goals.y2))
         first_priority_goal = sorted_goals[0]

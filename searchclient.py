@@ -93,21 +93,22 @@ def goal_state_analysis(layout, r, c):
         direct_neighbours = [(r-1, c), (r+1, c), (r, c-1), (r, c+1)]
         # diagonal neighbour positions
         diagonal_neighbours = [(r-1, c-1), (r-1, c+1), (r+1, c-1), (r+1, c+1)]
+        #print(layout, file=sys.stderr)
     
-        for nx, ny in direct_neighbours:
+        for pos in direct_neighbours:
          # Check if the direct neighbour position is within the layout boundaries
-            if 0 <= nx < len(layout[0]) and 0 <= ny < len(layout):
-                if layout[ny][nx] == '+':
+            #if 0 <= pos[0] < len(layout[0]) and 0 <= pos[1] < len(layout):
+                if layout[pos[0]][pos[1]] == '+':
                     x2 = x2+1
-                if layout[ny][nx].isdigit() or layout[ny][nx].isupper():
+                if layout[pos[0]][pos[1]].isdigit() or layout[pos[0]][pos[1]].isupper():
                     y2 = y2+1
 
-        for nx, ny in diagonal_neighbours:
+        for pos in diagonal_neighbours:
             # Check if the diagonal neighbour position is within the layout boundaries
-            if 0 <= nx < len(layout[0]) and 0 <= ny < len(layout):
-                if layout[ny][nx] == '+':
+            #if 0 <= pos[0] < len(layout[0]) and 0 <= pos[1] < len(layout):
+                if layout[pos[0]][pos[1]] == '+':
                     x1 = x1+1
-                if layout[ny][nx].isdigit() or layout[ny][nx].isupper():
+                if layout[pos[0]][pos[1]].isdigit() or layout[pos[0]][pos[1]].isupper():
                     y1 = y1+1
         
         x1 = x1 + x2
@@ -157,7 +158,7 @@ class SearchClient:
         for row_idx, row in enumerate(goal_layout):
             for col_idx, char in enumerate(row):
                 if char.isdigit() or char.isupper():
-                    x1, x2, y1, y2 = goal_state_analysis(initial_layout, row_idx, col_idx)
+                    x1, y1, x2, y2 = goal_state_analysis(goal_layout, row_idx, col_idx)
                     goals.append(Goal(pos=Position(col_idx, row_idx), value=char, uid=goal_uid, x1=x1, y1=y1, x2=x2, y2=y2))
                     goal_uid += 1
 

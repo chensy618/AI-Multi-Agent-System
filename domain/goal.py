@@ -13,4 +13,4 @@ class Goal:
         self.y2 = y2
 
     def __repr__(self):
-        return f"Goal(uid={self.uid}, pos={self.pos}, value={self.value})"
+        return f"Goal(uid={self.uid}, pos={self.pos}, value={self.value}, x1={self.x1}, y1={self.y1}, x2={self.x2}, y2={self.y2})"

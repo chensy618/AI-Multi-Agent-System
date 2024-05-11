@@ -32,7 +32,7 @@ class HTNResolver:
         self.round_counter += 1
 
         boxes = current_state.boxes
-        
+
         for color, agents_by_color in self.agents_by_color.items():
             boxes = self.boxes_by_color.get(color, [])
 
@@ -49,12 +49,16 @@ class HTNResolver:
                     #     ],
                     #     key=lambda item: DistanceCalc.calculate_box_task(item[0], agent, item[1])
                     # )
-                    goal = HTNHelper.prioritize_goals_by_difficulty(boxes)
+                    goals = [goal for box in boxes for goal in State.goals if goal.value == box.value]
+                    available_goals =  [goal for goal in goals if State.is_free(current_state,goal.pos)]
+                    goal = HTNHelper.prioritize_goals_by_difficulty(available_goals)
                     box = HTNHelper.prioritize_boxes_by_difficulty(boxes, goal)
 
+                    print("priorities done", file=sys.stderr)
                     self.boxes_by_color[agent.color].remove(box)
                     self.round[agent.value] = Task(box.uid, box.value, goal.uid)
                 else:
+                    print("without priorities", file=sys.stderr)
                     goal_uid = HTNHelper.get_closest_goal_uid_to_agent(agent)
                     self.round[agent.value] = Task(-1, None, goal_uid)
         
