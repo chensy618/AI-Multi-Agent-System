@@ -39,19 +39,21 @@ class HTNResolver:
             for agent in agents_by_color:
                 # Check if we have box
                 if boxes:
-                    min_box, goal_uid = min(
-                        [
-                            (
-                                box, 
-                                HTNHelper.get_closest_goal_uid_to_box(box)
-                            ) 
-                            for box in boxes
-                        ],
-                        key=lambda item: DistanceCalc.calculate_box_task(item[0], agent, item[1])
-                    )
+                    # min_box, goal_uid = min(
+                    #     [
+                    #         (
+                    #             box, 
+                    #             HTNHelper.get_closest_goal_uid_to_box(box)
+                    #         ) 
+                    #         for box in boxes
+                    #     ],
+                    #     key=lambda item: DistanceCalc.calculate_box_task(item[0], agent, item[1])
+                    # )
+                    goal_uid = HTNHelper.prioritize_goals_by_difficulty(boxes)
+                    box = HTNHelper.prioritize_boxes_by_difficulty(boxes, goal_uid)
 
-                    self.boxes_by_color[agent.color].remove(min_box)
-                    self.round[agent.value] = Task(min_box.uid, min_box.value, goal_uid)
+                    self.boxes_by_color[agent.color].remove(box)
+                    self.round[agent.value] = Task(box.uid, box.value, goal_uid)
                 else:
                     goal_uid = HTNHelper.get_closest_goal_uid_to_agent(agent)
                     self.round[agent.value] = Task(-1, None, goal_uid)
