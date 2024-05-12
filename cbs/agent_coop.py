@@ -109,10 +109,12 @@ def meta_agent_block_communication(node, initial_solutions, initial_positions, c
     meta_box_pos_list = box_i_pos_list if box_id_i == initial_positions[meta_agent_id]['box_id'] else box_j_pos_list
     # print(f'meta_agent_pos_list: {meta_agent_pos_list}',file=sys.stderr)
     # print(f'meta_box_pos_list: {meta_box_pos_list}',file=sys.stderr)
-    print(f'-----------------meta_agent_id: {meta_agent_id}',file=sys.stderr)
-    print(f'-----------------meta_box_id: {meta_box_id}',file=sys.stderr)
+    # print(f'-----------------meta_agent_id: {meta_agent_id}',file=sys.stderr)
+    # print(f'-----------------meta_box_id: {meta_box_id}',file=sys.stderr)
     non_meta_agent_id = agent_id_i if meta_agent_id == agent_id_j else agent_id_j
     non_meta_box_id = initial_positions[non_meta_agent_id]['box_id']
+    # print(f'-----------------non_meta_agent_id: {non_meta_agent_id}',file=sys.stderr)
+    # print(f'-----------------non_meta_box_id: {non_meta_box_id}',file=sys.stderr)
 
     # Store the path of the meta agent/box in avoid_pos_list, and move the other agent/box out of the way
     # Add meta agent/box initial position to walls
@@ -125,67 +127,101 @@ def meta_agent_block_communication(node, initial_solutions, initial_positions, c
     avoid_pos_list = meta_agent_pos_list + meta_box_pos_list
     # print(f'avoid_pos_list: {avoid_pos_list}',file=sys.stderr)
     temp_goal = find_temp_goal(avoid_pos_list, walls)
-    real_goal = current_state.goals[non_meta_agent_id].pos
-    print(f'temp_goal: {temp_goal}',file=sys.stderr)
-    print(f'real_goal: {real_goal}',file=sys.stderr)
+    for goal in current_state.goals:
+        # print(f'goal: {goal}',file=sys.stderr)
+        # print(f'goal.value: {goal.value}',file=sys.stderr)
+        if goal.value == non_meta_box_id:
+            real_goal = goal.pos
+            break
+    # print(f'current state goals: {current_state.goals}',file=sys.stderr)
+    # print(f'temp_goal: {temp_goal}',file=sys.stderr)
+    # print(f'real_goal: {real_goal}',file=sys.stderr)
 
     # Update the current state goal map and goal position to use the temp goal
     goal_uid = round[non_meta_agent_id].goal_uid
+    # print(f'round is {round}',file=sys.stderr)
     # print(f'goal_uid: {goal_uid}',file=sys.stderr)
-    current_state.goals[non_meta_agent_id].pos = temp_goal
+    current_state.goals[goal_uid].pos = temp_goal
     current_state.goal_map[goal_uid][temp_goal.y][temp_goal.x] = 0
     current_state.goal_map[goal_uid][real_goal.y][real_goal.x] = 1
     # print(f'current state goal map is {current_state.goal_map[goal_uid]}',file=sys.stderr)
-    # print(f'current state non meta agent goal is {current_state.goals[non_meta_agent_id]}',file=sys.stderr)
+    # print(f'current state non meta agent goal is {current_state.goals[goal_uid]}',file=sys.stderr)
     # Invoke Astar to find the path for the non meta agent/box to move out of the way
     relaxed_state = current_state.from_agent_perspective(non_meta_agent_id)
-    move_out_plan = astar(relaxed_state, round[non_meta_agent_id])
-    # print(f'-------round[non_meta_agent_id]: {round[non_meta_agent_id]}-------',file=sys.stderr)
-    print(f'==================================move_out_plan: {move_out_plan}',file=sys.stderr)
-
-    # To avoid that the meta agent block the way of the agent/box that needs to move
-    # Change the goal back to the real goal after the agent/box moved out of the way
-    current_state.goals[non_meta_agent_id].pos = real_goal
-    current_state.goal_map[goal_uid][temp_goal.y][temp_goal.x] = 1
-    current_state.goal_map[goal_uid][real_goal.y][real_goal.x] = 0
+    try:
+        move_out_plan = astar(relaxed_state, round[non_meta_agent_id])
+        # print(f'-------round[non_meta_agent_id]: {round[non_meta_agent_id]}-------',file=sys.stderr)
+        print(f'==================================move_out_plan: {move_out_plan}',file=sys.stderr)
+    except RuntimeError as e:
+        print(f"The meta agent communication cannot solve the move_out_plan: {e}", file=sys.stderr)
+        return node
+    finally:
+        # To avoid that the meta agent block the way of the agent/box that needs to move
+        # Change the goal back to the real goal after the agent/box moved out of the way
+        current_state.goals[goal_uid].pos = real_goal
+        current_state.goal_map[goal_uid][temp_goal.y][temp_goal.x] = 1
+        current_state.goal_map[goal_uid][real_goal.y][real_goal.x] = 0
+        # print(f'current state goal map is {current_state.goal_map[goal_uid]}',file=sys.stderr)
+        # print(f'current state non meta agent goal is {current_state.goals[goal_uid]}',file=sys.stderr)
+        # print(f'current state agents: {current_state.agents}',file=sys.stderr)
 
     # update the initial positions of the non-meta agent/box to the moving out plan resulting positions
     # replan for the non-meta agent/box
     resulting_position_agent, resulting_position_box = get_resulting_positions_of_plan(non_meta_agent_id, initial_positions, {non_meta_agent_id: move_out_plan})
     # print(f'-------------------resulting_position_agent: {resulting_position_agent}',file=sys.stderr)
     # print(f'-------------------resulting_position_box: {resulting_position_box}',file=sys.stderr)
-    current_state.agents[non_meta_agent_id].pos = resulting_position_agent
+    # Find the non meta agent value and update the position
+    for agent in current_state.agents:
+        if agent.value == non_meta_agent_id:
+            agent.pos = resulting_position_agent
+            break
+    # print(f'After change current state agent: {current_state.agents}',file=sys.stderr)
+    # Find the non meta box value and update the position
     if initial_positions[non_meta_agent_id]['box_id'] is not None:
         box_uid = round[non_meta_agent_id].box_uid
         for uid, box in current_state.boxes.items():
-            if box.value == non_meta_box_id and box.uid == box_uid:
+            if box.value == non_meta_box_id and uid == box_uid:
+                # print('box position has been reset',file=sys.stderr)
                 current_state.boxes[uid].pos = resulting_position_box
+                # print(f'After change current state box: {current_state.boxes[uid].pos}',file=sys.stderr)
                 break
 
     relaxed_state = current_state.from_agent_perspective(non_meta_agent_id)
-    non_meta_agent_rest_plan = astar(relaxed_state, round[non_meta_agent_id])
-    print(f'==================================non_meta_agent_rest_plan: {non_meta_agent_rest_plan}',file=sys.stderr)
+    try:
+        non_meta_agent_rest_plan = astar(relaxed_state, round[non_meta_agent_id])
+        print(f'==================================non_meta_agent_rest_plan: {non_meta_agent_rest_plan}',file=sys.stderr)
+    except RuntimeError as e:
+        print(f"The meta agent communication cannot solve the non_meta_agent_rest_plan: {e}", file=sys.stderr)
+        return node
+    finally:
+        # Update the initial positions of the non-meta agent/box to the real initial positions
+        for agent in current_state.agents:
+            if agent.value == non_meta_agent_id:
+                agent.pos = initial_positions[non_meta_agent_id]['agent_position']
+                break
+        if initial_positions[non_meta_agent_id]['box_id'] is not None:
+            for uid, box in current_state.boxes.items():
+                if box.value == non_meta_box_id and box.uid == box_uid:
+                    current_state.boxes[uid].pos = initial_positions[non_meta_agent_id]['box_position']
+                    break
+        # print(f'================================The current state agent has been changed back to the initial position: {current_state.agents}',file=sys.stderr)
+        # print(f'================================The current state box has been changed back to the initial position: {current_state.boxes}',file=sys.stderr)
+        # print(f'================================The current state goal map has been changed back to the initial position: {current_state.goal_map}',file=sys.stderr)
+        # print(f'================================The current state goals has been changed back to the initial position: {current_state.goals}',file=sys.stderr)
+        # Remove the temp walls
+        walls[initial_positions[meta_agent_id]['agent_position'].y][initial_positions[meta_agent_id]['agent_position'].x] = False
+        walls[initial_positions[meta_agent_id]['box_position'].y][initial_positions[meta_agent_id]['box_position'].x] = False
 
     # Wait while the meta agent/box is moving towards the goal
     non_meta_agent_noop_plan = [Action.NoOp for _ in range(len(initial_solutions[meta_agent_id]))]
     # Insert the available actions to the agent/box that needs to move
     node.solution[non_meta_agent_id] = move_out_plan + non_meta_agent_noop_plan + non_meta_agent_rest_plan
-    print(f'node.solution[non_meta_agent_id]: {node.solution[non_meta_agent_id]}',file=sys.stderr)
+    # print(f'node.solution[non_meta_agent_id]: {node.solution[non_meta_agent_id]}',file=sys.stderr)
     # Insert the NoOp action to the meta agent/box from the beginning, until the agent/box moved out of the way
     for _ in range(len(move_out_plan)):
         node.solution[meta_agent_id].insert(0, Action.NoOp)
-    print(f'node.solution[meta_agent_id]: {node.solution[meta_agent_id]}',file=sys.stderr)
-
-    # Update the initial positions of the non-meta agent/box to the real initial positions
-    current_state.agents[non_meta_agent_id].pos = initial_positions[non_meta_agent_id]['agent_position']
-    if initial_positions[non_meta_agent_id]['box_id'] is not None:
-        for uid, box in current_state.boxes.items():
-            if box.value == non_meta_box_id and box.uid == box_uid:
-                current_state.boxes[uid].pos = initial_positions[non_meta_agent_id]['box_position']
-                break
-    # Remove the temp walls
-    walls[initial_positions[meta_agent_id]['agent_position'].y][initial_positions[meta_agent_id]['agent_position'].x] = False
-    walls[initial_positions[meta_agent_id]['box_position'].y][initial_positions[meta_agent_id]['box_position'].x] = False
+    # print(f'node.solution[meta_agent_id]: {node.solution[meta_agent_id]}',file=sys.stderr)
+    # print(f'---node.solution: {node.solution}---',file=sys.stderr)
 
     # Once the agent/box moved out, insert the NoOp action to the agent/box that needs to move
     return node
