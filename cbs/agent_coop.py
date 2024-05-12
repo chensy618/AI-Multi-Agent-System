@@ -4,6 +4,7 @@ import sys
 from astar import astar
 from cbs.utils import find_meta_agent, get_actual_agent_id, get_pos_list, get_resulting_positions_of_plan, opposite_action
 from domain.action import Action, ActionType
+from domain.conflict import FollowConflict
 
 def ask_blocked_agent_help(agent_id, blocked_agent_id, agent_current_pos, time_step, node, avoid_pos_list, walls):
     """ The agent_id needs to move away so that blocked_agent_id can move.
@@ -85,6 +86,9 @@ def ask_blocked_agent_help(agent_id, blocked_agent_id, agent_current_pos, time_s
 
 
 def meta_agent_block_communication(node, initial_solutions, initial_positions, conflict, current_state, round):
+    if isinstance(conflict, FollowConflict):
+        print(f"The meta agent communication does not support follow conflict handling", file=sys.stderr)
+        return node
     # Decide which one is the new meta agent, and which one is the agent that needs to take actions
     # Get the agent and box ids
     entity_i = conflict.ai
