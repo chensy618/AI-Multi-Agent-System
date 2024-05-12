@@ -50,8 +50,8 @@ class HTNResolver:
                     #     key=lambda item: DistanceCalc.calculate_box_task(item[0], agent, item[1])
                     # )
                     goals = [goal for box in boxes for goal in State.goals if goal.value == box.value]
-                    available_goals =  [goal for goal in goals if State.is_free(current_state,goal.pos)]
-                    goal = HTNHelper.prioritize_goals_by_difficulty(available_goals)
+                    #available_goals =  [goal for goal in goals if State.is_free(current_state,goal.pos)]
+                    goal = HTNHelper.prioritize_goals_by_difficulty(goals)
                     box = HTNHelper.prioritize_boxes_by_difficulty(boxes, goal)
 
                     print("priorities done", file=sys.stderr)
