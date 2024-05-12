@@ -513,5 +513,5 @@ def solve_meta_agent_conflict(node, conflict, initial_solutions):
     for t in range(len(node.solution[meta_agent_id])):
         node.solution[non_meta_agent_id].insert(t, Action.NoOp)
 
-    print(f"---updated node.solution[non_meta_agent_id]--{node.solution[non_meta_agent_id]}",file=sys.stderr)
+    # print(f"---updated node.solution[non_meta_agent_id]--{node.solution[non_meta_agent_id]}",file=sys.stderr)
     return node
