@@ -2,6 +2,7 @@ import sys
 from domain.box import Box
 from helper.distance_calc import DistanceCalc
 from state import State
+from itertools import groupby
 
 def is_movable(layout, box):
         # the possible neighbour positions
@@ -51,16 +52,47 @@ class HTNHelper:
 
         return closest_goal_uid
     
-    def prioritize_goals_by_difficulty(available_goals):
-        # Sort boxes by x2 in descending order and then by y2 in descending order
-        sorted_goals = sorted(available_goals, key=lambda available_goals: (-available_goals.x2, -available_goals.y2))
+    def prioritize_goals_by_difficulty(available_goals, agent):
+        for goal in available_goals:
+            goal.dist = State.goal_map[goal.uid][agent.pos.y][agent.pos.x]
+        # Sort boxes by x2 in descending order and then by y2 in descending order, then by x1, then by y1, then by distance
+        sorted_goals = sorted(available_goals, key=lambda available_goals: (-available_goals.x2, -available_goals.y2, -available_goals.x1, -available_goals.y1))
         first_priority_goal = sorted_goals[0]
         return first_priority_goal
     
-    def prioritize_boxes_by_difficulty(boxes, goal):
+    def prioritize_boxes_by_difficulty(boxes, goal, agent):
         available_boxes = [box for box in boxes if goal.value == box.value]
-        first_priority_box = available_boxes[0]
+        min_dist = float('inf')
+        for box in available_boxes:
+            dist = DistanceCalc.pos_to_box_distance(box, agent.pos)
+            if dist < min_dist:
+                min_dist = dist
+                first_priority_box = box
+        #first_priority_box = available_boxes[0]
         return first_priority_box
+    
+    def prioritize_goal_box_by_difficulty(available_goals, boxes, agent):
+        # Sort boxes by x2 in descending order and then by y2 in descending order, then by x1, then by y1, then by distance
+        sorted_goals = sorted(available_goals, key=lambda available_goals: (-available_goals.x2, -available_goals.y2, -available_goals.x1, -available_goals.y1))
+        print(f"sorted_goals: {sorted_goals}", file=sys.stderr)
+        # Group the goals
+        grouped_goals = groupby(sorted_goals, key=lambda sorted_goals: (-sorted_goals.x2, -sorted_goals.y2, -sorted_goals.x1, -sorted_goals.y1))
+        # Convert the grouped goals to a list of lists
+        grouped_goals = [list(group) for key, group in grouped_goals]
+        first_group = grouped_goals[0]
+        print(f"first_group: {first_group}", file=sys.stderr)
+        # Get the boxes that correspond to the first group of goals
+        available_boxes = [box for goal in first_group for box in boxes if goal.value == box.value]
+        print(f"available_boxes: {available_boxes}", file=sys.stderr)
+        for box in available_boxes:
+            box.dist = DistanceCalc.pos_to_box_distance(box, agent.pos)
+        sorted_boxes = sorted(available_boxes, key=lambda available_boxes: available_boxes.dist)
+        print(f"sorted_boxes: {sorted_boxes}", file=sys.stderr)    
+        first_priority_box = sorted_boxes[0]
+        for goal in first_group:
+            if first_priority_box.value == goal.value:
+                first_priority_goal = goal
+        return first_priority_box, first_priority_goal
     
     def get_closest_goal_uid_to_agent(agent):
         min_dist = float('inf')
