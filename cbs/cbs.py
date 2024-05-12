@@ -236,8 +236,12 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
                 if (resulting_position, time_step) in positions:
                     # Conflict detected, return information about the conflict
                     other_agent_id = positions[(resulting_position, time_step)]
-                    print(f"---Conflict--{Conflict(agent_id, other_agent_id, resulting_position, time_step)}", file=sys.stderr)
-                    return Conflict(agent_id, other_agent_id, resulting_position, time_step)
+                    if conflict_counts.get((agent_id, other_agent_id), 0) < 3:
+                        print(f"---Conflict--{Conflict(agent_id, other_agent_id, resulting_position, time_step)}", file=sys.stderr)
+                        return Conflict(agent_id, other_agent_id, resulting_position, time_step)
+                    else:
+                        print(f"---MetaAgentConflict--{MetaAgentConflict(agent_id, other_agent_id)}", file=sys.stderr)
+                        return MetaAgentConflict(agent_id, other_agent_id)
                 ### Following conflict one way ###
                 # Other agent is moving into the current agent's position at the timestep
                 if (current_position, time_step) in positions:
@@ -509,5 +513,5 @@ def solve_meta_agent_conflict(node, conflict, initial_solutions):
     for t in range(len(node.solution[meta_agent_id])):
         node.solution[non_meta_agent_id].insert(t, Action.NoOp)
 
-    print(f"---updated node.solution[non_meta_agent_id]--{node.solution[non_meta_agent_id]}",file=sys.stderr)
+    # print(f"---updated node.solution[non_meta_agent_id]--{node.solution[non_meta_agent_id]}",file=sys.stderr)
     return node
