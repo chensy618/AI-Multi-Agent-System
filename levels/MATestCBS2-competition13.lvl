@@ -1,0 +1,35 @@
+#domain
+hospital
+#levelname
+MATestCBS
+#colors
+red: 0, A
+green: 1, B
+blue: 2, C
+purple:3, D
+orange:4, E
+cyan:5, F
+pink:6, G
+grey:7, H
+brown:8, I
+#initial
+++++++++++++++++++++
++0   3     2     + +
++  A   ++ ++++++++D+
++++  + G+E          +
++1 B   +++++++++++ 5+
++++C +6 +4    8    +
+++    +  F I  H  7  +
+++++++++++++++++++++
+
+#goal
+++++++++++++++++++++
++                +D+
++ B    ++ ++++++++ +
++++  +  +    E      +
++    A +++++++++++  +
++++  +  +   H      +
+++C   +   G  I     F+
+++++++++++++++++++++
+
+#end
