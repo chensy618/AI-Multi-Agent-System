@@ -88,16 +88,31 @@ class LevelParser:
         return goal_layout
 
 def goal_state_analysis(layout, r, c):
+        # reconstruct the layout
+        max_rows = len(layout)
+        max_cols = max(len(row) for row in layout)
+        # new layout
+        new_layout = [[' ' for _ in range(max_cols)] for _ in range(max_rows)]
+        for row_idx, row in enumerate(layout):
+            for col_idx, char in enumerate(row):
+                new_layout[row_idx][col_idx] = char
+        layout = new_layout
         x1 = x2 = y1 = y2 = 0
         # direct neighbour positions
         direct_neighbours = [(r-1, c), (r+1, c), (r, c-1), (r, c+1)]
         # diagonal neighbour positions
         diagonal_neighbours = [(r-1, c-1), (r-1, c+1), (r+1, c-1), (r+1, c+1)]
-        #print(layout, file=sys.stderr)
+        # print(layout, file=sys.stderr)
+        # print(f"len layout[0] - {len(layout[0])}", file=sys.stderr)
+        # print(f"len layout - {len(layout)}", file=sys.stderr)
     
         for pos in direct_neighbours:
          # Check if the direct neighbour position is within the layout boundaries
-            #if 0 <= pos[0] < len(layout[0]) and 0 <= pos[1] < len(layout):
+            if 0 <= pos[0] < len(layout) and 0 <= pos[1] < len(layout[0]):
+                if layout[pos[0]][pos[1]] == ' ':
+                    x2 = x2
+                    y2 = y2
+                    continue
                 if layout[pos[0]][pos[1]] == '+':
                     x2 = x2+1
                 if layout[pos[0]][pos[1]].isdigit() or layout[pos[0]][pos[1]].isupper():
@@ -105,7 +120,11 @@ def goal_state_analysis(layout, r, c):
 
         for pos in diagonal_neighbours:
             # Check if the diagonal neighbour position is within the layout boundaries
-            #if 0 <= pos[0] < len(layout[0]) and 0 <= pos[1] < len(layout):
+            if 0 <= pos[0] < len(layout) and 0 <= pos[1] < len(layout[0]):
+                if layout[pos[0]][pos[1]] == ' ':
+                    x1 = x1
+                    y1 = y1
+                    continue
                 if layout[pos[0]][pos[1]] == '+':
                     x1 = x1+1
                 if layout[pos[0]][pos[1]].isdigit() or layout[pos[0]][pos[1]].isupper():
@@ -115,6 +134,7 @@ def goal_state_analysis(layout, r, c):
         y1 = y1 + y2
             
         return x1, y1, x2, y2
+
 
 class SearchClient:
 
