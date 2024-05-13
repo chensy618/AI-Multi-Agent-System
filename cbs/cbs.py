@@ -30,6 +30,8 @@ def conflict_based_search(current_state: State, round):
             continue
         relaxed_state = current_state.from_agent_perspective(agent.value)
         plan = astar(relaxed_state, round[agent.value])
+        #if plan == None:
+
         root.solution[agent.value] = plan
     print(f'Astar solution: ', root.solution, file=sys.stderr)
 

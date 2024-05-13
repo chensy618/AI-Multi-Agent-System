@@ -9,6 +9,7 @@ class Box:
         self.color = color
         self.value = value
         self.uid = uid
+        self.dist = 0
 
     def __repr__(self):
         return f"Box(pos={self.pos}, value={self.value}, uid={self.uid} color={self.color})"
