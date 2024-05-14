@@ -141,7 +141,7 @@ def neighbour_goal_analysis(goals, goal, group_number, base_score):
             original_goals.append(g)
         
     if neighbour_goals==[]:
-        print("--ytttttttttttttttttttttttttttttttttttttttttttttttttttttt", file=sys.stderr)
+        #print("--ytttttttttttttttttttttttttttttttttttttttttttttttttttttt", file=sys.stderr)
         return original_goals, neighbour_goals, group_number, base_score
     else:
         #neighbour_goals = sorted(neighbour_goals , key=lambda neighbour_goals: (-neighbour_goals.x2, -neighbour_goals.y2, -neighbour_goals.x1, -neighbour_goals.y1))

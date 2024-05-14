@@ -294,7 +294,6 @@ class State:
                 return True
         for agent in self.agents:
             if agent.pos == goal.pos and agent.value == int(goal.value):
-                print("Agent goal achieved", file=sys.stderr)
                 return True
         return False
     
