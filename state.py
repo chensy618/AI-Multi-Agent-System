@@ -287,6 +287,11 @@ class State:
 
     def is_free(self, position) -> bool:
         return not self.walls[position.y][position.x] and not self.box_at(position) and not self.agent_at(position)
+    
+    def is_goal_achieved(self, goal: Goal) -> bool:
+        for box in self.boxes.values():
+            if box.pos == goal.pos and box.value == goal.value:
+                return True
 
     def agent_at(self, position: Position) -> Agent:
         for agent in self.agents:

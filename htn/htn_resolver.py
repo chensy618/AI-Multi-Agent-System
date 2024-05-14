@@ -24,14 +24,17 @@ class HTNResolver:
     def initialize_problems(self, initial_state: State):
         agents = initial_state.agents
         boxes = initial_state.boxes
+        goals = initial_state.goals
 
         self.agents_by_color = HTNHelper.categorize_agents_by_color(agents)
-        self.boxes_by_color = HTNHelper.categorize_boxes_by_color(boxes)
+        self.boxes_by_color = HTNHelper.categorize_boxes_by_color(initial_state, boxes, goals)
 
     def create_round(self, current_state):
         self.round_counter += 1
 
         boxes = current_state.boxes
+        goals = current_state.goals
+        self.boxes_by_color = HTNHelper.categorize_boxes_by_color(current_state, boxes, goals)
 
         for color, agents_by_color in self.agents_by_color.items():
             boxes = self.boxes_by_color.get(color, [])
@@ -50,13 +53,13 @@ class HTNResolver:
                     #     key=lambda item: DistanceCalc.calculate_box_task(item[0], agent, item[1])
                     # )
                     goals = [goal for box in boxes for goal in State.goals if goal.value == box.value]
-                    available_goals =  [goal for goal in goals if State.is_free(current_state,goal.pos) and not current_state.box_at(goal.pos) == goal.value]
+                    available_goals =  [goal for goal in goals if not current_state.is_goal_achieved(goal)]
                     box, goal = HTNHelper.prioritize_goal_box_by_difficulty(available_goals, boxes, agent)
                     #goal = HTNHelper.prioritize_goals_by_difficulty(available_goals, agent)
                     #box = HTNHelper.prioritize_boxes_by_difficulty(boxes, goal, agent)
 
                     print("priorities done", file=sys.stderr)
-                    self.boxes_by_color[agent.color].remove(box)
+                    #self.boxes_by_color[agent.color].remove(box)
                     self.round[agent.value] = Task(box.uid, box.value, goal.uid)
                 else:
                     print("without priorities", file=sys.stderr)
@@ -69,8 +72,11 @@ class HTNResolver:
             if(goal_uid != None):
                 if State.goal_map[goal_uid][agent.pos.y][agent.pos.x] != 0:
                     return True
-        for _, boxes in self.boxes_by_color.items():
-            if len(boxes) > 0:
+        for goal in current_state.goals:
+            if not current_state.is_goal_achieved(goal):
                 return True
+        #for _, boxes in self.boxes_by_color.items():
+        #    if len(boxes) > 0:
+        #        return True
 
         return False

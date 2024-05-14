@@ -29,12 +29,15 @@ class HTNHelper:
         return agents_by_color
     
     @staticmethod
-    def categorize_boxes_by_color(boxes):
+    def categorize_boxes_by_color(state: State, boxes, goals):
         boxes_by_color = {}
+        goals = [goal for goal in goals if not state.is_goal_achieved(goal)]
         for box in boxes.values():
             if box.color not in boxes_by_color:
                 boxes_by_color[box.color] = []
-            boxes_by_color[box.color].append(box)
+            for goal in goals:
+                if box.value == goal.value and not state.box_at(goal.pos) == goal.value:
+                    boxes_by_color[box.color].append(box)
         return boxes_by_color
     
     @staticmethod
@@ -72,26 +75,23 @@ class HTNHelper:
         return first_priority_box
     
     def prioritize_goal_box_by_difficulty(available_goals, boxes, agent):
-        # Sort boxes by x2 in descending order and then by y2 in descending order, then by x1, then by y1, then by distance
-        sorted_goals = sorted(available_goals, key=lambda available_goals: (-available_goals.x2, -available_goals.y2, -available_goals.x1, -available_goals.y1))
-        print(f"sorted_goals: {sorted_goals}", file=sys.stderr)
+        # Sort boxes by x2 in descending order and then by y2 in descending order, then by x1, then by y1, then by z
+        sorted_goals = sorted(available_goals, key=lambda available_goals: (-available_goals.group, -available_goals.x2, -available_goals.y2, -available_goals.x1, -available_goals.y1, -available_goals.z))
+        #print(f"sorted goals: {sorted_goals}", file=sys.stderr)
         # Group the goals
-        grouped_goals = groupby(sorted_goals, key=lambda sorted_goals: (-sorted_goals.x2, -sorted_goals.y2, -sorted_goals.x1, -sorted_goals.y1))
+        grouped_goals = groupby(sorted_goals, key=lambda sorted_goals: (-sorted_goals.group, -sorted_goals.x2, -sorted_goals.y2, -sorted_goals.x1, -sorted_goals.y1, -sorted_goals.z))
         # Convert the grouped goals to a list of lists
         grouped_goals = [list(group) for key, group in grouped_goals]
         first_group = grouped_goals[0]
-        print(f"first_group: {first_group}", file=sys.stderr)
         # Get the boxes that correspond to the first group of goals
         available_boxes = [box for goal in first_group for box in boxes if goal.value == box.value]
-        print(f"available_boxes: {available_boxes}", file=sys.stderr)
         for box in available_boxes:
             box.dist = DistanceCalc.pos_to_box_distance(box, agent.pos)
-        sorted_boxes = sorted(available_boxes, key=lambda available_boxes: available_boxes.dist)
-        print(f"sorted_boxes: {sorted_boxes}", file=sys.stderr)    
+        sorted_boxes = sorted(available_boxes, key=lambda available_boxes: available_boxes.dist)  
         first_priority_box = sorted_boxes[0]
-        for goal in first_group:
-            if first_priority_box.value == goal.value:
-                first_priority_goal = goal
+        available_goals = [goal for goal in first_group if goal.value == first_priority_box.value]
+        first_priority_goal = available_goals[0]
+            
         return first_priority_box, first_priority_goal
     
     def get_closest_goal_uid_to_agent(agent):

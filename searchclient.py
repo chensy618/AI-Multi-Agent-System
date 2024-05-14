@@ -8,6 +8,7 @@ from domain.action import Action
 from domain.task import Task
 from htn.htn_resolver import HTNResolver
 import memory
+from itertools import groupby
 
 from cbs.cbs import conflict_based_search
 from domain.position import Position
@@ -93,7 +94,6 @@ def goal_state_analysis(layout, r, c):
         direct_neighbours = [(r-1, c), (r+1, c), (r, c-1), (r, c+1)]
         # diagonal neighbour positions
         diagonal_neighbours = [(r-1, c-1), (r-1, c+1), (r+1, c-1), (r+1, c+1)]
-        #print(layout, file=sys.stderr)
     
         for pos in direct_neighbours:
          # Check if the direct neighbour position is within the layout boundaries
@@ -105,7 +105,8 @@ def goal_state_analysis(layout, r, c):
 
         for pos in diagonal_neighbours:
             # Check if the diagonal neighbour position is within the layout boundaries
-            #if 0 <= pos[0] < len(layout[0]) and 0 <= pos[1] < len(layout):
+            if 0 <= pos[0] < len(layout[0]) and 0 <= pos[1] < len(layout[pos[0]]):
+            #if 0 <= pos[0] < len(layout[pos[1]]) and 0 <= pos[1] < len(layout[pos[0]]):
                 if layout[pos[0]][pos[1]] == '+':
                     x1 = x1+1
                 if layout[pos[0]][pos[1]].isdigit() or layout[pos[0]][pos[1]].isupper():
@@ -115,6 +116,62 @@ def goal_state_analysis(layout, r, c):
         y1 = y1 + y2
             
         return x1, y1, x2, y2
+
+def neighbour_goal_analysis(goals, goal, group_number, base_score):
+    x, y = goal.pos.x, goal.pos.y
+    # direct neighbour positions
+    direct_neighbours = [(y-1, x), (y+1, x), (y, x-1), (y, x+1)]
+    # if goal.z == 0:
+    #     base_score = 50
+    #     group_number += 1
+    #     goal.group = group_number
+    neighbour_goals = []
+    original_goals = []
+    for g in goals:
+        found = False
+        for pos in direct_neighbours:
+            #print(f"---pos--{pos[0], pos[1]}")
+            #print(f"---g.pos--{g.pos.y, g.pos.x}")
+            if pos[0] == g.pos.y and pos[1] == g.pos.x:
+                #print("--wwwwwwwwwwwwwwwwwwwwwwwwwwwwtttttttttttttttttttttttttt", file=sys.stderr)
+                neighbour_goals.append(g)
+                #goals.remove(g)
+                found = True
+        if found == False:    
+            original_goals.append(g)
+        
+    if neighbour_goals==[]:
+        print("--ytttttttttttttttttttttttttttttttttttttttttttttttttttttt", file=sys.stderr)
+        return original_goals, neighbour_goals, group_number, base_score
+    else:
+        #neighbour_goals = sorted(neighbour_goals , key=lambda neighbour_goals: (-neighbour_goals.x2, -neighbour_goals.y2, -neighbour_goals.x1, -neighbour_goals.y1))
+        for g in neighbour_goals:
+            g.group = goal.group
+            g.z = base_score-1
+            base_score -= 1
+        return original_goals, neighbour_goals, group_number, base_score
+
+def post_goal_state_analysis(goals):
+    sorted_goals = sorted(goals, key=lambda available_goals: (-available_goals.x2, -available_goals.y2, -available_goals.x1, -available_goals.y1))
+    frontier_neighbour_goals = []
+    group_number = 0
+    base_score = 0
+    while sorted_goals:
+        goal = sorted_goals[0]
+        sorted_goals.pop(0)
+        if goal.z == 0:
+            base_score = 50
+            group_number += 1
+            goal.group = group_number
+        sorted_goals, neighbour_goals, group_number, base_score = neighbour_goal_analysis(sorted_goals, goal, group_number, base_score)
+        if neighbour_goals: frontier_neighbour_goals.extend(neighbour_goals)
+        while frontier_neighbour_goals:
+            for current_goal in frontier_neighbour_goals:
+                sorted_goals, goal, group_number, base_score = neighbour_goal_analysis(sorted_goals, current_goal, group_number, base_score)
+                frontier_neighbour_goals.remove(current_goal)
+                #base_score -= 1
+                if goal:    
+                    frontier_neighbour_goals.extend(goal)
 
 class SearchClient:
 
@@ -161,6 +218,7 @@ class SearchClient:
                     x1, y1, x2, y2 = goal_state_analysis(goal_layout, row_idx, col_idx)
                     goals.append(Goal(pos=Position(col_idx, row_idx), value=char, uid=goal_uid, x1=x1, y1=y1, x2=x2, y2=y2))
                     goal_uid += 1
+        post_goal_state_analysis(goals)
 
 
         # Calculate the dimensions of the level\
@@ -216,7 +274,11 @@ class SearchClient:
             print(resolver.round, file=sys.stderr)
 
             plan = conflict_based_search(current_state, resolver.round)
+            if plan is None:
+                continue
             for time_step in plan:
+                print("Time step -> ", time_step, file=sys.stderr)
+                print("Plan -> ", plan, file=sys.stderr)
                 final_plan.append(time_step)
                 current_state = current_state.result(time_step)
 

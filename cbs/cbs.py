@@ -30,8 +30,17 @@ def conflict_based_search(current_state: State, round):
             continue
         relaxed_state = current_state.from_agent_perspective(agent.value)
         plan = astar(relaxed_state, round[agent.value])
-        #if plan == None:
-
+        if plan == None:
+            print(f"round[agent.value].goal_uid: {round[agent.value].goal_uid}", file=sys.stderr)
+            for goal in current_state.goals:
+                if goal.uid == round[agent.value].goal_uid:
+                    goals = [g for g in current_state.goals if g.group == goal.group and g.uid != goal.uid]
+                    print(f"Goals to change group {goals}", file=sys.stderr)
+                    goal.group = -goal.group
+                    for g in goals:
+                        print(f"Goal to change group {g}", file=sys.stderr)
+                        g.group = -g.group
+            return None
         root.solution[agent.value] = plan
     print(f'Astar solution: ', root.solution, file=sys.stderr)
 

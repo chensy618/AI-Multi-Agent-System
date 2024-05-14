@@ -43,8 +43,8 @@ def astar(initial_state, task):
 
     print("No solution found", file=sys.stderr)
     print(f"\n=============ASTAR - v{initial_state.agents[0].value}===============", file=sys.stderr)
-    raise RuntimeError("A* cannot find solution for this problem, check HTN")  # No solution found
-    #return None
+    #raise RuntimeError("A* cannot find solution for this problem, check HTN")  # No solution found
+    return None
 
 def print_search_status(explored, frontier):
     status_template = '#Expanded: {:8,}, #Frontier: {:8,}, #Generated: {:8,}, Time: {:3.3f} s\n[Alloc: {:4.2f} MB, MaxAlloc: {:4.2f} MB]'

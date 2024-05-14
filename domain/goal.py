@@ -11,7 +11,9 @@ class Goal:
         self.y1 = y1
         self.x2 = x2
         self.y2 = y2
+        self.z = 0
+        self.group = 0
         self.dist = 0
 
     def __repr__(self):
-        return f"Goal(uid={self.uid}, pos={self.pos}, value={self.value}, x1={self.x1}, y1={self.y1}, x2={self.x2}, y2={self.y2})"
+        return f"Goal(uid={self.uid}, pos={self.pos}, value={self.value}, x1={self.x1}, y1={self.y1}, x2={self.x2}, y2={self.y2}, group no={self.group}, z={self.z})"
