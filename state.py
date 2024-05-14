@@ -292,7 +292,12 @@ class State:
         for box in self.boxes.values():
             if box.pos == goal.pos and box.value == goal.value:
                 return True
-            
+        for agent in self.agents:
+            if agent.pos == goal.pos and agent.value == int(goal.value):
+                print("Agent goal achieved", file=sys.stderr)
+                return True
+        return False
+    
     def goal_achieved_by_box(self, goal: Goal) -> Box:
         for box in self.boxes.values():
             if box.pos == goal.pos and box.value == goal.value:
