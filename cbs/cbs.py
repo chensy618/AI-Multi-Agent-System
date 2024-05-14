@@ -63,7 +63,9 @@ def conflict_based_search(current_state: State, round):
     while not frontier.empty():
         tiebreaker_value, node = frontier.get()
         conflict = find_first_conflict(node.solution, initial_positions, conflict_counts)
+        print(f"---Heeeeeeeeeeeeeeeeeerrrrrrrrrrrrrrrrrreeeeeeeeeeeeeeeeeeeeee--{conflict}", file=sys.stderr)
         if conflict is None:
+            print(f"wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww ", file=sys.stderr)
             print(f"Conflict solved. CBS solution... -> {node.solution}", file=sys.stderr)
             executable_plan = merge_plans(current_state, node.solution, round)
             print(f"=============CBS-end===============\n", file=sys.stderr)

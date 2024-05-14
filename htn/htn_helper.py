@@ -31,13 +31,15 @@ class HTNHelper:
     @staticmethod
     def categorize_boxes_by_color(state: State, boxes, goals):
         boxes_by_color = {}
+        box_to_be_excluded = [state.goal_achieved_by_box(goal) for goal in goals if state.is_goal_achieved(goal)]
         goals = [goal for goal in goals if not state.is_goal_achieved(goal)]
+        uid_boxes_excluded = [box.uid for box in box_to_be_excluded]
         for box in boxes.values():
             if box.color not in boxes_by_color:
                 boxes_by_color[box.color] = []
             for goal in goals:
-                if box.value == goal.value and not state.box_at(goal.pos) == goal.value:
-                    boxes_by_color[box.color].append(box)
+                if box.value == goal.value and box.uid not in uid_boxes_excluded: 
+                        boxes_by_color[box.color].append(box)
         return boxes_by_color
     
     @staticmethod

@@ -292,6 +292,11 @@ class State:
         for box in self.boxes.values():
             if box.pos == goal.pos and box.value == goal.value:
                 return True
+            
+    def goal_achieved_by_box(self, goal: Goal) -> Box:
+        for box in self.boxes.values():
+            if box.pos == goal.pos and box.value == goal.value:
+                return box
 
     def agent_at(self, position: Position) -> Agent:
         for agent in self.agents:
