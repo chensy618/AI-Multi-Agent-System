@@ -49,7 +49,7 @@ class HTNResolver:
                         ],
                         key=lambda item: DistanceCalc.calculate_box_task(item[0], agent, item[1])
                     )
-
+                    
                     self.boxes_by_color[agent.color].remove(min_box)
                     self.round[agent.value] = Task(min_box.uid, min_box.value, goal_uid)
                 else:

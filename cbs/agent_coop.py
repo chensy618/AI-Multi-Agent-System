@@ -11,13 +11,13 @@ def ask_blocked_agent_help(agent_id, blocked_agent_id, agent_current_pos, time_s
     However the agent_id doesn't have avaialble action to move away,
     so this function is called to ask the blocked_agent_id to move away so that agent_id can move,
     and make the path available for the blocked_agent_id."""
-    print(f'original solution for agent {agent_id}: {node.solution[agent_id]}',file=sys.stderr)
-    print(f'original solution for blocked agent {blocked_agent_id}: {node.solution[blocked_agent_id]}',file=sys.stderr)
+    # print(f'original solution for agent {agent_id}: {node.solution[agent_id]}',file=sys.stderr)
+    # print(f'original solution for blocked agent {blocked_agent_id}: {node.solution[blocked_agent_id]}',file=sys.stderr)
     # Get the current position of the blocked agent
     for (position, t), info in avoid_pos_list.items():
         if info['id'] == blocked_agent_id and t == time_step:
             blocked_agent_current_pos = position
-    print(f'Agent {blocked_agent_id} is blocked by agent {agent_id} at time step {time_step} at position {agent_current_pos}',file=sys.stderr)
+    # print(f'Agent {blocked_agent_id} is blocked by agent {agent_id} at time step {time_step} at position {agent_current_pos}',file=sys.stderr)
     # Used for counting the number of actions to the agent
     count = 0
     # loop actions to see the blocked agent's action at the time step
@@ -37,19 +37,19 @@ def ask_blocked_agent_help(agent_id, blocked_agent_id, agent_current_pos, time_s
                         pos_t: info for pos_t, info in avoid_pos_list.items()
                         if pos_t[1] != time_step or info['id'] != blocked_agent_id
                     }
-                    print(f'---new_avoid_pos_list: {new_avoid_pos_list}---',file=sys.stderr)
+                    # print(f'---new_avoid_pos_list: {new_avoid_pos_list}---',file=sys.stderr)
                     insert_blocked_agent_action = action
-                    print(f'---insert_blocked_agent_action: {insert_blocked_agent_action}---',file=sys.stderr)
+                    # print(f'---insert_blocked_agent_action: {insert_blocked_agent_action}---',file=sys.stderr)
                     # Insert the new action at the time step
                     node.solution[blocked_agent_id].insert(time_step, insert_blocked_agent_action)
-                    print(f'node.solution[blocked_agent_id]: {node.solution[blocked_agent_id]}',file=sys.stderr)
+                    # print(f'node.solution[blocked_agent_id]: {node.solution[blocked_agent_id]}',file=sys.stderr)
                     # Update the solution for the agent
                     # Firstly wait for the blocked agent to move
                     # Insert NoOp for the agent if the agent's solution is shorter than the current time step
                     while len(node.solution[agent_id]) < time_step:
                         node.solution[agent_id].append(Action.NoOp)
                     node.solution[agent_id].insert(time_step, Action.NoOp)
-                    print(f'node.solution[agent_id]: {node.solution[agent_id]}',file=sys.stderr)
+                    # print(f'node.solution[agent_id]: {node.solution[agent_id]}',file=sys.stderr)
                     while count < 3:
                         # Then find the next 3 move for the agent
                         for action_agent in Action:
@@ -60,25 +60,25 @@ def ask_blocked_agent_help(agent_id, blocked_agent_id, agent_current_pos, time_s
                                     # Check if agent_destination is a wall or in avoid_positions
                                     is_destination_occupied = walls[agent_destination.y][agent_destination.x] or \
                                                                 any(pos == agent_destination for pos, _ in new_avoid_pos_list.keys())
-                                    print(f'---is_destination_occupied: {is_destination_occupied}---',file=sys.stderr)
+                                    # print(f'---is_destination_occupied: {is_destination_occupied}---',file=sys.stderr)
                                     if not is_destination_occupied:
                                         # add the position and time step to the new_avoid_pos_list
                                         new_avoid_pos_list[agent_destination, time_step+count+2] = {'id': agent_id}
                                         insert_agent_action = action_agent
-                                        print(f'---insert_agent_action: {insert_agent_action}---',file=sys.stderr)
-                                        print(f'---count: {count}---',file=sys.stderr)
+                                        # print(f'---insert_agent_action: {insert_agent_action}---',file=sys.stderr)
+                                        # print(f'---count: {count}---',file=sys.stderr)
                                         # Insert the new action at the time step
                                         node.solution[agent_id].insert(time_step+count+1, insert_agent_action)
                                         # The blocked agent id needs to wait for the agent to move
                                         node.solution[blocked_agent_id].insert(time_step+count+1, Action.NoOp)
-                                        print(f'node.solution[agent_id]: {node.solution[agent_id]}',file=sys.stderr)
-                                        print(f'node.solution[blocked_agent_id]: {node.solution[blocked_agent_id]}',file=sys.stderr)
+                                        # print(f'node.solution[agent_id]: {node.solution[agent_id]}',file=sys.stderr)
+                                        # print(f'node.solution[blocked_agent_id]: {node.solution[blocked_agent_id]}',file=sys.stderr)
                                         # Update the current position of the agent
                                         agent_current_pos = agent_destination
                         count += 1
                     # Insert the opposite action to the blocked agent so that it can return
                     node.solution[blocked_agent_id].insert(time_step+count+1, opposite_action(insert_blocked_agent_action))
-                    print(f'final node.solution[block ed_agent_id]: {node.solution[blocked_agent_id]}',file=sys.stderr)
+                    # print(f'final node.solution[block ed_agent_id]: {node.solution[blocked_agent_id]}',file=sys.stderr)
                     # break the loop as long as 1 available action is found
                     break
 
@@ -87,7 +87,7 @@ def ask_blocked_agent_help(agent_id, blocked_agent_id, agent_current_pos, time_s
 
 def meta_agent_block_communication(node, initial_solutions, initial_positions, conflict, current_state, round):
     if isinstance(conflict, FollowConflict):
-        print(f"The meta agent communication does not support follow conflict handling", file=sys.stderr)
+        # print(f"The meta agent communication does not support follow conflict handling", file=sys.stderr)
         return node
     # Decide which one is the new meta agent, and which one is the agent that needs to take actions
     # Get the agent and box ids
@@ -151,13 +151,13 @@ def meta_agent_block_communication(node, initial_solutions, initial_positions, c
     # print(f'current state goal map is {current_state.goal_map[goal_uid]}',file=sys.stderr)
     # print(f'current state non meta agent goal is {current_state.goals[goal_uid]}',file=sys.stderr)
     # Invoke Astar to find the path for the non meta agent/box to move out of the way
-    relaxed_state = current_state.from_agent_perspective(non_meta_agent_id)
+    relaxed_state = current_state.from_agent_perspective(non_meta_agent_id, round)
     try:
         move_out_plan = astar(relaxed_state, round[non_meta_agent_id])
         # print(f'-------round[non_meta_agent_id]: {round[non_meta_agent_id]}-------',file=sys.stderr)
-        print(f'==================================move_out_plan: {move_out_plan}',file=sys.stderr)
+        # print(f'==================================move_out_plan: {move_out_plan}',file=sys.stderr)
     except RuntimeError as e:
-        print(f"The meta agent communication cannot solve the move_out_plan: {e}", file=sys.stderr)
+        # print(f"The meta agent communication cannot solve the move_out_plan: {e}", file=sys.stderr)
         return node
     finally:
         # To avoid that the meta agent block the way of the agent/box that needs to move
@@ -190,12 +190,12 @@ def meta_agent_block_communication(node, initial_solutions, initial_positions, c
                 # print(f'After change current state box: {current_state.boxes[uid].pos}',file=sys.stderr)
                 break
 
-    relaxed_state = current_state.from_agent_perspective(non_meta_agent_id)
+    relaxed_state = current_state.from_agent_perspective(non_meta_agent_id, round)
     try:
         non_meta_agent_rest_plan = astar(relaxed_state, round[non_meta_agent_id])
-        print(f'==================================non_meta_agent_rest_plan: {non_meta_agent_rest_plan}',file=sys.stderr)
+        # print(f'==================================non_meta_agent_rest_plan: {non_meta_agent_rest_plan}',file=sys.stderr)
     except RuntimeError as e:
-        print(f"The meta agent communication cannot solve the non_meta_agent_rest_plan: {e}", file=sys.stderr)
+        # print(f"The meta agent communication cannot solve the non_meta_agent_rest_plan: {e}", file=sys.stderr)
         return node
     finally:
         # Update the initial positions of the non-meta agent/box to the real initial positions
@@ -234,12 +234,12 @@ def meta_agent_block_communication(node, initial_solutions, initial_positions, c
 def find_temp_goal(avoid_pos_list, walls):
     start_time_step = max([t for _, t in avoid_pos_list])
     pos_list = []
-    print(f'start_time_step: {start_time_step}',file=sys.stderr)
+    # print(f'start_time_step: {start_time_step}',file=sys.stderr)
     for time_step in range(start_time_step, -1, -1):
         # print(f'----------t: {time_step}-----------',file=sys.stderr)
         for pos, t in avoid_pos_list:
             if t == time_step:
-                print(pos)
+                # print(pos)
                 pos_list.append(pos)
         # print(f'----------pos_list: {pos_list}--------',file=sys.stderr)
         for pos in pos_list:

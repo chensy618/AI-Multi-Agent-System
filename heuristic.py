@@ -76,7 +76,7 @@ class HeuristicSpaceTimeAStar(Heuristic):
         time_cost = 0
         agent = state.agents[0]
 
-        if task.box_uid is None or task.goal_uid is None:
+        if task.box_uid is None:
             raise RuntimeError("Box_uid or goal_uid is None, this should not be happening")
 
         # Check if the task is a box-to-goal task or an agent-to-goal task

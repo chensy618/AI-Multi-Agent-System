@@ -145,33 +145,34 @@ class SearchClient:
     @staticmethod
     def main(args) -> None:
         print('SearchClient', flush=True)
-        # print('#This is a comment.', flush=True)
 
         server_messages = io.TextIOWrapper(sys.stdin.buffer, encoding='ASCII')
         initial_state = SearchClient.parse_level(server_messages)
-
-        print("\n========INITIAL STATE========\n", file=sys.stderr)
+        start = time.time()
+        # print("\n========INITIAL STATE========\n", file=sys.stderr)
         for goal in State.goals:
             State.goal_map[goal.uid] = State.initialize_goal_map(initial_state.walls, goal.pos)
-            print(f"Goal - v{goal.value} ---> ", goal, file=sys.stderr)
-        for agent in initial_state.agents:
-            print(f"Agent - v{agent.value} ---> ", agent, file=sys.stderr)
+            # print(f"Goal - v{goal.value} ---> ", goal, file=sys.stderr)
+        # for agent in initial_state.agents:
+            # print(f"Agent - v{agent.value} ---> ", agent, file=sys.stderr)
         for box in initial_state.boxes.values():
             State.box_goal_map[box.uid] = State.initialize_goal_map(initial_state.walls, box.pos)
-            print(f"Box - v{box.value} ---> ", box, file=sys.stderr)
+            # print(f"Box - v{box.value} ---> ", box, file=sys.stderr)
 
-        for goal_id in State.goal_map.keys():
-            print(f"\n----------Distance map for Goal - {goal_id}-------------", file=sys.stderr)
-            goal_grid = State.goal_map[goal_id]
-            for row in goal_grid:
-                print(' '.join(f"{cell if cell is not None else 'None':4}" for cell in row), file=sys.stderr)
-        for box_id in State.box_goal_map.keys():
-            print(f"\n----------Distance map for Box - {box_id}-------------", file=sys.stderr)
-            goal_grid = State.box_goal_map[box_id]
-            for row in goal_grid:
-                print(' '.join(f"{cell if cell is not None else 'None':4}" for cell in row), file=sys.stderr)
+        end = time.time()
+        print(f"Time taken to initialize goal_map and box_goal_map: {end - start}", file=sys.stderr)
+        # for goal_id in State.goal_map.keys():
+            # print(f"\n----------Distance map for Goal - {goal_id}-------------", file=sys.stderr)
+            # goal_grid = State.goal_map[goal_id]
+            # for row in goal_grid:
+                # print(' '.join(f"{cell if cell is not None else 'None':4}" for cell in row), file=sys.stderr)
+        # for box_id in State.box_goal_map.keys():
+            # print(f"\n----------Distance map for Box - {box_id}-------------", file=sys.stderr)
+            # goal_grid = State.box_goal_map[box_id]
+            # for row in goal_grid:
+                # print(' '.join(f"{cell if cell is not None else 'None':4}" for cell in row), file=sys.stderr)
 
-        print("\n========INITIAL STATE========\n", file=sys.stderr)
+        # print("\n========INITIAL STATE========\n", file=sys.stderr)
 
         resolver = HTNResolver()
         resolver.initialize_problems(initial_state)
@@ -185,12 +186,13 @@ class SearchClient:
             print(resolver.round, file=sys.stderr)
 
             plan = conflict_based_search(current_state, resolver.round)
+            print("We have a plan ->", plan, file=sys.stderr)
             for time_step in plan:
                 final_plan.append(time_step)
                 current_state = current_state.result(time_step)
 
 
-        print("========PROBLEM========\n", file=sys.stderr)
+        # print("========PROBLEM========\n", file=sys.stderr)
 
         if final_plan is None:
             print('Unable to solve level.', file=sys.stderr, flush=True)
@@ -226,7 +228,7 @@ class SearchClient:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Simple client based on state-space graph search.')
-    parser.add_argument('--max-memory', metavar='<MB>', type=float, default=2048.0, help='The maximum memory usage allowed in MB (soft limit, default 2048).')
+    parser.add_argument('--max-memory', metavar='<MB>', type=float, default=16384.0, help='The maximum memory usage allowed in MB (soft limit, default 16384).')
     args = parser.parse_args()
 
     # set the maximum memory usage allowed in MB (soft limit, default 2048)
