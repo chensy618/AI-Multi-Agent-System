@@ -1,0 +1,112 @@
+#domain
+hospital
+#levelname
+NameHere
+#colors
+blue: 0, X, Y
+red: 2, U, Z
+purple: 3, 9, W, D
+brown: 4, G
+orange: 5, F
+pink: 1, 6, H, K, L, M, N, O, Q, R, S, T, P, V, B, E, A, C
+grey: 7, J
+lightblue: 8, I
+#initial
+++++++++++++++++++++++++++++++++++++++++++++++++
++0   XXXXXX                       BBVY     XXX1+
++    XXXXXX                               ZZZZZ+
++    XXXXXX                                    +
++++++++++++                               ZZZZZ+
+++++++++++++++++++++++++++ ++++++++++++ ++++++++
++ + +H++++++++++++++++++++ ++++++++++++ ++++++++
++ + +L+++++++++++++++++RP    PR++X            Y+
++ + +N+++ NAME HERE  ++NP    PN++X            Y+
++ + +Q+++ CHESSBOARD ++BP    PB++X            Y+
++ + +S+++              QP    PQ++X            Y+
++ + +T+++            ++KP    PK++X            Y+
++ + +R++++++++++ ++++++BP    PB++X            Y+
++ + +O+++++   CK   T ++NP    PN++X            Y+
++ + +M+++++++++++++++++RP    PR++X            Y+
++ + +KZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ+
++  6  ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ+
++XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX+
++                       Z                     I+
++          Z     Z      Z                      +
++         Z            +++++  Z Z              +
++                F    +ZZZZZ+       F   F      +
++ Z   Z   Z     F    +ZZZZZZZ+     F    Z      +
++ Z      Z           ++ZZZZZ++  Z         F    +
++  Z   Z    Z    Z   +J+ZZZ+J+     Z  F        +
++   Z     Z    Z ZZ  +JJ+Z+JJ+  F        Z   F +
++  Z     Z           +JJ+Z+JJ+                 +
++   Z    Z     F  Z Z ++ZZZ++     Z   Z  F   F +
++    Z    Z          +Z+++++Z+                 +
++ Z   Z    Z ZZZ Z  +ZXZZ+ZZXZ+  F         F   +
++  ZZZ    F Z   Z   +Z+Z+Z+Z+Z+             F  +
++ Z                  ++XZZZX++ Z      F        +
++ ZZZZZ   F      Z    +XXXXX+   Z              +
++     Z      Z   Z  Z +ZZ+ZZ+                  +
++++ +++   Z            ++ ++    Z     F    F   +
++     +                                        +
++     + ++++++++++++++++++++++++++++++++++++++++
++     +                                      +W+
++++++++ I+++++++BBBBBBBBBBBBBBBBB+ + + + + + +Z+
++ +ZZZ+ G++WWWWWB2B3B9B5B7B8B4B B            +D+
++ +ZZZ+ ++      B  Z Z D F J IB B+ + + + + +  G+
++ +ZZZ+ +++     B               BW           +I+
++ +ZZZ+   +DDDD BBBBBBBBGBBBBBBBB+ + + + + + +J+
++ +ZZZ+ +++++++ +              ++W           +F+
++ +ZZZ+                        J++++++++ +++++++
++ +ZZZ++++++++++++++++++++++++ J++++++++ +++++++
++                              +++++++++       +
+++++++++++++++++++++++++++++++++++++++++++++++++
+#goal
+++++++++++++++++++++++++++++++++++++++++++++++++
++                                              +
++                                              +
++                                         V0YBB+
++++++++++++                                    +
+++++++++++++++++++++++++++ ++++++++++++ ++++++++
++H+ + ++++++++++++++++++++ ++++++++++++ ++++++++
++K+ + +++++++++++++++++RP    PR++Y            X+
++L+ + +++            ++NP    PN++Y            X+
++M+ + +++            ++BP    PB++Y            X+
++N+ + +++1               P   PQ++Y            X+
++O+ + +++            ++K  P  PK++Y            X+
++Q+ + ++++++++++ ++++++BP   P B++Y            X+
++R+ + +++++CHECK MATE++NP  P  N++Y            X+
++S+ + +++++++++++++++++RP  Q PR++Y            X+
++T+ +                                          +
++                                              +
++                                              +
++                                              +
++                                              +
++                      +++++                   +
++                     +     +                  +
++                    +       +                 +
++                    ++     ++                 +
++                    + +   + +                 +
++                    +  + +  +                 +
++                    +  + +  +                 +
++                     ++   ++                  +
++                    + +++++ +                 +
++                   +    +    +                +
++                   + + + + + +                +
++                    ++     ++                 +
++                     +     +                  +
++                     +  +  +                  +
++++ +++                ++ ++                   +
++ FFF +                                        +
++ FFF + ++++++++++++++++++++++++++++++++++++++++
++ FFF +                                      +G+
++++++++ J+++++++                 + + + + + + +I+
++Z+   + J++DDDD                I             +J+
++Z+   + ++W                      + + + + + + 5F+
++Z+   + +++                                  +D+
++Z+   +   +WWWW                  + + + + + + +W+
++Z+   + +++++++ +              ++            +Z+
++Z+   +                        G++++++++ +++++++
++Z+   ++++++++++++++++++++++++ I++++++++ +++++++
++                              +++++++++      I+
+++++++++++++++++++++++++++++++++++++++++++++++++
+#end
