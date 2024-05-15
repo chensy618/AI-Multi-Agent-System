@@ -293,8 +293,9 @@ class State:
             if box.pos == goal.pos and box.value == goal.value:
                 return True
         for agent in self.agents:
-            if agent.pos == goal.pos and agent.value == int(goal.value):
-                return True
+            if goal.value.isdigit():
+                if agent.pos == goal.pos and agent.value == int(goal.value):
+                    return True
         return False
     
     def goal_achieved_by_box(self, goal: Goal) -> Box:
