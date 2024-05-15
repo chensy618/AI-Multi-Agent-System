@@ -43,11 +43,6 @@ def conflict_based_search(current_state: State, round):
     # Create a dictionary to store the number of conflicts for each agent pair
     conflict_counts = {}
 
-    # Store the initial solution to be used in the long corridor situation
-    initial_solutions = root.solution.copy()
-    # Create a dictionary to store the number of conflicts for each agent pair
-    conflict_counts = {}
-
     while not frontier.empty():
         tiebreaker_value, node = frontier.get()
         conflict = find_first_conflict(node.solution, initial_positions, conflict_counts)
@@ -207,17 +202,17 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
     avoid_pos_list = {}
     # Find the maximum path length to know how many time steps to check
     max_path_length = max(len(path) for path in solution.values())
-    
+
     # sort agent by their path length, so that we always start from short path
     sorted_agents = sorted(solution.items(), key=lambda item: len(item[1]))
-   
+
     for agent_id, path in sorted_agents:
-       
+
         # agent-agent conflict
         if initial_positions[agent_id]['box_id'] is None:
             current_position = initial_positions[agent_id]['agent_position']
             # Add initial position to the positions dictionary as time step 0
-            positions[(current_position, 0)] = agent_id
+            positions[(current_position, 0)] = {'id': agent_id}
             time_step = 1 # Start the first step at 1
             # Loop over the max path length to avoid situation that one agent reach the goal and stop moving, but still block the other agents
             while time_step < len(path)+1:
@@ -230,7 +225,7 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
                 )
                 if (resulting_position, time_step) in positions:
                     # Conflict detected, return information about the conflict
-                    other_agent_id = positions[(resulting_position, time_step)]
+                    other_agent_id = positions[(resulting_position, time_step)]['id']
                     if conflict_counts.get((agent_id, other_agent_id), 0) < 3:
                         return Conflict(agent_id, other_agent_id, resulting_position, time_step)
                     else:
@@ -238,20 +233,19 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
                 ### Following conflict one way ###
                 # Other agent is moving into the current agent's position at the timestep
                 if (current_position, time_step) in positions:
-                    other_agent_id = positions[(current_position, time_step)]
+                    other_agent_id = positions[(current_position, time_step)]['id']
                     # remove situation that the agent id is itself because of NoOp action
                     if other_agent_id != agent_id:
                         return FollowConflict(other_agent_id, time_step-1)
                 ### Following conflict the other way ###
                 # Current agent is moving into the other agent's position at the timestep
                 if (resulting_position, time_step-1) in positions:
-                    other_agent_id = positions[(resulting_position, time_step-1)]
+                    other_agent_id = positions[(resulting_position, time_step-1)]['id']
                     # remove situation that the agent id is itself because of NoOp action
                     if other_agent_id != agent_id:
                         return FollowConflict(agent_id, time_step-1)
-
                 # update the position of the agent at specific time step
-                positions[(resulting_position, time_step)] = agent_id
+                positions[(resulting_position, time_step)] = {'id': agent_id}
                 # Update the current position of the agent
                 current_position = resulting_position
                 time_step += 1
@@ -296,18 +290,23 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
 
                 ### Judge Vertex conflict ###
                 if (resulting_agent_position, time_step) in positions:
-                    tag = positions[(resulting_agent_position, time_step)]['tag']
-                    # print(f"tag: {tag}", file=sys.stderr)
-                    # print(f"positions: {positions}", file=sys.stderr)
-                    # print(f"resulting_agent_position: {resulting_agent_position}", file=sys.stderr)
+                    value = positions.get((resulting_agent_position, time_step), None)
+                    # Check if the value is a dictionary and has the 'tag' key
+                    if isinstance(value, dict):
+                        tag = value.get('tag', None)
+                    else:
+                        # The value is not a dictionary (possibly an integer), so 'tag' is not applicable
+                        tag = None
                     other_entity_id = positions[(resulting_agent_position, time_step)]['id']
                     # Means the other conflict agent hasn't finished its goal yet
                     if tag == 'fixed':
                         # If the same conflict agent pair happens more than 3 times, then it is a deadlock
                         if conflict_counts.get((agent_id, other_entity_id), 0) < 3:
+                            # print(f'---conflict 1 is {Conflict(agent_id, other_entity_id, resulting_agent_position, time_step)}')
                             return Conflict(agent_id, other_entity_id, resulting_agent_position, time_step)
                         else:
                             other_agent_id = get_actual_agent_id(initial_positions, other_entity_id)
+                            # print(f'---meta conflict 1 is {MetaAgentConflict(agent_id, other_agent_id)}')
                             return MetaAgentConflict(agent_id, other_agent_id)
                     # Means the other conflict agent has finished its goal, and can try to move out the way
                     else:
@@ -317,16 +316,24 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
                         avoid_pos_list[(initial_positions[other_entity_id]['goal_position'], time_step)] = {'id': initial_positions[other_entity_id]['goal_id']}
                         return MoveAwayConflict(other_entity_id, agent_id, resulting_agent_position, avoid_pos_list, time_step-1)
                 elif (resulting_box_position, time_step) in positions:
-                    tag = positions[(resulting_box_position, time_step)]['tag']
+                    value = positions.get((resulting_box_position, time_step), None)
+                    # Check if the value is a dictionary and has the 'tag' key
+                    if isinstance(value, dict):
+                        tag = value.get('tag', None)
+                    else:
+                        # The value is not a dictionary (possibly an integer), so 'tag' is not applicable
+                        tag = None
                     other_entity_id = positions[(resulting_box_position, time_step)]['id']
                     # Means the other conflict agent hasn't finished its goal yet
                     if tag == 'fixed':
                         # If the same conflict agent pair happens more than 3 times, then it is a deadlock
                         if conflict_counts.get((box_id, other_entity_id), 0) < 3:
+                            # print(f'---conflict 2 is {Conflict(box_id, other_entity_id, resulting_box_position, time_step)}')
                             return Conflict(box_id, other_entity_id, resulting_box_position, time_step)
                         else:
                             agent_id = get_actual_agent_id(initial_positions, box_id)
                             other_agent_id = get_actual_agent_id(initial_positions, other_entity_id)
+                            # print(f'---meta conflict 2 is {MetaAgentConflict(agent_id, other_agent_id)}')
                             return MetaAgentConflict(agent_id, other_agent_id)
                     # Means the other conflict agent has finished its goal, and can try to move out the way
                     else:
@@ -341,6 +348,7 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
                     other_entity_id = positions[(current_agent_position, time_step)]['id']
                     # In case the other entity is a box, get its agent id, so that the later handling of the conflict can get agent directly
                     other_agent_id = get_actual_agent_id(initial_positions, other_entity_id)
+                    # print(f'-------------------following conflict 1: {FollowConflict(other_agent_id, time_step-1)}', file=sys.stderr)
                     return FollowConflict(other_agent_id, time_step-1)
                 ### Following conflict the other way ###
                 # Means the current agent/box is moving into the other agent's/box's position at the timestep
@@ -350,11 +358,13 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
                         other_entity_id = positions[(pos, t)]['id']
                         # eliminate the situation that the agent is moving into its own box or the other way around
                         if (other_entity_id != agent_id and other_entity_id != box_id):
-                            
+                            # print(f'-------------------following conflict 2: {FollowConflict(agent_id, time_step-1)}', file=sys.stderr)
                             return FollowConflict(agent_id, time_step-1)
                 # Store the explored agent and box positions in the positions dictionary
                 positions[(resulting_agent_position, time_step)] = {'id': agent_id, 'tag': agent_tag}
                 positions[(resulting_box_position, time_step)] = {'id': box_id, 'tag': box_tag}
+                # print(f'==========================time_step--{time_step}', file=sys.stderr)
+                # print(f'==========================positions--{positions}', file=sys.stderr)
                 current_agent_position = resulting_agent_position
                 current_box_position = resulting_box_position
                 time_step += 1
