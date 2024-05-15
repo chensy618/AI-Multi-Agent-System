@@ -67,16 +67,8 @@ class HTNResolver:
                     self.round[agent.value] = Task(-1, None, goal_uid)
         
     def has_any_task_left(self, current_state):
-        for agent in current_state.agents:
-            goal_uid = HTNHelper.get_closest_goal_uid_to_agent(agent)
-            if(goal_uid != None):
-                if State.goal_map[goal_uid][agent.pos.y][agent.pos.x] != 0:
-                    return True
         for goal in current_state.goals:
             if not current_state.is_goal_achieved(goal):
                 return True
-        #for _, boxes in self.boxes_by_color.items():
-        #    if len(boxes) > 0:
-        #        return True
 
         return False
