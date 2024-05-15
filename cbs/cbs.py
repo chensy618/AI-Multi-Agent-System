@@ -25,9 +25,8 @@ def conflict_based_search(current_state: State, round):
     root.constraints = set()
     initial_positions = initialize_initial_positions(current_state, round)
     # print(f"=============Initial positions: =============\n{initial_positions}", file=sys.stderr)
-    for agent in current_state.agents:
-        if(round[agent.value].goal_uid == None):
-            continue
+    for agent_uid, task in round.items():
+        agent = current_state.get_agent_by_uid(agent_uid)
         relaxed_state = current_state.from_agent_perspective(agent.value, round)
         plan = astar(relaxed_state, round[agent.value])
         root.solution[agent.value] = plan
@@ -298,6 +297,9 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
                 ### Judge Vertex conflict ###
                 if (resulting_agent_position, time_step) in positions:
                     tag = positions[(resulting_agent_position, time_step)]['tag']
+                    # print(f"tag: {tag}", file=sys.stderr)
+                    # print(f"positions: {positions}", file=sys.stderr)
+                    # print(f"resulting_agent_position: {resulting_agent_position}", file=sys.stderr)
                     other_entity_id = positions[(resulting_agent_position, time_step)]['id']
                     # Means the other conflict agent hasn't finished its goal yet
                     if tag == 'fixed':

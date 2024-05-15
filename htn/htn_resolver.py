@@ -55,7 +55,10 @@ class HTNResolver:
                     self.round[agent.value] = Task(min_box.uid, min_box.value, goal_uid)
                 else:
                     goal_uid = HTNHelper.get_closest_goal_uid_to_agent(agent)
+                    if goal_uid is None:
+                        continue
                     self.round[agent.value] = Task(-1, None, goal_uid)
+                    print(f"self.round[{agent.value}] = Task(-1, None, {goal_uid})")
         
     def has_any_task_left(self, current_state):
         for agent in current_state.agents:
