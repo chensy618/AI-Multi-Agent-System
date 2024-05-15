@@ -319,7 +319,7 @@ class SearchClient:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Simple client based on state-space graph search.')
-    parser.add_argument('--max-memory', metavar='<MB>', type=float, default=2048.0, help='The maximum memory usage allowed in MB (soft limit, default 2048).')
+    parser.add_argument('--max-memory', metavar='<MB>', type=float, default=32768, help='The maximum memory usage allowed in MB (soft limit, default 2048).')
     args = parser.parse_args()
 
     # set the maximum memory usage allowed in MB (soft limit, default 2048)
