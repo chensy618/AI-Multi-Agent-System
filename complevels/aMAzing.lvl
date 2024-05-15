@@ -1,0 +1,30 @@
+#domain
+hospital
+#levelname
+aMAzing
+#colors
+red: 0, A, B
+blue: 1, C, D
+#initial
+++++++++++
++C  D    +
+++   +++ + 
++A       +
++   B  + +
++  +   + +
++  +   + +
+++++   + +
++    0 1 +
+++++++++++
+#goal
+++++++++++
++      AB+
+++   +++ + 
++        +
++      + +
++  +   +C+
++  +   +D+
+++++   + +
++        +
+++++++++++
+#end

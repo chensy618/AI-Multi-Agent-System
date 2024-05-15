@@ -1,0 +1,113 @@
+#domain
+hospital
+#levelname
+MSPaint
+#colors
+green: 0, 1, 2, 3, 4, 5, 6, 7, 8, A, B, C
+lightblue: F, G, D
+grey: Z, E
+orange: U, V, S, R, Q, X, Y, W, T
+blue: 9, L, K, I, J, M, N, O, H, P
+#initial
+++++++++++++++++++++++++++++++++++++++++++++++++++
++MSPAINT+MSPAINT+MSPAINT+MSPAINT+MSPAINT+ZZZZZ4ZZ+
++ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ8ZZ+
++ZZZZZZZZZZZZZZZZ3                       2ZZZZ7ZZ+
++ZZZZZZZZZZZZZZZZ ZZZZZZZZZZZZZZZZZZZZZZZZZZZZ6ZZ+
++   0ZZZZZZZ1   Z Z   Z   Z   ZZZZZZZZZZZZZZZZ5ZZ+
++    ZZZZZZZ    Z Z Z Z Z Z Z ZZZZZZZ ZZZZZZZZ ZZ+
++B   ZZZZZZZ   AZ   Z   Z   Z            CZZZ   Z+
++UWUWUWUWUWUWUWUWUWUUWUWUWUWUWUWUWUWUWUWUWUZZZ ZZ+
++9                                         ZZZ ZZ+
++          EEZZZZZEEFFEEZZZZZEEE           ZZZ ZZ+
++        EEZZZFINJKKKLLKKIIIHZZZEE         ZZZ ZZ+
++        ZZHLLLMLHHHHGHIKLLLMJIFZZE        ZZZ ZZ+
++      EEFLQPOLLKKIIMKHGJMMLIKNNNFZE       ZZZ ZZ+
++      EZORONKNLLLLIMNJHKIMKKLKJNMFEE      ZZZZZZ+
++     EZGSNMMKMNNMKJLNLKKIIKNMKJJOLZE      ZMZZMZ+
++     EZLROLLLLMLKKKLKLKLMMMJHHJLMMEZ      ZSZZSZ+
++     EEMPONPRQRRQQQQRQQSTSRQNKJLKLGZE     ZPZZPZ+
++     ZENMNRSSTUVWWXXWWWVUTSRRRMIHKGZE     ZAZZAZ+
++     ZELLNRRSTUUVWWWWWVVUTSRQPNJIKGZE     ZIZZIZ+
++     EZKLNQRTTUUVWWWWWVUUTTRPOLJHKGZE     ZNZZNZ+
++     EZGLLPRSTTUVVVWVVVUUTSRPNKJHJFZE     ZTZZTZ+
++     EZFLLPRSUUVWWWVVVWVVUSSPNLIIIEZZ     ZZZZZZ+
++     EZJMMQRSRSSSTUVTTQPPPPQPNMIJKGZE     ZZZZZZ+
++    EZENMNRPQPMLKLQVUNKJKMNNLMNJJLHZE     ZZZZZZ+
++    EZFPNORPONMMPPQUUPPQOLMMNOPLKMKZE     ZZZZZZ+
++    EZEQQPTTSSSTUTSTURSUTSRSSSQNKQNZE     ZMZZMZ+
++     EZPTRTUUUUUUTSTURQTUUUUUTRNNSNZE     ZSZZSZ+
++     EZJURTUVVVVUTTTVRRSUVVUUTQMPSIZE     ZPZZPZ+
++     EZESSRUVVVUSRRTWSPPRSUUTRNLQOEE      ZAZZAZ+
++      EZIQQRTTSTTOLNNKIMSSQQQNMOPIZE      ZIZZIZ+
++       EZEPQQRSUUTSQLNRSRRRPONOLFZE       ZNZZNZ+
++        EEPSSSSQRSSSTSQPNNRQQPPHZE        ZTZZTZ+
++        EZMSSSSSPPRSSRQONSRRQPMFEE        ZZZZZZ+
++        EZGQRRSTSQQRRRONQSRQQOIZE         ZZZZZZ+
++         EZIPQRSSRPMMMNQSRQQNKFZE         ZZZZZZ+
++        EEZFMOPSTTUTTTTTSROLIJGZZEE       ZZZZZZ+
++    EEEZZZGGLMLOSTTTTSSRQMIHIJGGEZZZEEE   ZZZZZZ+
++EEZZZZZEFHIFKOLKMOOOPOMLJHHIKJEGHGFEZZZZZEZZZZZZ+
++ZZZEFGHIIHGFJPOMLKJIIHGGGHIJLKFFFHHHHGFEZZZZZZZZ+
++GHHIIIHHHGHGKQQONMLKIHHHIIKLMKFFGGGGHHIIHGZZZZZZ+
++IHHHHHHHHHHHNPRQPNMLKJIIJKMNNMGGGGGGGGGGHHZZZZZZ+
++HHHHHHHHHHHGPRQRRPOMMLKLLMONOPHGGGGGGGGGGGZZZZZZ+
++HHHHHHHHGGHGJQSRRRQPOONNNOOPROGGGGGGGGGGGGZZZZZZ+
++HHHHHHHHHHHHFGMRRRRPOOOOPPQSNGGGGGGGGGGGGGZZZZZZ+
++HHHHHHHHHHHHGGFIMQSSQQQRSQOJFFGGGGGGGGGGGGZZZZZZ+
++HHHHHHHHHHHHGGGGFHLPQQQOLHFFGGGGGGGGGGGGGGZZZZZZ+
++HHHHHHHHHHHHGGGGGGFFGGFFFFGGGGGGGGGGGGGGGGZZZZZZ+
++HHHHHHHHHHHHGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGZZZZZZ+
+++++++++++++++++++++++++++++++++++++++++++++++++++
+#goal
+++++++++++++++++++++++++++++++++++++++++++++++++++
++       +       +       +       +       +ZZZZZ ZZ+
++ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ ZZ+
++ZZZZZZZZZZZZZZZZ            2           CZZZZ ZZ+
++ZZZZZZZZZZZZZZZZ ZZZZZZZZZZZZZZZZZZZZZZZZZZZZ ZZ+
++   0Z     Z1   Z Z   Z   Z   ZZZZZZZZZZZZZZZZ ZZ+
++    Z     Z    Z Z Z Z Z Z Z ZZZZZZZ ZZZZZZZZ ZZ+
++B   Z     Z   AZ   Z   Z   Z    3        ZZZ   Z+
++UWUWUWUWUWUWUWUWUWUUWUWUWUWUWUWUWUWUWUWUWUZZZ ZZ+
++                                          ZZZ8ZZ+
++                                          ZZZ7ZZ+
++                                          ZZZ6ZZ+
++                                          ZZZ4ZZ+
++                                          ZZZ5ZZ+
++                                          ZZZZZZ+
++                                          ZMZZMZ+
++                                          ZSZZSZ+
++                                          ZPZZPZ+
++                                          ZAZZAZ+
++                                          ZIZZIZ+
++                                          ZNZZNZ+
++                                          ZTZZTZ+
++                                          ZZZZZZ+
++                                          ZZZZZZ+
++                                          ZZZZZZ+
++                                          ZZZZZZ+
++                                          ZMZZMZ+
++                                          ZSZZSZ+
++                                          ZPZZPZ+
++                                          ZAZZAZ+
++                                          ZIZZIZ+
++                                          ZNZZNZ+
++                                          ZTZZTZ+
++                                          ZZZZZZ+
++                                          ZZZZZZ+
++                                          ZZZZZZ+
++                                          ZZZZZZ+
++                                          ZZZZZZ+
++                                          ZZZZZZ+
++                                          ZZZZZZ+
++                                          ZZZZZZ+
++                                          ZZZZZZ+
++                                          ZZZZZZ+
++                                          ZZZZZZ+
++                                          ZZZZZZ+
++                                          ZZZZZZ+
++                                          ZZZZZZ+
++                                          ZZZZZZ+
++                                          ZZZZZZ+
+++++++++++++++++++++++++++++++++++++++++++++++++++
+#end

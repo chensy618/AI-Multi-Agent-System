@@ -1,0 +1,52 @@
+#domain
+hospital
+#levelname
+CerealWif
+#colors
+red: 0, Z
+blue: 1
+#initial
+++++++++++++++++++++++++++++++++++
++10                              +
++Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++                                +
++Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++                                +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++                                +
++Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++                                +
++Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
+++++++++++++++++++++++++++++++++++
+#goal
+++++++++++++++++++++++++++++++++++
++                                +
++1Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z +
++                                +
++Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++                                +
++Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++                                +
++Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++                                +
++                                +
+++++++++++++++++++++++++++++++++++
+#end
