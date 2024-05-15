@@ -1,0 +1,38 @@
+#domain
+hospital
+#levelname
+Bouncer
+#colors
+red: 0, A, S, Y
+purple: 2
+blue: 3
+grey: C, L, U, B, D, H
+pink: 1, T, O
+orange: E
+cyan: 4, F, G
+brown: 5
+#initial
+++++++++++++
++ ++4+SOO+ +
++T   +A  +F+
+++    Y  5 +
++CL2UB+3++ +
++     +  +G+
++ 1  0+E + +
++     +  + +
++     + H+ +
++     + D+ +
+++++++++++++
+#goal
+++++++++++++
++0++ +   +F+
++    +   + +
+++       54+
++  2  +3++ +
++     +  + +
++     +  + +
++    T+A + +
++    O+S + +
++1   O+Y +G+
+++++++++++++
+#end
