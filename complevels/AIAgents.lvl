@@ -1,0 +1,35 @@
+#domain
+hospital
+#levelname
+AIAgents
+#colors
+red: 0, A
+blue: 1, B
+cyan: 2, C
+green: 3, D
+lightblue: W
+#initial
+     +++++
+     +WWW+
+     +W2W+
+++++++WCW++++++
++WWWWWW WWWWWW+
++W0A       B1W+
++WWWWWW WWWWWW+
+++++++WDW++++++
+     +W3W+
+     +WWW+
+     +++++
+#goal
+     +++++
+     +WWW+
+     +WDW+
+++++++W W++++++
++WWWWWW WWWWWW+
++WB         AW+
++WWWWWW WWWWWW+
+++++++W W++++++
+     +WCW+
+     +WWW+
+     +++++
+#end
