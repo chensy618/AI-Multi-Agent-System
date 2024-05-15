@@ -86,9 +86,9 @@ def ask_blocked_agent_help(agent_id, blocked_agent_id, agent_current_pos, time_s
 
 
 def meta_agent_block_communication(node, initial_solutions, initial_positions, conflict, current_state, round):
-    if isinstance(conflict, FollowConflict):
-        print(f"The meta agent communication does not support follow conflict handling", file=sys.stderr)
-        return node
+    # if isinstance(conflict, FollowConflict):
+    #     print(f"The meta agent communication does not support follow conflict handling", file=sys.stderr)
+    #     return node
     # Decide which one is the new meta agent, and which one is the agent that needs to take actions
     # Get the agent and box ids
     entity_i = conflict.ai

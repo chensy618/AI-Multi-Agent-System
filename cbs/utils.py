@@ -39,6 +39,8 @@ def get_actual_agent_id(initial_positions, entity_id):
 
 
 def get_pos_list(agent_id, initial_positions, initial_solutions):
+    if initial_solutions[agent_id] is None:
+        return None, None
     agent_pos_list = []
     box_pos_list = []
     print(f'initial_positions: {initial_positions}',file=sys.stderr)
@@ -64,6 +66,8 @@ def get_pos_list(agent_id, initial_positions, initial_solutions):
 
 def get_resulting_positions_of_plan(non_meta_agent_id, initial_positions, move_out_plan):
     agent_pos_list, box_pos_list = get_pos_list(non_meta_agent_id, initial_positions, move_out_plan)
+    if agent_pos_list is None:
+        return None, None
     return agent_pos_list[-1][0], box_pos_list[-1][0]
 
 def merge_plans(current_state, solutions, round):
