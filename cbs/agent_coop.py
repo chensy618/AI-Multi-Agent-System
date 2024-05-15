@@ -5,6 +5,7 @@ from astar import astar
 from cbs.utils import find_meta_agent, get_actual_agent_id, get_pos_list, get_resulting_positions_of_plan, opposite_action
 from domain.action import Action, ActionType
 from domain.conflict import FollowConflict
+from state import State
 
 def ask_blocked_agent_help(agent_id, blocked_agent_id, agent_current_pos, time_step, node, avoid_pos_list, walls):
     """ The agent_id needs to move away so that blocked_agent_id can move.
@@ -123,6 +124,13 @@ def meta_agent_block_communication(node, initial_solutions, initial_positions, c
     # Store the path of the meta agent/box in avoid_pos_list, and move the other agent/box out of the way
     # Add meta agent/box initial position to walls
     walls = current_state.walls
+    agents_not_in_round = State.agents_without_round(current_state,round)
+    boxes_not_in_round = State.boxes_without_round(current_state,round)
+    for agent in agents_not_in_round:
+        walls[agent.pos.y][agent.pos.x] = True
+
+    for box in boxes_not_in_round:
+        walls[box.pos.y][box.pos.x] = True
     walls[initial_positions[meta_agent_id]['agent_position'].y][initial_positions[meta_agent_id]['agent_position'].x] = True
     walls[initial_positions[meta_agent_id]['box_position'].y][initial_positions[meta_agent_id]['box_position'].x] = True
     # print(f'walls: {walls}',file=sys.stderr)
