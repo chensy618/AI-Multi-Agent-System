@@ -1,0 +1,116 @@
+#domain
+hospital
+#levelname
+SinbadAil
+#colors
+green: J
+blue: I
+lightblue: F,9
+orange: C
+red: Z
+grey: Y
+pink: D, R, A, K, E,V,0,4 ,5,L
+purple: G, M, X,Q,1, 6
+cyan: B, T, S, 2,8,P
+brown: H, U, O, N, 3,7,W
+#initial
+++++++++++++++++++++++++++++++++++++++++++++++++++++
++                   IIIII  II                 C    +
++   JJ       J J JJ II IIIIIIII     F           C  +
++ JJJJJJJJ   JJ JJJJ    IIIIII     F      FF   CCCC+
++JJJJJJJJJJJJJJJJ JJJ  IIIIIII              CCCCCCC+
++JJJJJJJJJJJJJJJJJ JJ  IIIIII       FFF   FFCCCCCCC+
++     JJJJJJJJJ     J  II   II     FFFF FFFFCCCCCCC+
++     JJJJJJJJJ  JJ               FF FFFFFFFCCCCCCC+
++     JJJJJJJJJJJJJJ           F2  F FFFFFFFCCCCCCC+
++    JJJJJJJJJJJJJJJJ         W3FPFFFFFFFFFFCCCCCCC+
++    JJJJJJJJJJJJJJJ J          FFFFFFFFFFFFCCCCCCC+
++   JJJJJJJJJJJJJJJJ            FFFFFFF  CCCCCCCCCC+
++   JJJJJJJJJJJJ              FFF  FFFF  CCCCCCCCCC+
++    JJJJJJJJJJ              0FF     FFCCCCCCCCCCCC+
++    JJJJJJJJJ                1ZZZZ     CCCCCCCCCCC+
++    JJJJJ  J                 ZZZZZZZZZZCCCCCCCCCCC+
++    JJJJ                    ZZZZZZZZZZZZCCC CCCCCC+
++     JJJ J  J              ZZZZZZZZZZZZZCCCCC   CC+
++      JJJJ   JJ           QZZZZZZZZZZZZZ CCCC   CC+
++          JJJ  YY          ZZZZZZZZZZZZZZZZZ     C+
++            YYYYYY          ZZZZZZZZZZZZZZZ       +
++            YYYYYYY              ZZZZZZZZZZ       +
++           YYYYYYYYY             ZZZZZZZZZ        +
++           YYYYYYYYYYYL           ZZZZZZZ         +
++            YYYYYYYYYYY           ZZZZZZZ         +
++            YYYYYYYYYY            ZZZZZZZ XZ      +
++             YYYYYYYYY            ZZZZZZZ Z       +
++             VYYYYYYYY            ZZZZZZ  Z       +
++              YYYYYYY              ZZZZZ          +
++              YYYYYY               ZZZZ           +
++              YYYYY                ZZZ            +
++               YYY                                +
++               YYY                                +
++               YY                                 +
++               YY                                 +
++               YY                                 +
++                 Y                                +
++                                                  +
++                                                  +
+++++++++++++++++++++++++++++++++++++++++++++++++++++
++  DS        +++D++ ++ ++ ++ ++ ++E++++     DE  A A+
++HU  ON      +4                      5+            +
++ 7          +++R++++++++A++++++++K++++            +
++            ++++++++++++9+++++++++++++            +
++  MG    6                                         +
+++++++++++++++++++++++++++++++++++++++++++++++++++++
++8                     AREN                 BTS    +
+++                                                ++
+++++++++++++++++++++++++++++++++++++++++++++++++++++
+#goal
+++++++++++++++++++++++++++++++++++++++++++++++++++++
++                   IIIII  II                 C    +
++   JJ       J J JJ II IIIIIIII     F           C 2+
++ JJJJJJJJ   JJ JJJJ    IIIIII     FP     FF   CCCC+
++JJJJJJJJJJJJJJJJ JJJ  IIIIIII              CCCCCCC+
++JJJJJJJJJJJJJJJJJ JJ  IIIIII       FFF   FFCCCCCCC+
++     JJJJJJJJJ     J  II   II     FFFF FFFFCCCCCCC+
++     JJJJJJJJJW3JJ               FF FFFFFFFCCCCCCC+
++    0JJJJJJJJJJJJJJ           F   F FFFFFFFCCCCCCC+
++    JJJJJJJJJJJJJJJJ           F FFFFFFFFFFCCCCCCC+
++    JJJJJJJJJJJJJJJ J          FFFFFFFFFFFFCCCCCCC+
++   JJJJJJJJJJJJJJJJ            FFFFFFF  CCCCCCCCCC+
++   JJJJJJJJJJJJ              FFF  FFFF  CCCCCCCCCC+
++    JJJJJJJJJJ               FF     FFCCCCCCCCCCCC+
++    JJJJJJJJJ                 ZZZZ     CCCCCCCCCCC+
++    JJJJJ  J                 ZZZZZZZZZZCCCCCCCCCCC+
++    JJJJ                    ZZZZZZZZZZZZCCC CCCCCC+
++     JJJ J  J              ZZZZZZZZZZZZZCCCCC X1CC+
++      JJJJ   JJ            ZZZZZZZZZZZZZ CCCC   CC+
++       V  JJJ  YY          ZZZZZZZZZZZZZZZZZ     C+
++            YYYYYY          ZZZZZZZZZZZZZZZ       +
++            YYYYYYY              ZZZZZZZZZZ       +
++           YYYYYYYYY             ZZZZZZZZZ        +
++           YYYYYYYYYYY            ZZZZZZZ         +
++            YYYYYYYYYYY           ZZZZZZZ         +
++            YYYYYYYYYY            ZZZZZZZ  Z      +
++             YYYYYYYYY            ZZZZZZZ Z       +
++              YYYYYYYY            ZZZZZZ  Z       +
++             LYYYYYYY             QZZZZZ          +
++              YYYYYY               ZZZZ           +
++              YYYYY                ZZZ            +
++               YYY                                +
++               YYY                                +
++               YY                                 +
++               YY                                 +
++               YY                                 +
++                 Y                                +
++                                                  +
++                                                  +
+++++++++++++++++++++++++++++++++++++++++++++++++++++
++HUDSON      +++ ++D++R++A++K++E++ ++++     DE MAGA+
++            +4                      5+            +
++            +++ ++++++++ ++++++++ ++++            +
++            ++++++++++++9+++++++++++++            +
++7                                                6+
+++++++++++++++++++++++++++++++++++++++++++++++++++++
++                     BARENTS                     8+
+++                                                ++
+++++++++++++++++++++++++++++++++++++++++++++++++++++
+#end
