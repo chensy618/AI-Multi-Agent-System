@@ -28,7 +28,9 @@ def conflict_based_search(current_state: State, round):
     for agent_uid, task in round.items():
         agent = current_state.get_agent_by_uid(agent_uid)
         relaxed_state = current_state.from_agent_perspective(agent.value, round)
-        plan = astar(relaxed_state, round[agent.value])
+        plan = astar(relaxed_state, round[agent.value])  
+        if plan is None:
+            continue 
         root.solution[agent.value] = plan
     print(f'Astar solution: ', root.solution, file=sys.stderr)
 
@@ -156,6 +158,7 @@ def resolve_conflict(node, conflict, current_state, round, frontier):
                 m.constraints.add(constraint)
         relaxed_state = current_state.from_agent_perspective(agent_uid, round)
         st_solution = space_time_a_star(relaxed_state, m.constraints, round[agent_uid])
+        print(f'Space time A* solution: {st_solution}', file=sys.stderr)
         m.solution[agent_uid] = st_solution
         m.cost = cost(m.solution)
         if m.cost < sys.maxsize:
@@ -206,11 +209,11 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
     positions = {}
     avoid_pos_list = {}
     # Find the maximum path length to know how many time steps to check
-    max_path_length = max(len(path) for path in solution.values())
+    max_path_length = max(len(path) for path in solution.values() if path is not None)
     
     # sort agent by their path length, so that we always start from short path
-    sorted_agents = sorted(solution.items(), key=lambda item: len(item[1]))
-   
+    # sorted_agents = sorted(solution.items(), key=lambda item: len(item[1]))
+    sorted_agents = sorted((item for item in solution.items() if item[1] is not None), key=lambda item: len(item[1]))
     for agent_id, path in sorted_agents:
        
         # agent-agent conflict

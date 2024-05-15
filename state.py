@@ -112,6 +112,10 @@ class State:
     def boxes_without_round(self, round):
         box_uids = [task.box_uid for task in round.values()]
         return [box for box in self.boxes.values() if box.uid not in box_uids]
+    
+    def boxes_in_round(self, round):
+        box_uids = [task.box_uid for task in round.values()]
+        return [box for box in self.boxes.values() if box.uid in box_uids]
 
     @staticmethod
     def initialize_goal_map(walls, goal_pos: Position):

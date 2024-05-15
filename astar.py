@@ -6,6 +6,7 @@ from domain.action import Action
 import time
 import sys
 import memory
+from htn.htn_resolver import HTNResolver
 
 globals().update(Action.__members__)
 start_time = time.perf_counter()
@@ -40,10 +41,24 @@ def astar(initial_state, task):
             # print_search_status(explored, frontier)
             print('Maximum memory usage exceeded.', file=sys.stderr)
             return None
+        
+    if frontier.is_empty():
+        # print(f"initial_state agents: {initial_state.agents}", file=sys.stderr)
+        # print(f"initial_state boxes: {initial_state.boxes}", file=sys.stderr)
+        # print(f"task: {task}", file=sys.stderr)
+        for agent_id, box in initial_state.boxes.items():
+            if box.uid != task.box_uid:
+                continue
+            else:
+                if box.color not in HTNResolver.boxes_by_color:
+                    HTNResolver.boxes_by_color[box.color] = []
+                HTNResolver.boxes_by_color[box.color].append(box) 
+                #print(f"HTNResolver.boxes_by_color{HTNResolver.boxes_by_color}")
 
+        
     # print("No solution found", file=sys.stderr)
     # print(f"\n=============ASTAR - v{initial_state.agents[0].value}===============", file=sys.stderr)
-    raise RuntimeError("A* cannot find solution for this problem, check HTN")  # No solution found
+    #raise RuntimeError("A* cannot find solution for this problem, check HTN")  # No solution found
 
 def print_search_status(explored, frontier):
     status_template = '#Expanded: {:8,}, #Frontier: {:8,}, #Generated: {:8,}, Time: {:3.3f} s\n[Alloc: {:4.2f} MB, MaxAlloc: {:4.2f} MB]'

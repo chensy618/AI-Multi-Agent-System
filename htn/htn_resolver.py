@@ -9,15 +9,17 @@ from state import State
 
 class HTNResolver:
     completed_tasks = {}
+    boxes_by_color = {}
+    agents_by_color = {}
 
     def __init__(self):
         # Stores current assigned task for an agent
         self.round = {}
         # Stores list of Box for each Colour
-        self.boxes_by_color = {}
+        #self.boxes_by_color = {}
 
         # Stores list of Agent for each Colour
-        self.agents_by_color = {}
+        #elf.agents_by_color = {}
 
         self.round_counter = 0
 
@@ -27,6 +29,8 @@ class HTNResolver:
 
         self.agents_by_color = HTNHelper.categorize_agents_by_color(agents)
         self.boxes_by_color = HTNHelper.categorize_boxes_by_color(boxes)
+        print(f"self.boxes_by_color: {self.boxes_by_color}", file=sys.stderr)
+        
 
     def create_round(self, current_state):
         self.round_counter += 1
@@ -35,7 +39,6 @@ class HTNResolver:
         
         for color, agents_by_color in self.agents_by_color.items():
             boxes = self.boxes_by_color.get(color, [])
-
             for agent in agents_by_color:
                 # Check if we have box
                 if boxes:
@@ -71,3 +74,9 @@ class HTNResolver:
                 return True
 
         return False
+    
+    def get_boxes_by_color(self):
+        return self.boxes_by_color
+    
+    def set_boxes_by_color(self, boxes_by_color):
+        self.boxes_by_color = boxes_by_color

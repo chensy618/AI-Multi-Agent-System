@@ -190,7 +190,7 @@ class SearchClient:
             for time_step in plan:
                 final_plan.append(time_step)
                 current_state = current_state.result(time_step)
-
+            
 
         # print("========PROBLEM========\n", file=sys.stderr)
 
