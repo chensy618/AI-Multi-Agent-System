@@ -51,7 +51,7 @@ class HTNHelper:
 
         for goal_uid in available_box_goals_uids:
             dist = State.goal_map[goal_uid][box.pos.y][box.pos.x]
-            if dist < min_dist:
+            if dist is not None and dist < min_dist:
                 min_dist = dist
                 closest_goal_uid = goal_uid
 

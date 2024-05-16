@@ -64,7 +64,10 @@ class HTNResolver:
                 else:
                     print("without priorities", file=sys.stderr)
                     goal_uid = HTNHelper.get_closest_goal_uid_to_agent(agent)
+                    if goal_uid is None:
+                        continue
                     self.round[agent.value] = Task(-1, None, goal_uid)
+                    print(f"self.round[{agent.value}] = Task(-1, None, {goal_uid})")
         
     def has_any_task_left(self, current_state):
         for goal in current_state.goals:
