@@ -158,7 +158,7 @@ def resolve_conflict(node, conflict, current_state, round, frontier):
                 m.constraints.add(constraint)
         relaxed_state = current_state.from_agent_perspective(agent_uid, round)
         st_solution = space_time_a_star(relaxed_state, m.constraints, round[agent_uid])
-        print(f'Space time A* solution: {st_solution}', file=sys.stderr)
+        #print(f'Space time A* solution: {st_solution}', file=sys.stderr)
         m.solution[agent_uid] = st_solution
         m.cost = cost(m.solution)
         if m.cost < sys.maxsize:
@@ -214,8 +214,9 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
     # sort agent by their path length, so that we always start from short path
     # sorted_agents = sorted(solution.items(), key=lambda item: len(item[1]))
     sorted_agents = sorted((item for item in solution.items() if item[1] is not None), key=lambda item: len(item[1]))
+    print(f"sorted_agents: {sorted_agents}", file=sys.stderr)
     for agent_id, path in sorted_agents:
-       
+        print(f"agent_id: {agent_id}", file=sys.stderr)
         # agent-agent conflict
         if initial_positions[agent_id]['box_id'] is None:
             current_position = initial_positions[agent_id]['agent_position']

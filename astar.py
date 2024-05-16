@@ -50,9 +50,9 @@ def astar(initial_state, task):
             if box.uid != task.box_uid:
                 continue
             else:
-                if box.color not in HTNResolver.boxes_by_color:
+                if box.color in HTNResolver.boxes_by_color:
                     HTNResolver.boxes_by_color[box.color] = []
-                HTNResolver.boxes_by_color[box.color].append(box) 
+                    HTNResolver.boxes_by_color[box.color].append(box) 
                 #print(f"HTNResolver.boxes_by_color{HTNResolver.boxes_by_color}")
 
         
