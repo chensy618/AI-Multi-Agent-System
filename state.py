@@ -33,14 +33,24 @@ class State:
         self.g = 0
         self._hash = None
 
-    def from_agent_perspective(self, agent_id):
+    def from_agent_perspective(self, agent_id, round):
 
         relaxed_agent = self.get_agent_by_uid(agent_id)
 
         agent_colored_boxes = self.get_agent_boxes(relaxed_agent.color)
         
+        agents_not_in_round = self.agents_without_round(round)
+        
+        boxes_not_in_round = self.boxes_without_round(round)
+
         relaxed_walls = [row[:] for row in self.walls]
-          
+
+        for agent in agents_not_in_round:
+            relaxed_walls[agent.pos.y][agent.pos.x] = True
+
+        for box in boxes_not_in_round:
+            relaxed_walls[box.pos.y][box.pos.x] = True
+            
         return State([relaxed_agent], agent_colored_boxes, relaxed_walls)
 
 
@@ -83,7 +93,7 @@ class State:
                 copied_box = next((box for box in copy_boxes.values() if box.pos == box_pos), None)
 
                 if(copied_box is None):
-                    print("All tasks are completed", file=sys.stderr)
+                    # print("All tasks are completed", file=sys.stderr)
                     break
                 # Update the box's position
                 copied_box.pos += action.box_rel_pos
@@ -97,19 +107,11 @@ class State:
         return copy_state
 
     def agents_without_round(self, round):
-        agents_not_in_round = set()
-        for agent in self.agents:
-            for agent_in_round_uid in self.round.keys():
-                is_agent_in_round = False 
-                if(agent_in_round_uid == agent.uid):
-                    is_agent_in_round = True
-                    break
-                
-                if(not is_agent_in_round):
-                    agent = self.get_agent_by_uid(agent.uid)
-                    agents_not_in_round.add(agent.value)
-
-        return agents_not_in_round
+        return [agent for agent in self.agents if agent.value not in round.keys()]
+    
+    def boxes_without_round(self, round):
+        box_uids = [task.box_uid for task in round.values()]
+        return [box for box in self.boxes.values() if box.uid not in box_uids]
 
     @staticmethod
     def initialize_goal_map(walls, goal_pos: Position):
@@ -140,34 +142,9 @@ class State:
                     
         return distance_grid
 
-    # def is_goal_state(self) -> bool:
-    #     '''
-    #     Checks if this state is a goal state.
-    #     '''
-    #     # Create a mapping of box positions to their corresponding IDs
-    #     #box_positions = {box.pos: box.uid for box in self.boxes}
-    #     box_positions = {box.pos: box.value for box in self.boxes}
-    #     print("box_positions ->", box_positions, file=sys.stderr)
-    #     # Create a mapping of agent positions to their corresponding IDs
-    #     agent_positions = {agent.pos: agent.uid for agent in self.agents}
-    #     print("agent_positions ->", agent_positions, file=sys.stderr)
-    #     # Check if all goals are satisfied by boxes and agents
-    #     for goal in State.goals:
-    #         if 'A' <= goal.value <= 'Z':
-    #             # Check if there's a box at the goal position with the matching ID
-    #             if box_positions.get(goal.pos) != (goal.value):
-    #                 return False
-    #         elif '0' <= goal.value <= '9':
-    #             # Check if there's an agent at the goal position with the matching ID
-    #             if agent_positions.get(goal.pos) != int(goal.value):
-    #                 return False
-    #         else:
-    #             # If the goal ID is not recognized as a box or agent, return False
-    #             print('There is something wrong with the goal id set up, please', file=sys.stderr)
-    #             return False
-    #     return True
-
     def is_goal_state_for_subgoal(self, task: Task, agent: Agent) -> bool:
+        if(task.goal_uid == None):
+            return True
         if(task.box_uid == -1):
             if State.goal_map[task.goal_uid][agent.pos.y][agent.pos.x] == 0:
                 return True
@@ -189,7 +166,6 @@ class State:
         while True:
             for agentIdx in range(num_agents):
                 joint_action[agentIdx] = applicable_actions[agentIdx][actions_permutation[agentIdx]]
-            # if not self.is_conflicting(joint_action):
 
             expanded_states.append(self.result(joint_action))
 
@@ -287,6 +263,21 @@ class State:
 
     def is_free(self, position) -> bool:
         return not self.walls[position.y][position.x] and not self.box_at(position) and not self.agent_at(position)
+    
+    def is_goal_achieved(self, goal: Goal) -> bool:
+        for box in self.boxes.values():
+            if box.pos == goal.pos and box.value == goal.value:
+                return True
+        for agent in self.agents:
+            if goal.value.isdigit():
+                if agent.pos == goal.pos and agent.value == int(goal.value):
+                    return True
+        return False
+    
+    def goal_achieved_by_box(self, goal: Goal) -> Box:
+        for box in self.boxes.values():
+            if box.pos == goal.pos and box.value == goal.value:
+                return box
 
     def agent_at(self, position: Position) -> Agent:
         for agent in self.agents:
@@ -366,21 +357,17 @@ class SpaceTimeState(State):
         self.g = g
         self._hash = None
 
-    def from_agent_perspective(self, agent_id) -> 'SpaceTimeState': 
-        # print("from_agent_perspective - ", agent_id, file=sys.stderr)
+    def from_agent_perspective(self, agent_id, round) -> 'SpaceTimeState': 
 
         relaxed_agent = self.get_agent_by_uid(agent_id)
-        # print("relaxed_agent", relaxed_agent, file=sys.stderr)
 
         agent_colored_boxes = self.get_agent_boxes(relaxed_agent.color)
-        # print("agent_colored_boxes", agent_colored_boxes, file=sys.stderr)
         
         relaxed_walls = [row[:] for row in self.walls]
 
         relaxed_constraints = [Constraint(constraint.agentId, constraint.pos, constraint.t) for constraint in self.constraints]
         relaxed_time = self.time
 
-        # print("from_agent_perspective", file=sys.stderr)
         return SpaceTimeState([relaxed_agent], agent_colored_boxes, relaxed_walls, relaxed_time, relaxed_constraints, self.g)
 
     # Modify is_applicable function to include constraints judgement
@@ -444,7 +431,7 @@ class SpaceTimeState(State):
                 copied_box = next((box for box in copy_boxes.values() if box.pos == box_pos), None)
 
                 if(copied_box is None):
-                    print("All tasks are completed", file=sys.stderr)
+                    # print("All tasks are completed", file=sys.stderr)
                     break
                 
                 # Update the box's position
