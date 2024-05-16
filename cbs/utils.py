@@ -41,8 +41,6 @@ def get_actual_agent_id(initial_positions, entity_id):
 def get_pos_list(agent_id, initial_positions, initial_solutions):
     agent_pos_list = []
     box_pos_list = []
-    print(f'initial_positions: {initial_positions}',file=sys.stderr)
-    print(f'initial_solutions: {initial_solutions}',file=sys.stderr)
     box_flag = False
     agent_current_pos = initial_positions[agent_id]['agent_position']
     agent_pos_list.append((agent_current_pos, 0))
@@ -78,7 +76,6 @@ def merge_plans(current_state, solutions, round):
     # Find the maximum length of the individual agent plans
     max_length = max(len(plan) for plan in solutions.values())
 
-
     # For each agent, get the action at the current step or use NoOp if the plan is shorter
     sorted_agents = sorted(current_state.agents, key=lambda a: a.value)
     for step in range(max_length):
@@ -96,7 +93,6 @@ def merge_plans(current_state, solutions, round):
                 joint_action.append(Action.NoOp)
         # Append the joint action to the merged plan
         merged_plan.append(joint_action)
-    print(f"Merged_plan--{merged_plan}", file=sys.stderr)
 
     for agent_uid, task in round.items():
         if(HTNResolver.completed_tasks.get(agent_uid) is None):
