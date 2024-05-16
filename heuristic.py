@@ -35,19 +35,6 @@ class Heuristic(metaclass=ABCMeta):
 
         return distance
 
-        # if(HTNResolver.completed_tasks.get(agent.uid) == None):
-        #     HTNResolver.completed_tasks[agent.uid] = []
-        # completed_tasks = HTNResolver.completed_tasks[agent.uid]
-
-        # for task in completed_tasks:
-        #     if(task.box_uid == -1):
-        #         raise RuntimeError(f"There shouldn't be any agent goal tasks in completed_tasks list.")
-            
-        #     agent_box = state.boxes[task.box_uid]
-
-        #     box_to_goal_dist = State.goal_map[task.goal_uid][agent_box.pos.y][agent_box.pos.x]
-        #     distance += 1.5 * box_to_goal_dist
-
     @abstractmethod
     def f(self, state: 'State', task) -> 'int': pass
 

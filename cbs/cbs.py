@@ -20,28 +20,21 @@ tiebreaker = itertools.count()
 
 def conflict_based_search(current_state: State, round):
     # print(f"\n=============CBS-begin===============", file=sys.stderr)
-    # print(f"Current state walls: {current_state.walls}", file=sys.stderr)
     root = Node()
     root.constraints = set()
     initial_positions = initialize_initial_positions(current_state, round)
-    # print(f"=============Initial positions: =============\n{initial_positions}", file=sys.stderr)
     for agent_uid, task in round.items():
         agent = current_state.get_agent_by_uid(agent_uid)
         relaxed_state = current_state.from_agent_perspective(agent.value, round)
         plan = astar(relaxed_state, round[agent.value])
         if plan == None:
-            # print(f"round[agent.value].goal_uid: {round[agent.value].goal_uid}", file=sys.stderr)
             for goal in current_state.goals:
                 if goal.uid == round[agent.value].goal_uid:
                     goals = [g for g in current_state.goals if g.group == goal.group and g.uid != goal.uid]
-                    # print(f"Goals to change group {goals}", file=sys.stderr)
                     goal.group = -goal.group
                     for g in goals:
-                        # print(f"Goal to change group {g}", file=sys.stderr)
                         g.group = -g.group
-            #return None
         root.solution[agent.value] = plan
-    # print(f'Astar solution: ', root.solution, file=sys.stderr)
 
     root.cost = cost(root.solution)
     frontier = PriorityQueue()
@@ -58,9 +51,7 @@ def conflict_based_search(current_state: State, round):
         tiebreaker_value, node = frontier.get()
         conflict = find_first_conflict(node.solution, initial_positions, conflict_counts)
         if conflict is None:
-            # print(f"Conflict solved. CBS solution... -> {node.solution}", file=sys.stderr)
             executable_plan = merge_plans(current_state, node.solution, round)
-            # print(f"=============CBS-end===============\n", file=sys.stderr)
             return executable_plan
 
         elif  isinstance(conflict, MoveAwayConflict):
@@ -68,13 +59,9 @@ def conflict_based_search(current_state: State, round):
             new_node = solve_moveaway_conflict(node, conflict, current_state.walls)
             new_conflict = find_first_conflict(new_node.solution, initial_positions, conflict_counts)
             if new_conflict is None:
-                # print(f"Conflict solved. CBS solution... -> {new_node.solution}", file=sys.stderr)
                 executable_plan = merge_plans(current_state, new_node.solution, round)
-                # print(f"=============CBS-end===============\n", file=sys.stderr)
                 return executable_plan
             else:
-                # print('-----------Move away conflict not solved, adding to frontier.----------',file=sys.stderr)
-                # print(f'-----new conflict is {new_conflict}', file=sys.stderr)
                 new_node.cost = cost(new_node.solution)
                 if new_node.cost < sys.maxsize:
                     count_next = next(tiebreaker)
@@ -85,12 +72,9 @@ def conflict_based_search(current_state: State, round):
             new_node = solve_follow_conflict(node, conflict)
             new_conflict = find_first_conflict(new_node.solution, initial_positions, conflict_counts)
             if new_conflict is None:
-                # print(f"Conflict solved. CBS solution... -> {new_node.solution}", file=sys.stderr)
                 executable_plan = merge_plans(current_state, new_node.solution, round)
-                # print(f"=============CBS-end===============\n", file=sys.stderr)
                 return executable_plan
             else:
-                # print('-----------Following conflict not solved, adding to frontier.----------',file=sys.stderr)
                 new_node.cost = cost(new_node.solution)
                 if new_node.cost < sys.maxsize:
                     count_next = next(tiebreaker)
@@ -102,29 +86,22 @@ def conflict_based_search(current_state: State, round):
                 new_node = solve_meta_agent_conflict(node, conflict, initial_solutions)
                 new_conflict = find_first_conflict(new_node.solution, initial_positions, conflict_counts)
                 if new_conflict is None:
-                    # print(f"Conflict solved. CBS solution... -> {new_node.solution}", file=sys.stderr)
                     executable_plan = merge_plans(current_state, new_node.solution, round)
-                    # print(f"=============CBS-end===============\n", file=sys.stderr)
                     return executable_plan
                 else:
-                    # print('-----------Meta agent conflict not solved, adding to frontier.----------', file=sys.stderr)
                     new_node.cost = cost(new_node.solution)
                     if new_node.cost < sys.maxsize:
                         count_next = next(tiebreaker)
                         frontier.put((count_next, new_node))
                     continue
             else:
-                # print(f'----------- New conflict is {new_conflict} -------------', file=sys.stderr)
                 # If meta agent cannot finish it's route, then it enters the communication mode to ask other agent's help
                 new_node = meta_agent_block_communication(node, initial_solutions, initial_positions, conflict, current_state, round)
                 new_conflict = find_first_conflict(new_node.solution, initial_positions, conflict_counts)
                 if new_conflict is None:
-                    # print(f"Conflict solved. CBS solution... -> {meta_agent_new_node.solution}", file=sys.stderr)
                     executable_plan = merge_plans(current_state, new_node.solution, round)
-                    # print(f"=============CBS-end===============\n", file=sys.stderr)
                     return executable_plan
                 else:
-                    # print('-----------Meta agent conflict not solved, adding to frontier.----------', file=sys.stderr)
                     new_node.cost = cost(new_node.solution)
                     if new_node.cost < sys.maxsize:
                         count_next = next(tiebreaker)
@@ -133,7 +110,6 @@ def conflict_based_search(current_state: State, round):
         else:
             ai_aj_pair = (conflict.ai, conflict.aj)
             conflict_counts[ai_aj_pair] = conflict_counts.get(ai_aj_pair, 0) + 1
-            # print(f'=================Conflict count: ===================\n{conflict_counts}', file=sys.stderr)
             resolve_conflict(node, conflict, current_state, round, frontier)
 
     # print(f"CBS cannot resolve conflict", file=sys.stderr)
@@ -142,7 +118,6 @@ def conflict_based_search(current_state: State, round):
 
 def resolve_conflict(node, conflict, current_state, round, frontier):
     for agent_uid, task in round.items():
-        #round--{0: Task(box_uid=0 goal_uid=1), 1: Task(box_uid=1 goal_uid=0)}
         entity_id = None
         if(agent_uid in [conflict.ai, conflict.aj]):
             entity_id = agent_uid
@@ -313,11 +288,9 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
                     if tag == 'fixed':
                         # If the same conflict agent pair happens more than 3 times, then it is a deadlock
                         if conflict_counts.get((agent_id, other_entity_id), 0) < 3:
-                            # print(f'---conflict 1 is {Conflict(agent_id, other_entity_id, resulting_agent_position, time_step)}')
                             return Conflict(agent_id, other_entity_id, resulting_agent_position, time_step)
                         else:
                             other_agent_id = get_actual_agent_id(initial_positions, other_entity_id)
-                            # print(f'---meta conflict 1 is {MetaAgentConflict(agent_id, other_agent_id)}')
                             return MetaAgentConflict(agent_id, other_agent_id)
                     # Means the other conflict agent has finished its goal, and can try to move out the way
                     else:
@@ -344,7 +317,6 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
                         else:
                             agent_id = get_actual_agent_id(initial_positions, box_id)
                             other_agent_id = get_actual_agent_id(initial_positions, other_entity_id)
-                            # print(f'---meta conflict 2 is {MetaAgentConflict(agent_id, other_agent_id)}')
                             return MetaAgentConflict(agent_id, other_agent_id)
                     # Means the other conflict agent has finished its goal, and can try to move out the way
                     else:
@@ -359,7 +331,6 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
                     other_entity_id = positions[(current_agent_position, time_step)]['id']
                     # In case the other entity is a box, get its agent id, so that the later handling of the conflict can get agent directly
                     other_agent_id = get_actual_agent_id(initial_positions, other_entity_id)
-                    # print(f'-------------------following conflict 1: {FollowConflict(other_agent_id, time_step-1)}', file=sys.stderr)
                     return FollowConflict(other_agent_id, time_step-1)
                 ### Following conflict the other way ###
                 # Means the current agent/box is moving into the other agent's/box's position at the timestep
@@ -369,13 +340,10 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
                         other_entity_id = positions[(pos, t)]['id']
                         # eliminate the situation that the agent is moving into its own box or the other way around
                         if (other_entity_id != agent_id and other_entity_id != box_id):
-                            # print(f'-------------------following conflict 2: {FollowConflict(agent_id, time_step-1)}', file=sys.stderr)
                             return FollowConflict(agent_id, time_step-1)
                 # Store the explored agent and box positions in the positions dictionary
                 positions[(resulting_agent_position, time_step)] = {'id': agent_id, 'tag': agent_tag}
                 positions[(resulting_box_position, time_step)] = {'id': box_id, 'tag': box_tag}
-                # print(f'==========================time_step--{time_step}', file=sys.stderr)
-                # print(f'==========================positions--{positions}', file=sys.stderr)
                 current_agent_position = resulting_agent_position
                 current_box_position = resulting_box_position
                 time_step += 1
@@ -389,11 +357,6 @@ def solve_moveaway_conflict(node, conflict, walls):
     avoid_pos_list = conflict.avoid_pos_list
     agent_current_pos = conflict.current_pos
     time_step = conflict.t
-    # print(f"---agent_id--{agent_id}", file=sys.stderr)
-    # print(f"---blocked_agent_id--{blocked_agent_id}", file=sys.stderr)
-    # print(f"---avoid_pos_list--{avoid_pos_list}", file=sys.stderr)
-    # print(f"---agent_current_pos--{agent_current_pos}", file=sys.stderr)
-    # print(f"---time_step--{time_step}", file=sys.stderr)
 
     # Helper function to find a valid move action
     def find_valid_move(avoid_positions):
@@ -412,13 +375,11 @@ def solve_moveaway_conflict(node, conflict, walls):
 
     # Attempt round 1 to find a valid move action considering the entire avoid_pos_list
     insert_action = find_valid_move(avoid_pos_list)
-    # print(f"---first attempt insert_action--{insert_action}", file=sys.stderr)
 
     # Attempt round 2 - If no valid move action is found, try again without blocked_agent_goal
     if insert_action is None:
         filtered_avoid_pos_list = {pos: info for pos, info in avoid_pos_list.items() if 'blocked_agent_goal' not in info.values()}
         insert_action = find_valid_move(filtered_avoid_pos_list)
-    # print(f"---second attempt insert_action--{insert_action}", file=sys.stderr)
 
     if insert_action is not None:
         # Fill the solution with NoOp until the time step
@@ -437,7 +398,6 @@ def solve_moveaway_conflict(node, conflict, walls):
         # Find out which action the agent takes to move into the blocked agent's position
 
         node = ask_blocked_agent_help(agent_id, blocked_agent_id, agent_current_pos, time_step, node, filtered_avoid_pos_list, walls)
-        # print(f'==================new node.solution is ========================{node.solution}', file=sys.stderr)
         return node
 
 
@@ -466,11 +426,9 @@ def solve_meta_agent_conflict(node, conflict, initial_solutions):
     else:
         meta_agent_id = other_agent_id
         non_meta_agent_id = agent_id
-    # print(f'len of meta agent solution: {len(node.solution[meta_agent_id])}', file=sys.stderr)
     for t in range(len(node.solution[meta_agent_id])):
         node.solution[non_meta_agent_id].insert(t, Action.NoOp)
 
-    # print(f"---updated node.solution[non_meta_agent_id]--{node.solution[non_meta_agent_id]}",file=sys.stderr)
     return node
 
 
@@ -489,9 +447,7 @@ def solve_meta_agent_conflict(node, conflict, initial_solutions):
     else:
         meta_agent_id = other_agent_id
         non_meta_agent_id = agent_id
-    # print(f'len of meta agent solution: {len(node.solution[meta_agent_id])}', file=sys.stderr)
     for t in range(len(node.solution[meta_agent_id])):
         node.solution[non_meta_agent_id].insert(t, Action.NoOp)
 
-    # print(f"---updated node.solution[non_meta_agent_id]--{node.solution[non_meta_agent_id]}",file=sys.stderr)
     return node

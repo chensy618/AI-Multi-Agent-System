@@ -79,7 +79,6 @@ class HTNHelper:
     def prioritize_goal_box_by_difficulty(available_goals, boxes, agent):
         # Sort boxes by x2 in descending order and then by y2 in descending order, then by x1, then by y1, then by z
         sorted_goals = sorted(available_goals, key=lambda available_goals: (-available_goals.group, -available_goals.x2, -available_goals.y2, -available_goals.x1, -available_goals.y1, -available_goals.z))
-        #print(f"sorted goals: {sorted_goals}", file=sys.stderr)
         # Group the goals
         grouped_goals = groupby(sorted_goals, key=lambda sorted_goals: (-sorted_goals.group, -sorted_goals.x2, -sorted_goals.y2, -sorted_goals.x1, -sorted_goals.y1, -sorted_goals.z))
         # Convert the grouped goals to a list of lists

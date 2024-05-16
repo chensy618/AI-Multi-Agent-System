@@ -19,15 +19,11 @@ from domain.box import Box
 from domain.goal import Goal
 
 # import debugpy
-# debugpy.listen(("localhost", 12345)) # Open a debugging server at localhost:1234
-# debugpy.wait_for_client() # Wait for the debugger to connect
-# debugpy.breakpoint() # Ensure the program starts paused
-# import debugpy
 # debugpy.listen(("localhost", 1234)) # Open a debugging server at localhost:1234
 # debugpy.wait_for_client() # Wait for the debugger to connect
 # debugpy.breakpoint() # Ensure the program starts paused
 
-# data structure for agent, box, goal
+
 layout_rows = 0
 layout_cols = 0
 class LevelParser:
@@ -36,15 +32,12 @@ class LevelParser:
         agent_colors, box_colors = {}, {}
         # read "#colors" line
         line = server_messages.readline()
-        # print(f"---parse_colors--{line}")
 
         # read the color names and entities
         line = server_messages.readline()
         while not line.startswith('#'):
             color_name, entities = map(str.strip, line.split(':'))
-            # print(f"--get-Color-name--: {color_name}")
             color = Color.from_string(color_name)
-            # print(f"----Color---: {color,color_name}, entities: {entities}")
             for entity in entities.split(','):
                 entity = entity.strip()  # Strip spaces from the entity
                 if entity.isdigit():
@@ -66,7 +59,6 @@ class LevelParser:
         while not line.startswith(marker):
             layout.append(line.rstrip('\n'))
             line = server_messages.readline()
-            #print(f"parse_layout-marker-{layout,line,marker}")
         return layout, line
 
     @staticmethod
@@ -74,7 +66,6 @@ class LevelParser:
     def parse_initial_and_goal_states(server_messages):
         initial_layout, line = LevelParser.parse_layout(server_messages, '#goal')
         goal_layout, _ = LevelParser.parse_layout(server_messages, '#end')
-        # print(f"parse_initial and goal--{initial_layout,goal_layout}")
         return initial_layout, goal_layout
 
     @staticmethod
@@ -106,7 +97,6 @@ def goal_state_analysis(layout, r, c):
         for pos in diagonal_neighbours:
             # Check if the diagonal neighbour position is within the layout boundaries
             if 0 <= pos[0] < len(layout[0]) and 0 <= pos[1] < len(layout[pos[0]]):
-            #if 0 <= pos[0] < len(layout[pos[1]]) and 0 <= pos[1] < len(layout[pos[0]]):
                 if layout[pos[0]][pos[1]] == '+':
                     x1 = x1+1
                 if layout[pos[0]][pos[1]].isdigit() or layout[pos[0]][pos[1]].isupper():
@@ -121,30 +111,20 @@ def neighbour_goal_analysis(goals, goal, group_number, base_score):
     x, y = goal.pos.x, goal.pos.y
     # direct neighbour positions
     direct_neighbours = [(y-1, x), (y+1, x), (y, x-1), (y, x+1)]
-    # if goal.z == 0:
-    #     base_score = 50
-    #     group_number += 1
-    #     goal.group = group_number
     neighbour_goals = []
     original_goals = []
     for g in goals:
         found = False
         for pos in direct_neighbours:
-            #print(f"---pos--{pos[0], pos[1]}")
-            #print(f"---g.pos--{g.pos.y, g.pos.x}")
             if pos[0] == g.pos.y and pos[1] == g.pos.x:
-                #print("--wwwwwwwwwwwwwwwwwwwwwwwwwwwwtttttttttttttttttttttttttt", file=sys.stderr)
                 neighbour_goals.append(g)
-                #goals.remove(g)
                 found = True
         if found == False:
             original_goals.append(g)
 
     if neighbour_goals==[]:
-        #print("--ytttttttttttttttttttttttttttttttttttttttttttttttttttttt", file=sys.stderr)
         return original_goals, neighbour_goals, group_number, base_score
     else:
-        #neighbour_goals = sorted(neighbour_goals , key=lambda neighbour_goals: (-neighbour_goals.x2, -neighbour_goals.y2, -neighbour_goals.x1, -neighbour_goals.y1))
         for g in neighbour_goals:
             g.group = goal.group
             g.z = base_score-1
@@ -169,7 +149,6 @@ def post_goal_state_analysis(goals):
             for current_goal in frontier_neighbour_goals:
                 sorted_goals, goal, group_number, base_score = neighbour_goal_analysis(sorted_goals, current_goal, group_number, base_score)
                 frontier_neighbour_goals.remove(current_goal)
-                #base_score -= 1
                 if goal:
                     frontier_neighbour_goals.extend(goal)
 
@@ -181,20 +160,14 @@ class SearchClient:
             server_messages.readline()
 
         agent_colors, box_colors = LevelParser.parse_colors(server_messages)
-        # print(f"---agent_colors, box_colors--{agent_colors, box_colors}")
         initial_layout, goal_layout = LevelParser.parse_initial_and_goal_states(server_messages)
-        # print(f"---initial_layout, goal_layout--{initial_layout, goal_layout}", file=sys.stderr)
-        #print(f"---initial_layout, goal_layout--{initial_layout, goal_layout}")
         # agents, boxes, goals, walls initialization : empty lists
         # iterate through the initial_layout and goal_layout
         agents, boxes, goals = [], [], []
 
         nrows = len(initial_layout)
-        # ncols = len(initial_layout[0]) if nrows > 0 else 0
         ncols = max(len(row) for row in initial_layout)
-        # print(f"---nrows, ncols--{nrows, ncols}")
         walls = [[False] * ncols for _ in range(nrows)]
-        # print(f"---walls--{walls[0]}")
 
         box_uid = 0
         for row_idx, row in enumerate(initial_layout):
@@ -221,7 +194,7 @@ class SearchClient:
         post_goal_state_analysis(goals)
 
 
-        # Calculate the dimensions of the level\
+        # Calculate the dimensions of the level
         global layout_rows, layout_cols
         layout_rows = len(initial_layout)
         layout_cols = max(len(row) for row in initial_layout)
@@ -238,30 +211,12 @@ class SearchClient:
         server_messages = io.TextIOWrapper(sys.stdin.buffer, encoding='ASCII')
         initial_state = SearchClient.parse_level(server_messages)
         start = time.time()
-        # print("\n========INITIAL STATE========\n", file=sys.stderr)
         for goal in State.goals:
             State.goal_map[goal.uid] = State.initialize_goal_map(initial_state.walls, goal.pos)
-            # print(f"Goal - v{goal.value} ---> ", goal, file=sys.stderr)
-        # for agent in initial_state.agents:
-            # print(f"Agent - v{agent.value} ---> ", agent, file=sys.stderr)
         for box in initial_state.boxes.values():
             State.box_goal_map[box.uid] = State.initialize_goal_map(initial_state.walls, box.pos)
-            # print(f"Box - v{box.value} ---> ", box, file=sys.stderr)
 
         end = time.time()
-        # print(f"Time taken to initialize goal_map and box_goal_map: {end - start}", file=sys.stderr)
-        # for goal_id in State.goal_map.keys():
-            # print(f"\n----------Distance map for Goal - {goal_id}-------------", file=sys.stderr)
-            # goal_grid = State.goal_map[goal_id]
-            # for row in goal_grid:
-                # print(' '.join(f"{cell if cell is not None else 'None':4}" for cell in row), file=sys.stderr)
-        # for box_id in State.box_goal_map.keys():
-            # print(f"\n----------Distance map for Box - {box_id}-------------", file=sys.stderr)
-            # goal_grid = State.box_goal_map[box_id]
-            # for row in goal_grid:
-                # print(' '.join(f"{cell if cell is not None else 'None':4}" for cell in row), file=sys.stderr)
-
-        # print("\n========INITIAL STATE========\n", file=sys.stderr)
 
         resolver = HTNResolver()
         resolver.initialize_problems(initial_state)
@@ -269,21 +224,11 @@ class SearchClient:
         final_plan = []
         current_state = initial_state
         while(resolver.has_any_task_left(current_state)):
-            # print("Round -> ", resolver.round_counter, file=sys.stderr)
             resolver.create_round(current_state)
-
-            # print(resolver.round, file=sys.stderr)
-
             plan = conflict_based_search(current_state, resolver.round)
-            # print("We have a plan ->", plan, file=sys.stderr)
             for time_step in plan:
-                # print("Time step -> ", time_step, file=sys.stderr)
-                # print("Plan -> ", plan, file=sys.stderr)
                 final_plan.append(time_step)
                 current_state = current_state.result(time_step)
-
-
-        # print("========PROBLEM========\n", file=sys.stderr)
 
         if final_plan is None:
             print('Unable to solve level.', file=sys.stderr, flush=True)
@@ -295,7 +240,6 @@ class SearchClient:
                 print("|".join(a.name_ + "@" + a.name_ for a in joint_action), flush=True)
                 #We must read the server's response to not fill up the stdin buffer and block the server.
                 response = server_messages.readline()
-                # print(f"---response--{response}")
 
 
         # Prioritize tasks based on plausability and factor of blocking

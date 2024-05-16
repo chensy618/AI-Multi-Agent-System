@@ -11,10 +11,6 @@ globals().update(Action.__members__)
 start_time = time.perf_counter()
 
 def astar(initial_state, task):
-    # print(f"\n=============ASTAR - v{initial_state.agents[0].value}===============", file=sys.stderr)
-    # print(f'------------------------initial agent state: {initial_state.agents}------------------------', file=sys.stderr)
-    # print(f'------------------------initial box state: {initial_state.boxes}------------------------', file=sys.stderr)
-    # print(f'------------------------initial goal state: {initial_state.goals}------------------------', file=sys.stderr)
     frontier = AStarFrontier(HeuristicAStar(initial_state))
     frontier.add(initial_state, task)
     explored = set()
@@ -23,8 +19,6 @@ def astar(initial_state, task):
 
         if current_state.is_goal_state_for_subgoal(task, current_state.agents[0]):
             plan = current_state.extract_plan()
-            # print(f"Extracted plan: {plan}", file=sys.stderr)
-            # print(f"=============ASTAR - v{initial_state.agents[0].value}===============\n", file=sys.stderr)
             return plan  # Return the plan to reach the goal state
 
         explored.add(current_state)
@@ -42,7 +36,6 @@ def astar(initial_state, task):
             return None
 
     # print("No solution found", file=sys.stderr)
-    # print(f"\n=============ASTAR - v{initial_state.agents[0].value}===============", file=sys.stderr)
     raise RuntimeError("A* cannot find solution for this problem, check HTN")  # No solution found
 
 def print_search_status(explored, frontier):

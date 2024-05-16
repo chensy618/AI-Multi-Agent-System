@@ -166,7 +166,6 @@ class State:
         while True:
             for agentIdx in range(num_agents):
                 joint_action[agentIdx] = applicable_actions[agentIdx][actions_permutation[agentIdx]]
-            # if not self.is_conflicting(joint_action):
 
             expanded_states.append(self.result(joint_action))
 
