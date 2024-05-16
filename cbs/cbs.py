@@ -39,7 +39,7 @@ def conflict_based_search(current_state: State, round):
                     for g in goals:
                         print(f"Goal to change group {g}", file=sys.stderr)
                         g.group = -g.group
-            return None
+            #return None
         root.solution[agent.value] = plan
     print(f'Astar solution: ', root.solution, file=sys.stderr)
 
