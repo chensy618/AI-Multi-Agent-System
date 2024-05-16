@@ -31,7 +31,7 @@ class HTNHelper:
     @staticmethod
     def categorize_boxes_by_color(state: State, boxes, goals):
         boxes_by_color = {}
-        box_to_be_excluded = [state.goal_achieved_by_box(goal) for goal in goals if state.is_goal_achieved(goal)]
+        box_to_be_excluded = [state.goal_achieved_by_box(goal) for goal in goals if state.is_goal_achieved(goal) and not goal.value.isdigit()]
         goals = [goal for goal in goals if not state.is_goal_achieved(goal)]
         uid_boxes_excluded = [box.uid for box in box_to_be_excluded]
         for box in boxes.values():
