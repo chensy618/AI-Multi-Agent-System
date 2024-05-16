@@ -76,7 +76,7 @@ def merge_plans(current_state, solutions, round):
     # Initialize the merged plan
     merged_plan = []
     # Find the maximum length of the individual agent plans
-    print("solutions.values ->", solutions.values(), file=sys.stderr)
+    # print("solutions.values ->", solutions.values(), file=sys.stderr)
     max_length = max(len(plan) for plan in solutions.values())
 
     # For each agent, get the action at the current step or use NoOp if the plan is shorter

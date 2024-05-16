@@ -45,9 +45,9 @@ class HTNResolver:
                     # min_box, goal_uid = min(
                     #     [
                     #         (
-                    #             box, 
+                    #             box,
                     #             HTNHelper.get_closest_goal_uid_to_box(box)
-                    #         ) 
+                    #         )
                     #         for box in boxes
                     #     ],
                     #     key=lambda item: DistanceCalc.calculate_box_task(item[0], agent, item[1])
@@ -58,17 +58,17 @@ class HTNResolver:
                     #goal = HTNHelper.prioritize_goals_by_difficulty(available_goals, agent)
                     #box = HTNHelper.prioritize_boxes_by_difficulty(boxes, goal, agent)
 
-                    print("priorities done", file=sys.stderr)
+                    # print("priorities done", file=sys.stderr)
                     #self.boxes_by_color[agent.color].remove(box)
                     self.round[agent.value] = Task(box.uid, box.value, goal.uid)
                 else:
-                    print("without priorities", file=sys.stderr)
+                    # print("without priorities", file=sys.stderr)
                     goal_uid = HTNHelper.get_closest_goal_uid_to_agent(agent)
                     if goal_uid is None:
                         continue
                     self.round[agent.value] = Task(-1, None, goal_uid)
-                    print(f"self.round[{agent.value}] = Task(-1, None, {goal_uid})")
-        
+                    # print(f"self.round[{agent.value}] = Task(-1, None, {goal_uid})")
+
     def has_any_task_left(self, current_state):
         for goal in current_state.goals:
             if not current_state.is_goal_achieved(goal):

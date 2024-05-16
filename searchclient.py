@@ -94,7 +94,7 @@ def goal_state_analysis(layout, r, c):
         direct_neighbours = [(r-1, c), (r+1, c), (r, c-1), (r, c+1)]
         # diagonal neighbour positions
         diagonal_neighbours = [(r-1, c-1), (r-1, c+1), (r+1, c-1), (r+1, c+1)]
-    
+
         for pos in direct_neighbours:
          # Check if the direct neighbour position is within the layout boundaries
             #if 0 <= pos[0] < len(layout[0]) and 0 <= pos[1] < len(layout):
@@ -111,10 +111,10 @@ def goal_state_analysis(layout, r, c):
                     x1 = x1+1
                 if layout[pos[0]][pos[1]].isdigit() or layout[pos[0]][pos[1]].isupper():
                     y1 = y1+1
-        
+
         x1 = x1 + x2
         y1 = y1 + y2
-            
+
         return x1, y1, x2, y2
 
 def neighbour_goal_analysis(goals, goal, group_number, base_score):
@@ -137,9 +137,9 @@ def neighbour_goal_analysis(goals, goal, group_number, base_score):
                 neighbour_goals.append(g)
                 #goals.remove(g)
                 found = True
-        if found == False:    
+        if found == False:
             original_goals.append(g)
-        
+
     if neighbour_goals==[]:
         #print("--ytttttttttttttttttttttttttttttttttttttttttttttttttttttt", file=sys.stderr)
         return original_goals, neighbour_goals, group_number, base_score
@@ -170,7 +170,7 @@ def post_goal_state_analysis(goals):
                 sorted_goals, goal, group_number, base_score = neighbour_goal_analysis(sorted_goals, current_goal, group_number, base_score)
                 frontier_neighbour_goals.remove(current_goal)
                 #base_score -= 1
-                if goal:    
+                if goal:
                     frontier_neighbour_goals.extend(goal)
 
 class SearchClient:
@@ -249,7 +249,7 @@ class SearchClient:
             # print(f"Box - v{box.value} ---> ", box, file=sys.stderr)
 
         end = time.time()
-        print(f"Time taken to initialize goal_map and box_goal_map: {end - start}", file=sys.stderr)
+        # print(f"Time taken to initialize goal_map and box_goal_map: {end - start}", file=sys.stderr)
         # for goal_id in State.goal_map.keys():
             # print(f"\n----------Distance map for Goal - {goal_id}-------------", file=sys.stderr)
             # goal_grid = State.goal_map[goal_id]
@@ -269,16 +269,16 @@ class SearchClient:
         final_plan = []
         current_state = initial_state
         while(resolver.has_any_task_left(current_state)):
-            print("Round -> ", resolver.round_counter, file=sys.stderr)
+            # print("Round -> ", resolver.round_counter, file=sys.stderr)
             resolver.create_round(current_state)
 
-            print(resolver.round, file=sys.stderr)
+            # print(resolver.round, file=sys.stderr)
 
             plan = conflict_based_search(current_state, resolver.round)
-            print("We have a plan ->", plan, file=sys.stderr)
+            # print("We have a plan ->", plan, file=sys.stderr)
             for time_step in plan:
-                print("Time step -> ", time_step, file=sys.stderr)
-                print("Plan -> ", plan, file=sys.stderr)
+                # print("Time step -> ", time_step, file=sys.stderr)
+                # print("Plan -> ", plan, file=sys.stderr)
                 final_plan.append(time_step)
                 current_state = current_state.result(time_step)
 
@@ -289,7 +289,8 @@ class SearchClient:
             print('Unable to solve level.', file=sys.stderr, flush=True)
             sys.exit(0)
         else:
-            print('Found solution of length {}.'.format(len(plan)), file=sys.stderr, flush=True)
+            print('Found solution of length {}.'.format(len(final_plan)), file=sys.stderr, flush=True)
+            print(f'======================== Final plan is \n{final_plan} ========================', file=sys.stderr, flush=True)
             for joint_action in final_plan:
                 print("|".join(a.name_ + "@" + a.name_ for a in joint_action), flush=True)
                 #We must read the server's response to not fill up the stdin buffer and block the server.
