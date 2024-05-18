@@ -66,16 +66,15 @@ class HTNResolver:
         
     def initialize_reachability(self, initial_state: State):
         boxes = initial_state.boxes
-        reachability_matrix = [[[False] * len(boxes) for _ in len(boxes)]]
+        reachability_matrix = [[[False] * len(boxes.values()) for _ in range(len(boxes.values()))]]
         
-        for color, agents_by_color in self.agents_by_color.items():
-            boxes = self.boxes_by_color.get(color, [])
+        # for color, agents_by_color in self.agents_by_color.items():
+        #     boxes = self.boxes_by_color.get(color, [])
 
-            for agent in agents_by_color:
-                state_from_agent = initial_state.from_agent_perspective(agent)
-                if(boxes):
-                    for box in boxes:
-                        goal_uid = HTNHelper.get_closest_goal_uid_to_box(box)
+        #     for agent in agents_by_color:
+        #         if(boxes):
+        #             for box in boxes:
+        #                 goal_uid = HTNHelper.get_closest_goal_uid_to_box(box)
                         
 
         return reachability_matrix

@@ -36,8 +36,8 @@ class State:
     def from_agent_perspective(self, agent_id, round) -> 'State':
         relaxed_agent = self.get_agent_by_uid(agent_id)
 
-        agent_box = self.get_box_by_uid(round[agent_id].box_uid)
-        
+        agent_boxes = {round[agent_id].box_uid: self.boxes[round[agent_id].box_uid]}
+
         agents_not_in_round = self.agents_without_round(round)
         
         boxes_not_in_round = self.boxes_without_round(round)
@@ -50,7 +50,7 @@ class State:
         for box in boxes_not_in_round:
             relaxed_walls[box.pos.y][box.pos.x] = True
             
-        return State([relaxed_agent], agent_box, relaxed_walls)
+        return State([relaxed_agent], agent_boxes, relaxed_walls)
 
 
     def get_agent_by_uid(self, agentId) -> Agent:
@@ -76,6 +76,7 @@ class State:
         copy_agents = [Agent(agent.pos, agent.value, agent.color) for agent in self.agents]
         copy_agents = sorted(copy_agents, key=lambda agent: agent.value)
         copy_boxes = copy.deepcopy(self.boxes)
+
         for agent_index, action in enumerate(joint_action):
             copied_agent = copy_agents[agent_index]
             if action.type == ActionType.Move:
@@ -346,16 +347,16 @@ class SpaceTimeState(State):
         # print("from_agent_perspective - ", agent_id, file=sys.stderr)
 
         relaxed_agent = self.get_agent_by_uid(agent_id)
-
-        agent_box = self.get_box_by_uid(round[agent_id].box_uid)
         
+        agent_boxes = {round[agent_id].box_uid: self.boxes[round[agent_id].box_uid]}
+
         relaxed_walls = [row[:] for row in self.walls]
 
         relaxed_constraints = [Constraint(constraint.agentId, constraint.pos, constraint.t) for constraint in self.constraints]
         relaxed_time = self.time
 
         # print("from_agent_perspective", file=sys.stderr)
-        return SpaceTimeState([relaxed_agent], agent_box, relaxed_walls, relaxed_time, relaxed_constraints, self.g)
+        return SpaceTimeState([relaxed_agent], agent_boxes, relaxed_walls, relaxed_time, relaxed_constraints, self.g)
 
     # Modify is_applicable function to include constraints judgement
     def is_applicable(self, agent: int, action: Action, task: Task) -> bool:

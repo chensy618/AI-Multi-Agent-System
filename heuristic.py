@@ -18,7 +18,7 @@ class Heuristic(metaclass=ABCMeta):
         return self.calculate_heuristic_value(state, task)
 
 
-    def calculate_heuristic_value(self, state, task) -> 'int':
+    def calculate_heuristic_value(self, state: State, task) -> 'int':
         distance = 0
         
         agent = state.agents[0]
@@ -30,7 +30,8 @@ class Heuristic(metaclass=ABCMeta):
         if(task.box_uid == -1):
             distance += DistanceCalc.calculate_agent_task(agent, task.goal_uid)
         else:
-            agent_box = state.boxes[task.box_uid]
+            print("box uid -> ", task.box_uid, file=sys.stderr)
+            agent_box = state.get_box_by_uid(task.box_uid)
             distance += DistanceCalc.calculate_box_task(agent_box, agent, task.goal_uid)
 
         return distance
