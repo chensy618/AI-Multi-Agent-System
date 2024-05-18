@@ -2,7 +2,6 @@ import itertools
 import sys
 import time
 
-from astar import astar
 from cbs.node import Node
 from cbs.agent_coop import ask_blocked_agent_help, meta_agent_block_communication
 from cbs.utils import get_actual_agent_id, merge_plans
@@ -12,7 +11,8 @@ from domain.constraint import Constraint
 from domain.position import Position
 from queue import PriorityQueue
 
-from st_astar import space_time_a_star
+from pathfinding.astar import astar
+from pathfinding.st_astar import space_time_a_star
 from state import State
 
 # Create a counter that will serve as a tiebreaker

@@ -174,8 +174,7 @@ class SearchClient:
 
         # print("\n========INITIAL STATE========\n", file=sys.stderr)
 
-        resolver = HTNResolver()
-        resolver.initialize_problems(initial_state)
+        resolver = HTNResolver(initial_state)
 
         final_plan = []
         current_state = initial_state

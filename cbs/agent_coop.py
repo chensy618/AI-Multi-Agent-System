@@ -1,7 +1,7 @@
 """Handle agent communication."""
 import sys
 
-from astar import astar
+from pathfinding.astar import astar
 from cbs.utils import find_meta_agent, get_actual_agent_id, get_pos_list, get_resulting_positions_of_plan, opposite_action
 from domain.action import Action, ActionType
 from domain.conflict import FollowConflict
