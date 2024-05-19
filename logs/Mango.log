@@ -1,0 +1,91 @@
+#domain
+hospital
+#levelname
+Mango
+#colors
+blue: 0, A, B
+red: 1, C, D
+purple: 2
+#initial
++++++++++++++++
++0          A +
++++++++ +++++++ 
+      + +
+    +++ +++
+    + C B +
+    +++ +++
+      + +
+      + +  
++++++++ +++++++
++1          D +
++++++++++++++++
+#goal
++++++++++++++++
++1           A+
++++++++ +++++++ 
+      + +
+    +++ +++
+    +C   B+
+    +++ +++
+      + + 
+      + +
++++++++ +++++++
++0           D+
++++++++++++++++
+#end
+#clientname
+SearchClient
+#actions
+351242868:Move(E)@Move(E)|Move(E)@Move(E)
+351348818:Move(E)@Move(E)|Move(E)@Move(E)
+351434584:Move(E)@Move(E)|Move(E)@Move(E)
+351573080:Move(E)@Move(E)|Move(E)@Move(E)
+351667506:Move(E)@Move(E)|Move(E)@Move(E)
+351710389:Move(E)@Move(E)|Move(E)@Move(E)
+351767240:Move(S)@Move(S)|Move(E)@Move(E)
+351809285:Move(S)@Move(S)|Move(E)@Move(E)
+351854891:Move(S)@Move(S)|Move(E)@Move(E)
+351897983:Move(S)@Move(S)|Move(E)@Move(E)
+351940727:Push(E,E)@Push(E,E)|Push(E,E)@Push(E,E)
+352006029:Move(W)@Move(W)|Move(W)@Move(W)
+352055686:Move(N)@Move(N)|Move(W)@Move(W)
+352092842:Move(N)@Move(N)|Move(W)@Move(W)
+352136144:Move(N)@Move(N)|Move(W)@Move(W)
+352179166:Move(N)@Move(N)|Move(W)@Move(W)
+352253618:Move(E)@Move(E)|Move(N)@Move(N)
+352295592:Move(E)@Move(E)|Move(N)@Move(N)
+352327999:Move(E)@Move(E)|Move(N)@Move(N)
+352371440:Move(E)@Move(E)|Move(N)@Move(N)
+352408666:Push(E,E)@Push(E,E)|Move(N)@Move(N)
+352482489:NoOp@NoOp|Push(W,W)@Push(W,W)
+352526699:Move(W)@Move(W)|Move(E)@Move(E)
+352591302:Move(W)@Move(W)|Move(N)@Move(N)
+352635303:Move(W)@Move(W)|Move(N)@Move(N)
+352682376:Move(W)@Move(W)|Move(N)@Move(N)
+352731195:NoOp@NoOp|Move(N)@Move(N)
+352777710:NoOp@NoOp|Move(W)@Move(W)
+352844618:NoOp@NoOp|Move(W)@Move(W)
+352893368:Move(W)@Move(W)|Move(W)@Move(W)
+352951616:Move(S)@Move(S)|Move(W)@Move(W)
+352999108:Move(S)@Move(S)|Move(W)@Move(W)
+353049883:Move(S)@Move(S)|Move(W)@Move(W)
+353134950:Move(S)@Move(S)|NoOp@NoOp
+353210379:Move(S)@Move(S)|NoOp@NoOp
+353321777:Move(S)@Move(S)|NoOp@NoOp
+353417809:Move(S)@Move(S)|NoOp@NoOp
+353512235:Move(S)@Move(S)|NoOp@NoOp
+353601213:Move(S)@Move(S)|NoOp@NoOp
+353687468:Move(W)@Move(W)|NoOp@NoOp
+353795653:Move(W)@Move(W)|NoOp@NoOp
+353874923:Move(W)@Move(W)|NoOp@NoOp
+353925977:Move(W)@Move(W)|NoOp@NoOp
+353971794:Move(W)@Move(W)|NoOp@NoOp
+354017470:Move(W)@Move(W)|NoOp@NoOp
+#end
+#solved
+true
+#numactions
+45
+#time
+354017470
+#end

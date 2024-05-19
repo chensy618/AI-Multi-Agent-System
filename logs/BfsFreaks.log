@@ -1,0 +1,56 @@
+#domain
+hospital
+#levelname
+BfsFreaks
+#colors
+red: 0, A, B, C, D
+blue: 1, E, F, G
+cyan: 2, H, I, J
+#initial
+
+          ++++
+     ++++ + E+
+  ++++2 +++ ++
+  +       C  +
+ ++  A  B++ 1+
+ +   +  +    +
+ + +    D + +++
+ + 0   +  + FG+++++
+ +++    +    H+   +
+++++  +   I     J +
++     +++  ++++++++
++     + ++++
++   + +
++     +
++++++++
+
+#goal
+
+          ++++
+     ++++ +  +
+  ++++  +++ ++
+  +          +
+ ++      ++  +
+ +   +  +    +
+ + +      + +++
+ +     +  +   +++++
+ +++    +     +   +
+++++  +           +
++A    +++  ++++++++
++BEH  + ++++
++CFI+ +
++DGJ  +
++++++++
+
+#end
+#clientname
+SearchClient
+#actions
+#end
+#solved
+false
+#numactions
+0
+#time
+0
+#end

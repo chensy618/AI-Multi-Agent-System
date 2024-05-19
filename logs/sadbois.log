@@ -1,0 +1,69 @@
+#domain
+hospital
+#levelname
+sadbois
+#colors
+blue: 0, S
+green: 1, A
+red: 2, D
+#initial
++++++++++++
++0       1+
++ +++ +++ +
++ +S   A+ +
++ +     + +
++         +
++ +     + +
++ +D    + +
++ +++ +++ +
++    2    +
++++++++++++
+#goal
++++++++++++
++    2    +
++ +++ +++ +
++ +    D+ +
++ +     + +
++         +
++ +     + +
++ +A   S+ +
++ +++ +++ +
++0       1+
++++++++++++
+#end
+#clientname
+SearchClient
+#actions
+284263070:Move(S)@Move(S)|Move(W)@Move(W)|Move(N)@Move(N)
+284670875:Move(S)@Move(S)|Move(W)@Move(W)|Move(N)@Move(N)
+284746095:Move(S)@Move(S)|Move(W)@Move(W)|Move(W)@Move(W)
+284810000:Move(S)@Move(S)|Move(W)@Move(W)|Push(W,N)@Push(W,N)
+284875791:Move(E)@Move(E)|Move(S)@Move(S)|Push(N,E)@Push(N,E)
+284938299:Move(E)@Move(E)|Move(S)@Move(S)|Push(E,N)@Push(E,N)
+284990261:Move(N)@Move(N)|Move(E)@Move(E)|Push(N,N)@Push(N,N)
+285047461:Pull(S,S)@Pull(S,S)|Pull(W,W)@Pull(W,W)|Push(N,E)@Push(N,E)
+285105639:Pull(W,S)@Pull(W,S)|Pull(W,W)@Pull(W,W)|Push(E,E)@Push(E,E)
+285162071:Push(E,E)@Push(E,E)|Pull(W,W)@Pull(W,W)|Push(E,N)@Push(E,N)
+285220529:Push(E,S)@Push(E,S)|Pull(S,W)@Pull(S,W)|Push(N,E)@Push(N,E)
+285279824:Push(S,E)@Push(S,E)|Pull(S,S)@Pull(S,S)|NoOp@NoOp
+285336606:Push(E,S)@Push(E,S)|Pull(S,S)@Pull(S,S)|NoOp@NoOp
+285391431:Push(S,E)@Push(S,E)|Pull(S,S)@Pull(S,S)|NoOp@NoOp
+285447375:Push(E,E)@Push(E,E)|Pull(E,S)@Pull(E,S)|NoOp@NoOp
+285504575:NoOp@NoOp|Move(E)@Move(E)|Move(W)@Move(W)
+285557026:NoOp@NoOp|Move(S)@Move(S)|Move(N)@Move(N)
+285605775:NoOp@NoOp|Move(S)@Move(S)|Move(N)@Move(N)
+285652430:Move(W)@Move(W)|Move(E)@Move(E)|NoOp@NoOp
+285698316:Move(S)@Move(S)|Move(E)@Move(E)|NoOp@NoOp
+285740221:Move(S)@Move(S)|Move(E)@Move(E)|NoOp@NoOp
+285789599:Move(W)@Move(W)|Move(E)@Move(E)|NoOp@NoOp
+285837789:Move(W)@Move(W)|NoOp@NoOp|NoOp@NoOp
+285885002:Move(W)@Move(W)|NoOp@NoOp|NoOp@NoOp
+285938361:Move(W)@Move(W)|NoOp@NoOp|NoOp@NoOp
+#end
+#solved
+true
+#numactions
+25
+#time
+285938361
+#end

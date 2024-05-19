@@ -1,0 +1,84 @@
+#domain
+hospital
+#levelname
+Medibots
+#colors
+red: 0, 7, A, B, C, Z
+blue: 1, 8, D, E, F, G
+cyan: 2, 9, H, I, J, K, L
+purple: 3, M, N, O
+green: 4, X, Y, P, Q, R
+pink: 5, U, T
+grey: 6, W, V
+#initial
++++++++++++++++++++++++++++++
++         Y                 +
++         Y                 +
++         Y                 +
++         Y                 +
++         Y                 +
++         Y       ABC       +
++ HIJKL   Y                 +
++        ++ ++              +
++       +     +  MNO        +        
++       + U2V +++RRRRRRRRR++++++++++++++
++  DEFG   3 0               +AJKD+   + +
+++WWWWW++ P1Z +    DEFG     UEZGH+ + + +
++       +     +             +BFCI+ + + +
++        ++ ++              +    + + Q +
++       MNO T  HIJKL        +987   +   +
++           T               ++++MMMMMON+
++    ABC    T                  +       +
++           T                  +   T   +
++           T                  +       +
++           T                  +++     +
++           T                  X       +
++           +                  + +++++++
++ +++ ++++T+++++++++           +   V   +
+++X+Y+PNR+Q+        +          +    5  +
+++ + + N + +        V          +       +
++4                   W      +++++ PPPPP+
++                    U      +U   6  W  +
+++++++++++++++++++++++++++++++++++++++++
+#goal
++++++++++++++++++++++++++++++
++                           +
++                           +
++                           +
++                           +
++I   J     DGJN             +
++                           +
++H                  I       +
++  MNO  M++ ++              +
++A      +     +             +        
++       +     +++         ++++++++++++++
++                 O         +    +G8Z+C+
+++     ++     +E  C              + +7+F+
++       +     +             +    + +J+B+
++  L K   ++ ++              +    +9+A I+
++   H  F     K      ABC     +    K +HDE+
++     B                     ++++       +
++                              +       +
++                              +       +
++     DEFG                     +       +
++                              +++     +
++                                      +
++           +                  + +++++++
++L+++ ++++ +++++++++           +       +
+++ + +  4+ +        +          +       +
+++R+X+Y Q+P+                   +       +
++                           +++++      +
++                           +T  V W   U+
+++++++++++++++++++++++++++++++++++++++++
+#end
+#clientname
+SearchClient
+#actions
+#end
+#solved
+false
+#numactions
+0
+#time
+0
+#end

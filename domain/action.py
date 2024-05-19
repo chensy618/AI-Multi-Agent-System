@@ -52,6 +52,9 @@ class Action(Enum):
     PullWN = ("Pull(W,N)", ActionType.Pull, Direction.west,  Direction.north)
     PullWS = ("Pull(W,S)", ActionType.Pull, Direction.west,  Direction.south)
     
+    def get_position(self) -> Position:
+        return self.agent_rel_pos
+
     def __init__(self, name, type, agent_rel_pos, box_rel_pos):
         self.name_ = name
         self.type = type

@@ -1,3 +1,5 @@
+from domain.box import Box
+from domain.position import Position
 from state import State
 import sys
 
@@ -12,7 +14,7 @@ class DistanceCalc:
     def chebyshev_distance(pos1, pos2) -> 'int':
         return max(abs(pos1.x - pos2.x), abs(pos1.y - pos2.y))
     staticmethod
-    def pos_to_box_distance(box, pos) -> 'int':
+    def pos_to_box_distance(box: Box, pos: Position) -> 'int':
         # Check if the box has already moved from its initial position
         if(State.box_goal_map[box.uid][box.pos.y][box.pos.x] != 0):
             return DistanceCalc.manhatten_distance(pos, box.pos)

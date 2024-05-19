@@ -12,7 +12,7 @@ from domain.color import Color
 from domain.constraint import Constraint
 from domain.goal import Goal
 from domain.position import Position
-from domain.task import Task
+from domain.task import SubTask, Task
 from domain.wall import Wall
 
 class State:
@@ -21,6 +21,7 @@ class State:
     goal_map = {}
     box_goal_map = {}
     goals = []
+    temp_goals = []
 
     # agents: list of Agents
     # boxes: list of Boxes
@@ -33,12 +34,11 @@ class State:
         self.g = 0
         self._hash = None
 
-    def from_agent_perspective(self, agent_id, round):
-
+    def from_agent_perspective(self, agent_id, round) -> 'State':
         relaxed_agent = self.get_agent_by_uid(agent_id)
 
-        agent_colored_boxes = self.get_agent_boxes(relaxed_agent.color)
-        
+        agent_boxes = {round[agent_id].box_uid: self.boxes[round[agent_id].box_uid]}
+
         agents_not_in_round = self.agents_without_round(round)
         
         boxes_not_in_round = self.boxes_without_round(round)
@@ -51,7 +51,16 @@ class State:
         for box in boxes_not_in_round:
             relaxed_walls[box.pos.y][box.pos.x] = True
             
-        return State([relaxed_agent], agent_colored_boxes, relaxed_walls)
+        return State([relaxed_agent], agent_boxes, relaxed_walls)
+    
+    def from_agent_perspective_min(self, agent_id, round) -> 'State':
+        relaxed_agent = self.get_agent_by_uid(agent_id)
+
+        agent_boxes = {round[agent_id].box_uid: self.boxes[round[agent_id].box_uid]}
+
+        relaxed_walls = [row[:] for row in self.walls]
+
+        return State([relaxed_agent], agent_boxes, relaxed_walls)
 
 
     def get_agent_by_uid(self, agentId) -> Agent:
@@ -69,7 +78,7 @@ class State:
     def get_goal_by_uid(self, goal_uid) -> Goal:
         return next((goal for goal in State.goals if goal.uid == goal_uid), None)
     
-    def result(self, joint_action: list[Action]) -> 'State':
+    def result(self, joint_action: list[Action], save_action = True) -> 'State':
         '''
         Returns the state resulting from applying joint_action in this state.
         Precondition: Joint action must be applicable and non-conflicting in this state.
@@ -77,6 +86,7 @@ class State:
         copy_agents = [Agent(agent.pos, agent.value, agent.color) for agent in self.agents]
         copy_agents = sorted(copy_agents, key=lambda agent: agent.value)
         copy_boxes = copy.deepcopy(self.boxes)
+
         for agent_index, action in enumerate(joint_action):
             copied_agent = copy_agents[agent_index]
             if action.type == ActionType.Move:
@@ -102,8 +112,10 @@ class State:
         # Create a new state with the updated agents and boxes
         copy_state = State(copy_agents, copy_boxes, self.walls)
         copy_state.parent = self
-        copy_state.joint_action = joint_action[0]
-        copy_state.g = self.g + 1
+        if(save_action):
+            copy_state.joint_action = joint_action[0]
+            copy_state.g = self.g + 1
+
         return copy_state
 
     def agents_without_round(self, round):
@@ -143,15 +155,18 @@ class State:
         return distance_grid
 
     def is_goal_state_for_subgoal(self, task: Task, agent: Agent) -> bool:
-        if(task.goal_uid == None):
-            return True
-        if(task.box_uid == -1):
-            if State.goal_map[task.goal_uid][agent.pos.y][agent.pos.x] == 0:
-                return True
+        if(isinstance(task, SubTask)):
+            return self.boxes[task.box_uid].pos == task.goal_pos
         else:
-            box = self.get_box_by_uid(task.box_uid)
-            if State.goal_map[task.goal_uid][box.pos.y][box.pos.x] == 0:
+            if(task.goal_uid == None):
                 return True
+            if(task.box_uid == -1):
+                if State.goal_map[task.goal_uid][agent.pos.y][agent.pos.x] == 0:
+                    return True
+            else:
+                box = self.get_box_by_uid(task.box_uid)
+                if State.goal_map[task.goal_uid][box.pos.y][box.pos.x] == 0:
+                    return True
         return False
 
     def get_expanded_states(self, task: Task) -> 'list[State]':
@@ -159,6 +174,7 @@ class State:
 
         # Determine list of applicable action for each individual agent.
         applicable_actions = [[action for action in Action if self.is_applicable(agentIdx, action, task)] for agentIdx in range(num_agents)]
+        
         # Iterate over joint actions, check conflict and generate child states.
         joint_action = [None for _ in range(num_agents)]
         actions_permutation = [0 for _ in range(num_agents)]
@@ -218,50 +234,11 @@ class State:
 
         return False
 
-    # def is_conflicting(self, joint_action: 'list[Action]') -> 'bool':
-    #     num_agents = len(self.agents)
-
-    #     destination_positions = [None for _ in range(num_agents)] # Position of new cell to become occupied by action
-    #     box_positions = [None for _ in range(num_agents)] # current Position of box moved by action
-
-    #     # Collect cells to be occupied and boxes to be moved.
-    #     for agent_idx, action in enumerate(joint_action):
-    #         agent_pos = self.agents[agent_idx].pos
-    #         box_pos = None
-    #         if action.type is ActionType.NoOp:
-    #             pass
-    #         elif action.type is ActionType.Move:
-    #             destination_positions[agent_idx] = agent_pos + action.agent_rel_pos
-    #             box_positions[agent_idx] = Position(agent_pos.x, agent_pos.y) # Distinct dummy value.
-    #         if action.type in [ActionType.Push, ActionType.Pull]:
-    #             # Calculate box's current and destination positions for Push/Pull
-    #             if action.type == ActionType.Push:
-    #                 box_pos = agent_pos + action.agent_rel_pos
-    #                 box_destination_pos = box_pos + action.box_rel_pos
-    #             else:  # ActionType.Pull
-    #                 box_pos = agent_pos - action.box_rel_pos
-    #                 box_destination_pos = agent_pos
-
-    #         # Update the box positions to be checked for conflicts
-    #         box_positions[agent_idx] = box_pos
-    #         destination_positions[agent_idx] = box_destination_pos if action.type == ActionType.Push else agent_pos + action.agent_rel_pos
-
-    #     for a1 in range(num_agents):
-    #         if joint_action[a1].type is ActionType.NoOp:
-    #             continue
-
-    #         for a2 in range(a1 + 1, num_agents):
-    #             if joint_action[a2].type is ActionType.NoOp:
-    #                 continue
-
-    #             # Moving into same cell?
-    #             if (destination_positions[a1] is not None and destination_positions[a2] is not None and
-    #                 destination_positions[a1] == destination_positions[a2]):
-    #                 return True
-
-    #     return False
-
     def is_free(self, position) -> bool:
+        print(position, file=sys.stderr)
+        print(not self.walls[position.y][position.x], file=sys.stderr)
+        #print(f"len of walls[0]---{self.walls[0]}", file=sys.stderr)
+        
         return not self.walls[position.y][position.x] and not self.box_at(position) and not self.agent_at(position)
     
     def is_goal_achieved(self, goal: Goal) -> bool:
@@ -279,16 +256,30 @@ class State:
             if box.pos == goal.pos and box.value == goal.value:
                 return box
 
+    def is_goal_achieved(self, goal: Goal) -> bool:
+        for box in self.boxes.values():
+            if box.pos == goal.pos and box.value == goal.value:
+                return True
+        for agent in self.agents:
+            if goal.value.isdigit():
+                if agent.pos == goal.pos and agent.value == int(goal.value):
+                    return True
+        return False
+
     def agent_at(self, position: Position) -> Agent:
         for agent in self.agents:
             if agent.pos == position:
                 return agent
+            
+        # return None
 
     def box_at(self, position: Position) -> Box:
         for box in self.boxes.values():
             if box.pos == position:
                 return box
-
+            
+        # return None
+    
     def extract_plan(self) -> list[Action]:
         plan = [None for _ in range(self.g)]
         state = self
@@ -335,11 +326,14 @@ class State:
                 box = self.box_at(pos)
                 wall = self.walls[row][col] if self.walls and row < len(self.walls) and col < len(self.walls[row]) else False
                 if box is not None:
-                    line.append(box.getRealBoxId())
-                elif wall is not None:
-                    line.append('+')
+                    line.append(box.value)
                 elif agent is not None:
                     line.append(str(agent.value))
+                elif wall is not None:
+                    if(wall):
+                        line.append('+')
+                    else:
+                        line.append(' ')
                 else:
                     line.append(' ')
             lines.append(''.join(line))
@@ -358,17 +352,28 @@ class SpaceTimeState(State):
         self._hash = None
 
     def from_agent_perspective(self, agent_id, round) -> 'SpaceTimeState': 
-
         relaxed_agent = self.get_agent_by_uid(agent_id)
-
-        agent_colored_boxes = self.get_agent_boxes(relaxed_agent.color)
         
+        agent_boxes = {round[agent_id].box_uid: self.boxes[round[agent_id].box_uid]}
+
         relaxed_walls = [row[:] for row in self.walls]
 
         relaxed_constraints = [Constraint(constraint.agentId, constraint.pos, constraint.t) for constraint in self.constraints]
         relaxed_time = self.time
 
-        return SpaceTimeState([relaxed_agent], agent_colored_boxes, relaxed_walls, relaxed_time, relaxed_constraints, self.g)
+        return SpaceTimeState([relaxed_agent], agent_boxes, relaxed_walls, relaxed_time, relaxed_constraints, self.g)
+
+    def from_agent_perspective_min(self, agent_id, round) -> 'State':
+        relaxed_agent = self.get_agent_by_uid(agent_id)
+
+        agent_boxes = {round[agent_id].box_uid: self.boxes[round[agent_id].box_uid]}
+
+        relaxed_walls = [row[:] for row in self.walls]
+        
+        relaxed_constraints = [Constraint(constraint.agentId, constraint.pos, constraint.t) for constraint in self.constraints]
+        relaxed_time = self.time
+
+        return SpaceTimeState([relaxed_agent], agent_boxes, relaxed_walls, relaxed_time, relaxed_constraints, self.g)
 
     # Modify is_applicable function to include constraints judgement
     def is_applicable(self, agent: int, action: Action, task: Task) -> bool:
@@ -385,7 +390,7 @@ class SpaceTimeState(State):
         elif action.type is ActionType.Push:
             # Check if there is a box at the agent's destination to push
             box_to_push = next((box for box in self.boxes.values() if box.pos == agent_destination), None)
-            if box_to_push and box_to_push.uid == task.box_uid and  box_to_push.color == agent.color:
+            if box_to_push and box_to_push.uid == task.box_uid and box_to_push.color == agent.color:
                 # Calculate the box's destination position
                 box_destination = agent_destination + action.box_rel_pos
                 # Check if both the agent's and the box's destinations are free and not constrained

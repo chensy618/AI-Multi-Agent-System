@@ -1,5 +1,8 @@
 import sys
+from typing import List
+from domain.action import Action
 from domain.box import Box
+from domain.position import Position
 from helper.distance_calc import DistanceCalc
 from state import State
 from itertools import groupby
@@ -124,3 +127,15 @@ class HTNHelper:
                 closest_box = box
 
         return closest_box.uid
+    
+    @staticmethod
+    def get_list_positions_from_actions(actions: list[Action], pos: Position) -> 'list[Position]':
+        current_position = pos
+
+        positions = []
+
+        for action in actions:
+            current_position = action.get_position() + current_position
+            positions.append(current_position)
+
+        return positions

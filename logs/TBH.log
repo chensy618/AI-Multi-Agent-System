@@ -1,0 +1,76 @@
+#domain
+hospital
+#levelname
+TBH
+#colors
+blue: 0, A
+red: 2, M
+green: 1, C, D, L
+brown: 6, Z, Y
+pink: 3, F, G 
+purple: 4, N, I
+orange: 5, T, B, H
+cyan: E
+grey: 7, J
+#initial
++++++++++++++++++++++++++++++++++
++L AD        DJ   J   J   J   JG+
++D J   JJ JJ  JDDDJJJ JJJ J J J +
++C J  CJ   JL JJJ J       J J  0+
++JJJC  JJJJJ    J JHJ JJJJJ J JG+
++             J   J J       JFJ +
++JJJJJJJJFJJJJJJJJJNJJJJJJJJJJJJ+
++   J             J      J J   N+
++ J    JJJJJJJJJ  J      J J    +
++ JJJ  J   3 J    J JJJJ J J    +
++   J  J   5 J  JJJ J    J J    +
++JJ J  JJJMJJJ      JJJJ J JJI  +
++   J       2 T       B         +
++ JJJJJJJ     J       JJJJJJJJJJ+
++  J    J     J       M J       +
++J J JJJJ  JJJJ       J J JJJJJ +
++H JM1  M     J       J 4 J     +
++EEEEEEZZZZZZZZZZZZZZZZZZZZZZZZZ+
++  6  E  J  J       J    J    J +
++ E E E       J  J       J      +
++ E E E J 7     J    J      J   +
++ EEE E     J J   J    J        +
++ Z Y E  J    J   J        J    +
++++++++++++++++++++++++++++++++++
+#goal
++++++++++++++++++++++++++++++++++
++             JDDDJGF JG  J   J +
++  J   JJ JJ  J   JJJ JJJ J J J +
++  J   JCDLJ  JJJ J       J J   +
++JJJ   JJJJJ    J J J JJJJJ J J +
++CD           J   J J       J J +
++JJJJJJJJ JJJJJJJJJ JJJJJJJJJJJJ+
++   J             J      J JM  1+
++ J    JJJJJJJJJ  J      J J  43+
++ JJJ  J TBH J    J JJJJ J J 250+
++   J  J     J  JJJ JNMH J J    +
++JJ J  JJJ JJJ      JJJJ J JJ   +
++   J                           +
++ JJJJJJJ     J       JJJJJJJJJJ+
++  J   IJ     J         J       +
++J J JJJJ  JJJJM      J J JJJJJ +
++  J L       MJ       J   JFAN  +
++EEEEEEZZZZZZZZZZZZZZZZZZZZZZZZZ+
++     E   J     J J   J    J    +
++ EYE E      J          J     J +
++ EZE E J       J  J       7    +
++ EEE E    J    J      J        +
++  6  E J   J  J     J     J   J+
++++++++++++++++++++++++++++++++++
+#end
+#clientname
+SearchClient
+#actions
+#end
+#solved
+false
+#numactions
+0
+#time
+0
+#end

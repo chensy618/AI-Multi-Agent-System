@@ -1,11 +1,8 @@
 from abc import ABCMeta, abstractmethod
 import heapq
-import sys
-import time
-import sys
 
+from domain.task import SubTask
 from helper.distance_calc import DistanceCalc
-from htn.htn_resolver import HTNResolver
 from state import State, SpaceTimeState
 
 
@@ -18,20 +15,24 @@ class Heuristic(metaclass=ABCMeta):
         return self.calculate_heuristic_value(state, task)
 
 
-    def calculate_heuristic_value(self, state, task) -> 'int':
+    def calculate_heuristic_value(self, state: State, task) -> 'int':
         distance = 0
         
         agent = state.agents[0]
 
-        if(task.box_uid == None or task.goal_uid == None):
-            raise RuntimeError(f"Box_uid is None or goal_uid is None, this should not be happening")
-
-        # Check if the task is a box-to-goal task or an agent-to-goal task
-        if(task.box_uid == -1):
-            distance += DistanceCalc.calculate_agent_task(agent, task.goal_uid)
+        if(isinstance(task, SubTask)):
+            distance += DistanceCalc.manhatten_distance(task.goal_pos, agent.pos)
         else:
-            agent_box = state.boxes[task.box_uid]
-            distance += DistanceCalc.calculate_box_task(agent_box, agent, task.goal_uid)
+
+            if(task.box_uid == None or task.goal_uid == None):
+                raise RuntimeError(f"Box_uid is None or goal_uid is None, this should not be happening")
+
+            # Check if the task is a box-to-goal task or an agent-to-goal task
+            if(task.box_uid == -1):
+                distance += DistanceCalc.calculate_agent_task(agent, task.goal_uid)
+            else:
+                agent_box = state.get_box_by_uid(task.box_uid)
+                distance += DistanceCalc.calculate_box_task(agent_box, agent, task.goal_uid)
 
         return distance
 

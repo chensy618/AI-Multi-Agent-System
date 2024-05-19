@@ -19,3 +19,11 @@ class Box:
             return chr(self.uid)
         else:
             return self.uid
+        
+    def __eq__(self, other):
+        if isinstance(other, Box):
+            return self.uid == other.uid
+        return False
+
+    def __hash__(self):
+        return hash(self.uid)

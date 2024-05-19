@@ -1,0 +1,63 @@
+#domain
+hospital
+#levelname
+CerealWif
+#colors
+red: 0, Z
+blue: 1
+#initial
+++++++++++++++++++++++++++++++++++
++10                              +
++Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++                                +
++Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++                                +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++                                +
++Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++                                +
++Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
+++++++++++++++++++++++++++++++++++
+#goal
+++++++++++++++++++++++++++++++++++
++                                +
++1Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z +
++                                +
++Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++                                +
++Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++                                +
++Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z +
++ Z Z Z Z Z Z Z Z Z Z Z Z Z Z Z  +
++                                +
++                                +
+++++++++++++++++++++++++++++++++++
+#end
+#clientname
+SearchClient
+#actions
+#end
+#solved
+false
+#numactions
+0
+#time
+0
+#end

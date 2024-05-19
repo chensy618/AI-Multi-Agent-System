@@ -1,0 +1,44 @@
+#domain
+hospital
+#levelname
+RainyDay
+#colors
+blue: 0, A, D
+red: 1, B, E
+purple: 2, C, F
+orange: 3, G
+brown: X
+#initial
++++++++++++++++++++
++XXXXXXXXXXXXXXXXX+
++X       X  GDDD X+
++X  3   X   E  G X+
++X  2       B A  X+
++X    X    G 0   X+
++X   XG   C  1 C X+
++X   XGGC   B  F X+
++XXXXXXXXXXXXXXXXX+
++++++++++++++++++++
+#goal
++++++++++++++++++++
++                 +
++ ABCDDD     3    +
++ BCE             +
++ CF        2     +
++ GG              +
++ GG       1      +
++ GG          0   +
++                 +
++++++++++++++++++++
+#end
+#clientname
+SearchClient
+#actions
+#end
+#solved
+false
+#numactions
+0
+#time
+0
+#end
