@@ -11,6 +11,7 @@ from domain.constraint import Constraint
 from domain.position import Position
 from queue import PriorityQueue
 
+from domain.task import SubTask
 from pathfinding.astar import astar
 from pathfinding.st_astar import space_time_a_star
 from state import State
@@ -30,8 +31,11 @@ def conflict_based_search(current_state: State, round):
         relaxed_state = current_state.from_agent_perspective(agent.value, round)
         plan = astar(relaxed_state, round[agent.value])
         root.solution[agent.value] = plan
-    print(f'Astar solution: ', root.solution, file=sys.stderr)
 
+    if(len(root.solution.values()) == 0):
+       raise RuntimeError("You shouldn't run CBS on empty solutions set")
+    
+    print(f'Astar solution: ', root.solution, file=sys.stderr)
     root.cost = cost(root.solution)
     frontier = PriorityQueue()
     count_next = next(tiebreaker)
@@ -162,16 +166,22 @@ def initialize_initial_positions(current_state, round):
     initial_positions = {}
 
     for agent_uid, task in round.items():
+        is_sub_task = isinstance(task, SubTask)
         agent = current_state.get_agent_by_uid(agent_uid)
         box = current_state.get_box_by_uid(task.box_uid)
-        goal = current_state.get_goal_by_uid(task.goal_uid)
+        
+        if is_sub_task:
+            goal = None
+        else:
+            goal = current_state.get_goal_by_uid(task.goal_uid)
+        
         initial_positions[agent.value] = {
-                'agent_position': agent.pos,
-                'box_id': box.value if box else None,
-                'box_position': box.pos if box else None,
-                'goal_id': goal.value if goal else None,
-                'goal_position': goal.pos if goal else None
-            }
+            'agent_position': agent.pos,
+            'box_id': box.value if box else None,
+            'box_position': box.pos if box else None,
+            'goal_id': goal.value if goal else None,
+            'goal_position': goal.pos if goal else task.goal_pos 
+        }
     return initial_positions
 
 def cost(solution):

@@ -15,9 +15,11 @@ def astar(initial_state, task):
     frontier = AStarFrontier(HeuristicAStar(initial_state))
     frontier.add(initial_state, task)
     explored = set()
+    # print('task ->', task, file=sys.stderr)
+
     while not frontier.is_empty():
         current_state = frontier.pop()
-
+        # print('current_state.boxes.values() ->', current_state.boxes.values(), file=sys.stderr)
         if current_state.is_goal_state_for_subgoal(task, current_state.agents[0]):
             plan = current_state.extract_plan()
             print(f"Extracted plan: {plan}", file=sys.stderr)
@@ -40,7 +42,7 @@ def astar(initial_state, task):
 
     print("No solution found", file=sys.stderr)
     print(f"\n=============ASTAR - v{initial_state.agents[0].value}===============", file=sys.stderr)
-    raise RuntimeError("A* cannot find solution for this problem, check HTN")  # No solution found
+    return None  # No solution found
 
 def print_search_status(explored, frontier):
     status_template = '#Expanded: {:8,}, #Frontier: {:8,}, #Generated: {:8,}, Time: {:3.3f} s\n[Alloc: {:4.2f} MB, MaxAlloc: {:4.2f} MB]'

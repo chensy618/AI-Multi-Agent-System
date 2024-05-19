@@ -1,11 +1,8 @@
 from abc import ABCMeta, abstractmethod
 import heapq
-import sys
-import time
-import sys
 
+from domain.task import SubTask
 from helper.distance_calc import DistanceCalc
-from htn.htn_resolver import HTNResolver
 from state import State, SpaceTimeState
 
 
@@ -23,31 +20,21 @@ class Heuristic(metaclass=ABCMeta):
         
         agent = state.agents[0]
 
-        if(task.box_uid == None or task.goal_uid == None):
-            raise RuntimeError(f"Box_uid is None or goal_uid is None, this should not be happening")
-
-        # Check if the task is a box-to-goal task or an agent-to-goal task
-        if(task.box_uid == -1):
-            distance += DistanceCalc.calculate_agent_task(agent, task.goal_uid)
+        if(isinstance(task, SubTask)):
+            distance += DistanceCalc.manhatten_distance(task.goal_pos, agent.pos)
         else:
-            print("box uid -> ", task.box_uid, file=sys.stderr)
-            agent_box = state.get_box_by_uid(task.box_uid)
-            distance += DistanceCalc.calculate_box_task(agent_box, agent, task.goal_uid)
+
+            if(task.box_uid == None or task.goal_uid == None):
+                raise RuntimeError(f"Box_uid is None or goal_uid is None, this should not be happening")
+
+            # Check if the task is a box-to-goal task or an agent-to-goal task
+            if(task.box_uid == -1):
+                distance += DistanceCalc.calculate_agent_task(agent, task.goal_uid)
+            else:
+                agent_box = state.get_box_by_uid(task.box_uid)
+                distance += DistanceCalc.calculate_box_task(agent_box, agent, task.goal_uid)
 
         return distance
-
-        # if(HTNResolver.completed_tasks.get(agent.uid) == None):
-        #     HTNResolver.completed_tasks[agent.uid] = []
-        # completed_tasks = HTNResolver.completed_tasks[agent.uid]
-
-        # for task in completed_tasks:
-        #     if(task.box_uid == -1):
-        #         raise RuntimeError(f"There shouldn't be any agent goal tasks in completed_tasks list.")
-            
-        #     agent_box = state.boxes[task.box_uid]
-
-        #     box_to_goal_dist = State.goal_map[task.goal_uid][agent_box.pos.y][agent_box.pos.x]
-        #     distance += 1.5 * box_to_goal_dist
 
     @abstractmethod
     def f(self, state: 'State', task) -> 'int': pass

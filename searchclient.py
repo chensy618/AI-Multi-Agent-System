@@ -180,15 +180,22 @@ class SearchClient:
         current_state = initial_state
         while(resolver.has_any_task_left(current_state)):
             print("Round -> ", resolver.round_counter, file=sys.stderr)
-            resolver.create_round(current_state)
 
-            print(resolver.round, file=sys.stderr)
+            resolver.create_target(current_state)
+            # print("target ->", resolver.target, file=sys.stderr)
+            # time.sleep(5)
+            resolver.create_sub_round(current_state)
+            # print("sub_task_round ->", resolver.sub_task_round, file=sys.stderr)
+            while(resolver.has_any_subtask_left()):
+                print("Subround ->", resolver.sub_round_counter, file=sys.stderr)
+                resolver.create_subtask(current_state)
+                
+                plan = conflict_based_search(current_state, resolver.round)
+                for time_step in plan:
+                    final_plan.append(time_step)
+                    current_state = current_state.result(time_step)
 
-            plan = conflict_based_search(current_state, resolver.round)
-            print("We have a plan ->", plan, file=sys.stderr)
-            for time_step in plan:
-                final_plan.append(time_step)
-                current_state = current_state.result(time_step)
+                
 
 
         # print("========PROBLEM========\n", file=sys.stderr)
