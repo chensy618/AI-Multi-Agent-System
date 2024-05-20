@@ -114,7 +114,7 @@ class HTNResolver:
         # print("\n\n===========SUBROUND===========", file=sys.stderr)
 
         self.initialize_reachability(current_state)
-        print(self.round_planned_positions, file=sys.stderr)
+        #print(self.round_planned_positions, file=sys.stderr)
 
         for agent_uid, task in self.target.items():
             # task_order_box_uids = self.priority_resolver.find_task_order(reachability_matrix, self.target[agent_uid].box_uid)

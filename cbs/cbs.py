@@ -225,6 +225,12 @@ def check_if_need_replan(conflict: Conflict, solution, current_state: State, rou
         for st_pos_2 in positions_aj:
             if st_pos.t == st_pos_2.t and st_pos == st_pos_2:
                 conflict_t = st_pos.t
+                
+    if conflict_t == -1:
+        return False
+
+    if conflict_t+2 >= len(positions_ai) or conflict_t - 2 < 0:
+        return False
 
     if(positions_ai[conflict_t] == positions_aj[conflict_t]
     and positions_ai[conflict_t+1] == positions_aj[conflict_t-1]
