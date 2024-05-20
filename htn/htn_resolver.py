@@ -77,44 +77,59 @@ class HTNResolver:
                     goal_uid = HTNHelper.get_closest_goal_uid_to_agent(agent)
                     if goal_uid is None:
                         continue
-                    self.round[agent.value] = Task(-1, None, goal_uid)
+                    self.target[agent.value] = Task(-1, None, goal_uid)
 
 
     def has_any_subtask_left(self):
         return len(self.target.keys()) > 0
 
-    def create_subtask(self, current_state: State):
+    def create_round(self, current_state: State):
+        # print("self.sub_task_round", self.sub_task_round, file=sys.stderr)
+    
         for agent_value, target_task in list(self.target.items()):
                 agent = current_state.get_agent_by_uid(agent_value)
-                if target_task.box_uid is not None:
+                if target_task.box_uid != -1:
                     if(self.sub_task_round.get(agent_value) and len(self.sub_task_round[agent_value]) > 0):
                         self.round[agent_value] = self.sub_task_round[agent_value].pop(0)
+                        # print("Subtask -> Agent ->", agent_value, "Task ->", target_task, file=sys.stderr)
+
                         # print(f"Subtask assigned to agent {agent_value} -> {self.round[agent_value]}", file=sys.stderr)
                         self.sub_round_counter += 1
                         return 
                     else:
                         box = current_state.boxes[target_task.box_uid]
                         self.round[agent_value] = self.target[agent_value]
+                        # print("Task-> Agent ->", agent_value, "Task ->", target_task, file=sys.stderr)
+
                         # print(f"Task assigned to agent {agent_value} -> {self.round[agent_value]}", file=sys.stderr)
                         self.boxes_by_color[agent.color].remove(box)
-                        del self.target[agent_value]
 
                 else:
-                    raise RuntimeError("box_uid cannot be None, check self.target item assignment")
+                    self.round[agent_value] = self.target[agent_value]
+
+                del self.target[agent_value]
 
     def create_sub_round(self, current_state: State):
         # print("\n\n===========SUBROUND===========", file=sys.stderr)
 
         self.initialize_reachability(current_state)
+        print(self.round_planned_positions, file=sys.stderr)
 
-        for agent_uid in self.target.keys():
+        for agent_uid, task in self.target.items():
             # task_order_box_uids = self.priority_resolver.find_task_order(reachability_matrix, self.target[agent_uid].box_uid)
-
+            if(task.box_uid == -1):
+                continue
             agent = current_state.get_agent_by_uid(agent_uid)
+
+            box = current_state.boxes[task.box_uid]
+            # 4: [Position(x=10, y=5), Position(x=11, y=5), Position(x=12, y=5)]
+            # print(f"{agent_uid} - BOX ->", box.pos, file=sys.stderr)
+            self.round_planned_positions[agent_uid].remove(box.pos)
             avoid_positions = self.round_planned_positions[agent_uid]
-            # print("AVOID POSITIONS ->", avoid_positions, file=sys.stderr)
+            # print(f"{agent_uid} - AVOID POSITIONS ->", avoid_positions, file=sys.stderr)
             subtask_boxes = [box for box in current_state.boxes.values() if box.pos in avoid_positions and agent.color == box.color]
-            # print("SUBTASK BOXES ->", subtask_boxes, file=sys.stderr)
+            # print(f"{agent_uid} - SUBTASK BOXES ->", subtask_boxes, file=sys.stderr)
+            # print(f"{agent_uid} - task ->", task, file=sys.stderr)
             # TODO: It only works for one agent now 
             for box in subtask_boxes:
                 new_temp_goal_pos = self.priority_resolver.find_first_free_neighbour(current_state, box.pos, avoid_positions)
@@ -133,9 +148,10 @@ class HTNResolver:
     def initialize_reachability(self, initial_state: State):
         boxes = initial_state.boxes
 
-
+        # print("INITIALIZES REACHABILITY", file=sys.stderr)
         for agent_uid, task in self.target.items():
-            state_from_agent_perspective = initial_state.from_agent_perspective_min(agent_uid, self.target) 
+            if(task.box_uid == -1):
+                continue
             relaxed_state = initial_state.from_agent_perspective(agent_uid, self.target) 
             
             # print(initial_state, file=sys.stderr)
@@ -144,8 +160,15 @@ class HTNResolver:
             plan = astar(relaxed_state, task)
             
             if(plan):
-                self.round_planned_positions[agent_uid] = HTNHelper.get_list_positions_from_actions(plan, initial_state.agents[0].pos)
+                # print("HELLOOO2", file=sys.stderr)
+                # print(f"initial_state.agents[{agent_uid}].pos -> {initial_state.agents[agent_uid].pos}", file=sys.stderr)
+
+                self.round_planned_positions[agent_uid] = HTNHelper.get_list_positions_from_actions(plan, initial_state.get_agent_by_uid(agent_uid).pos)
+                # print(f"self.round_planned_positions[{agent_uid}]", self.round_planned_positions[agent_uid], file=sys.stderr)
             else:
+                # print("HELLOOO", file=sys.stderr)
+                state_from_agent_perspective = initial_state.from_agent_perspective_min(agent_uid, self.target) 
+
                 # Check if our plan is blocked
                 plan_from_agent_state = astar(state_from_agent_perspective, task)
                 if(not plan_from_agent_state):
@@ -153,12 +176,13 @@ class HTNResolver:
                 
                 # size = len(boxes.values())
                 # self.reachability_matrix[agent_uid] = [[False] * size for _ in range(size)]
-                self.round_planned_positions[agent_uid] = HTNHelper.get_list_positions_from_actions(plan_from_agent_state, state_from_agent_perspective.agents[0].pos)
+                self.round_planned_positions[agent_uid] = HTNHelper.get_list_positions_from_actions(plan_from_agent_state, state_from_agent_perspective.get_agent_by_uid(agent_uid).pos)
+                # print(f"self.round_planned_positions[{agent_uid}]", self.round_planned_positions[agent_uid], file=sys.stderr)
                 
                 # for box in initial_state.boxes.values():
                 #     if(box.uid != task.box_uid and box.pos in self.round_planned_positions[agent_uid]):
                 #         self.reachability_matrix[agent_uid][task.box_uid][box.uid] = True
-    
+        # print("INITIALIZES REACHABILITY", file=sys.stderr)
     def has_any_task_left(self, current_state):
         for goal in current_state.goals:
             if not current_state.is_goal_achieved(goal):

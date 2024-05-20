@@ -38,7 +38,7 @@ def conflict_based_search(current_state: State, round):
         root.solution[agent.value] = plan
 
     if(len(root.solution.values()) == 0):
-       raise RuntimeError("You shouldn't run CBS on empty solutions set")
+        raise RuntimeError("You shouldn't run CBS on empty solutions set")
     
     print(f'Astar solution: ', root.solution, file=sys.stderr)
     root.cost = cost(root.solution)

@@ -34,10 +34,15 @@ class State:
         self.g = 0
         self._hash = None
 
-    def from_agent_perspective(self, agent_id, round, diffentiate_colors=False) -> 'State':
+    def from_agent_perspective(self, agent_id, round) -> 'State':
         relaxed_agent = self.get_agent_by_uid(agent_id)
 
-        agent_boxes = {round[agent_id].box_uid: self.boxes[round[agent_id].box_uid]}
+        task = round[agent_id]
+
+        if(task.box_uid == -1):
+            agent_boxes = {}
+        else:
+            agent_boxes = {task.box_uid: self.boxes[task.box_uid]}
 
         agents_not_in_round = self.agents_without_round(round)
         
@@ -56,7 +61,8 @@ class State:
     def from_agent_perspective_min(self, agent_id, round) -> 'State':
         relaxed_agent = self.get_agent_by_uid(agent_id)
 
-        agent_boxes = {round[agent_id].box_uid: self.boxes[round[agent_id].box_uid]}
+        task = round[agent_id]
+        agent_boxes = {task.box_uid: self.boxes[task.box_uid]}
 
         relaxed_walls = [row[:] for row in self.walls]
 
@@ -352,7 +358,11 @@ class SpaceTimeState(State):
     def from_agent_perspective(self, agent_id, round) -> 'SpaceTimeState': 
         relaxed_agent = self.get_agent_by_uid(agent_id)
         
-        agent_boxes = {round[agent_id].box_uid: self.boxes[round[agent_id].box_uid]}
+        task = round[agent_id]
+        if(task.box_uid == -1):
+            agent_boxes = {}
+        else:
+            agent_boxes = {task.box_uid: self.boxes[task.box_uid]}
 
         relaxed_walls = [row[:] for row in self.walls]
 
