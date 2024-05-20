@@ -224,10 +224,10 @@ class SearchClient:
         current_state = initial_state
         while(resolver.has_any_task_left(current_state)):
             resolver.create_target(current_state)
-            print("TARGET ->", resolver.target, file=sys.stderr)
+            # print("TARGET ->", resolver.target, file=sys.stderr)
             resolver.create_sub_round(current_state)
             while(resolver.has_any_subtask_left()):
-                print("Subround ->", resolver.sub_round_counter, file=sys.stderr)
+                # print("Subround ->", resolver.sub_round_counter, file=sys.stderr)
                 resolver.create_subtask(current_state)
                 
                 plan = conflict_based_search(current_state, resolver.round)
@@ -235,7 +235,7 @@ class SearchClient:
                     final_plan.append(time_step)
                     current_state = current_state.result(time_step, save_action=False)
 
-                print(current_state, file=sys.stderr)
+                # print(current_state, file=sys.stderr)
 
 
         if final_plan is None:

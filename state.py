@@ -34,7 +34,7 @@ class State:
         self.g = 0
         self._hash = None
 
-    def from_agent_perspective(self, agent_id, round) -> 'State':
+    def from_agent_perspective(self, agent_id, round, diffentiate_colors=False) -> 'State':
         relaxed_agent = self.get_agent_by_uid(agent_id)
 
         agent_boxes = {round[agent_id].box_uid: self.boxes[round[agent_id].box_uid]}
@@ -49,7 +49,13 @@ class State:
             relaxed_walls[agent.pos.y][agent.pos.x] = True
 
         for box in boxes_not_in_round:
-            relaxed_walls[box.pos.y][box.pos.x] = True
+            if(diffentiate_colors):
+                if(box.color == relaxed_agent.color):
+                    relaxed_walls[box.pos.y][box.pos.x] = False
+                else:
+                    relaxed_walls[box.pos.y][box.pos.x] = True
+            else:
+                relaxed_walls[box.pos.y][box.pos.x] = True
             
         return State([relaxed_agent], agent_boxes, relaxed_walls)
     
@@ -174,7 +180,6 @@ class State:
 
         # Determine list of applicable action for each individual agent.
         applicable_actions = [[action for action in Action if self.is_applicable(agentIdx, action, task)] for agentIdx in range(num_agents)]
-        
         # Iterate over joint actions, check conflict and generate child states.
         joint_action = [None for _ in range(num_agents)]
         actions_permutation = [0 for _ in range(num_agents)]
@@ -235,10 +240,9 @@ class State:
         return False
 
     def is_free(self, position) -> bool:
-        print(position, file=sys.stderr)
-        print(not self.walls[position.y][position.x], file=sys.stderr)
+        # print(position, file=sys.stderr)
+        # print(not self.walls[position.y][position.x], file=sys.stderr)
         #print(f"len of walls[0]---{self.walls[0]}", file=sys.stderr)
-        
         return not self.walls[position.y][position.x] and not self.box_at(position) and not self.agent_at(position)
     
     def is_goal_achieved(self, goal: Goal) -> bool:

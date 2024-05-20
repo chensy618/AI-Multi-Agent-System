@@ -11,7 +11,7 @@ globals().update(Action.__members__)
 start_time = time.perf_counter()
 
 def astar(initial_state, task):
-    print(f"\n=============ASTAR - v{initial_state.agents[0].value}===============", file=sys.stderr)
+    # print(f"\n=============ASTAR - v{initial_state.agents[0].value}===============", file=sys.stderr)
     frontier = AStarFrontier(HeuristicAStar(initial_state))
     frontier.add(initial_state, task)
     explored = set()
@@ -22,14 +22,14 @@ def astar(initial_state, task):
         
         if current_state.is_goal_state_for_subgoal(task, current_state.agents[0]):
             plan = current_state.extract_plan()
-            print(f"Extracted plan: {plan}", file=sys.stderr)
-            print(f"=============ASTAR - v{initial_state.agents[0].value}===============\n", file=sys.stderr)
+            # print(f"Extracted plan: {plan}", file=sys.stderr)
+            # print(f"=============ASTAR - v{initial_state.agents[0].value}===============\n", file=sys.stderr)
             return plan  # Return the plan to reach the goal state
 
         explored.add(current_state)
 
         for state in current_state.get_expanded_states(task):
-            print(f"Expanded state: {state}", file=sys.stderr)
+            # print(f"Expanded state: {state}", file=sys.stderr)
             if state not in explored and not frontier.contains(state):
                 frontier.add(state, task)
 
@@ -41,8 +41,8 @@ def astar(initial_state, task):
             print('Maximum memory usage exceeded.', file=sys.stderr)
             return None
 
-    print("No solution found", file=sys.stderr)
-    print(f"\n=============ASTAR - v{initial_state.agents[0].value}===============", file=sys.stderr)
+    # print("No solution found", file=sys.stderr)
+    # print(f"\n=============ASTAR - v{initial_state.agents[0].value}===============", file=sys.stderr)
     return None  # No solution found
 
 def print_search_status(explored, frontier):

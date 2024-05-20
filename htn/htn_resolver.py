@@ -1,5 +1,6 @@
 from collections import deque
 import sys
+import time
 
 from domain.position import Position
 from domain.task import SubTask, Task
@@ -78,6 +79,7 @@ class HTNResolver:
                         continue
                     self.round[agent.value] = Task(-1, None, goal_uid)
 
+
     def has_any_subtask_left(self):
         return len(self.target.keys()) > 0
 
@@ -99,16 +101,17 @@ class HTNResolver:
                     raise RuntimeError("box_uid cannot be None, check self.target item assignment")
 
     def create_sub_round(self, current_state: State):
-        print("\n\n===========SUBROUND===========", file=sys.stderr)
+        # print("\n\n===========SUBROUND===========", file=sys.stderr)
 
         self.initialize_reachability(current_state)
 
         for agent_uid in self.target.keys():
             # task_order_box_uids = self.priority_resolver.find_task_order(reachability_matrix, self.target[agent_uid].box_uid)
 
+            agent = current_state.get_agent_by_uid(agent_uid)
             avoid_positions = self.round_planned_positions[agent_uid]
-            subtask_boxes = [box for box in current_state.boxes.values() if box.pos in avoid_positions]
-            print("SUBTASK BOXES ->", subtask_boxes, file=sys.stderr)
+            subtask_boxes = [box for box in current_state.boxes.values() if box.pos in avoid_positions and agent.color == box.color]
+            # print("SUBTASK BOXES ->", subtask_boxes, file=sys.stderr)
             # TODO: It only works for one agent now 
             for box in subtask_boxes:
                 new_temp_goal_pos = self.priority_resolver.find_first_free_neighbour(current_state, box.pos, avoid_positions)
@@ -120,9 +123,9 @@ class HTNResolver:
 
                 self.sub_task_round[agent_uid].append(new_subtask)
 
-            print("SUB ROUND ->", self.sub_task_round, file=sys.stderr)
+            # print("SUB ROUND ->", self.sub_task_round, file=sys.stderr)
 
-        print("===========SUBROUND===========\n\n", file=sys.stderr)
+        # print("===========SUBROUND===========\n\n", file=sys.stderr)
 
     def initialize_reachability(self, initial_state: State):
         boxes = initial_state.boxes
@@ -130,19 +133,18 @@ class HTNResolver:
 
         for agent_uid, task in self.target.items():
             state_from_agent_perspective = initial_state.from_agent_perspective_min(agent_uid, self.target) 
+            relaxed_state = initial_state.from_agent_perspective(agent_uid, self.target, diffentiate_colors=True) 
             
             print(initial_state, file=sys.stderr)
-            print("task ->", task, file=sys.stderr)
+            # print("task ->", task, file=sys.stderr)
             
-            plan = astar(initial_state, task)
+            plan = astar(relaxed_state, task)
 
             if(plan):
                 self.round_planned_positions[agent_uid] = HTNHelper.get_list_positions_from_actions(plan, initial_state.agents[0].pos)
             else:
                 # Check if our plan is blocked
-                print("Plan is blocked", file=sys.stderr)
                 plan_from_agent_state = astar(state_from_agent_perspective, task)
-                print("Plan is blocked", file=sys.stderr)
 
                 if(not plan_from_agent_state):
                     raise RuntimeError("Problem is not solvable, or task was assigned incorrectly")
