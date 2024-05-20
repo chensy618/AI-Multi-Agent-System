@@ -1,6 +1,7 @@
 """Handle agent communication."""
 import sys
 
+from domain.task import SubTask
 from pathfinding.astar import astar
 from cbs.utils import find_meta_agent, get_actual_agent_id, get_pos_list, get_resulting_positions_of_plan, opposite_action
 from domain.action import Action, ActionType
@@ -123,25 +124,41 @@ def meta_agent_block_communication(node, initial_solutions, initial_positions, c
         if goal.value == non_meta_box_id:
             real_goal = goal.pos
             break
-
+    
+    # real_goal = round[non_meta_agent_id].goal_uid
     # Update the current state goal map and goal position to use the temp goal
-    print("non ->", round[non_meta_agent_id], file=sys.stderr)
-    print("meta ->", round[meta_agent_id], file=sys.stderr)
-    goal_uid = round[non_meta_agent_id].goal_uid
-    current_state.goals[goal_uid].pos = temp_goal
-    current_state.goal_map[goal_uid][temp_goal.y][temp_goal.x] = 0
-    current_state.goal_map[goal_uid][real_goal.y][real_goal.x] = 1
-    relaxed_state = current_state.from_agent_perspective(non_meta_agent_id, round)
-    try:
-        move_out_plan = astar(relaxed_state, round[non_meta_agent_id])
-    except RuntimeError as e:
-        return node
-    finally:
-        # To avoid that the meta agent block the way of the agent/box that needs to move
-        # Change the goal back to the real goal after the agent/box moved out of the way
-        current_state.goals[goal_uid].pos = real_goal
-        current_state.goal_map[goal_uid][temp_goal.y][temp_goal.x] = 1
-        current_state.goal_map[goal_uid][real_goal.y][real_goal.x] = 0
+    if(isinstance(round[non_meta_agent_id], SubTask)):
+        goal_pos = round[non_meta_agent_id].goal_pos
+        round[non_meta_agent_id].goal_pos = temp_goal
+
+        # current_state.goals[goal_uid].pos = temp_goal
+        # current_state.goal_map[goal_uid][temp_goal.y][temp_goal.x] = 0
+        # current_state.goal_map[goal_uid][real_goal.y][real_goal.x] = 1
+        relaxed_state = current_state.from_agent_perspective(non_meta_agent_id, round)
+        try:
+            move_out_plan = astar(relaxed_state, round[non_meta_agent_id])
+        except RuntimeError as e:
+            return node
+        finally:
+            round[non_meta_agent_id].goal_pos = goal_pos
+            # To avoid that the meta agent block the way of the agent/box that needs to move
+            # Change the goal back to the real goal after the agent/box moved out of the way
+    else:
+        goal_uid = round[non_meta_agent_id].goal_uid
+        current_state.goals[goal_uid].pos = temp_goal
+        current_state.goal_map[goal_uid][temp_goal.y][temp_goal.x] = 0
+        current_state.goal_map[goal_uid][real_goal.y][real_goal.x] = 1
+        relaxed_state = current_state.from_agent_perspective(non_meta_agent_id, round)
+        try:
+            move_out_plan = astar(relaxed_state, round[non_meta_agent_id])
+        except RuntimeError as e:
+            return node
+        finally:
+            # To avoid that the meta agent block the way of the agent/box that needs to move
+            # Change the goal back to the real goal after the agent/box moved out of the way
+            current_state.goals[goal_uid].pos = real_goal
+            current_state.goal_map[goal_uid][temp_goal.y][temp_goal.x] = 1
+            current_state.goal_map[goal_uid][real_goal.y][real_goal.x] = 0
 
     # update the initial positions of the non-meta agent/box to the moving out plan resulting positions
     # replan for the non-meta agent/box

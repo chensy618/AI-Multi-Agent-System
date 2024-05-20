@@ -3,6 +3,7 @@ from typing import List
 from domain.action import Action
 from domain.box import Box
 from domain.position import Position
+from domain.st_position import STPosition
 from helper.distance_calc import DistanceCalc
 from state import State
 from itertools import groupby
@@ -140,6 +141,19 @@ class HTNHelper:
 
         for action in actions:
             current_position = action.get_position() + current_position
+            positions.append(current_position)
+
+        return positions
+    
+    @staticmethod
+    def get_list_positions_time_from_actions(actions: list[Action], pos: Position) -> 'list[STPosition]':
+        current_position = pos
+
+        positions = []
+
+        for t, action in enumerate(actions):
+            pos = action.get_position() + current_position
+            current_position = STPosition(pos.x, pos.y, t)
             positions.append(current_position)
 
         return positions

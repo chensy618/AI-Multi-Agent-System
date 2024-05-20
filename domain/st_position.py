@@ -11,7 +11,7 @@ class STPosition(Position):
 
     def __eq__(self, other):
         if isinstance(other, STPosition):
-            return self.x == other.x and self.y == other.y and self.t == other.t
+            return self.x == other.x and self.y == other.y
         return False
     
     def __lt__(self, other):

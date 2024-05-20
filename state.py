@@ -468,8 +468,7 @@ class SpaceTimeState(State):
     def __eq__(self, other):
         return (self.agents == other.agents and
                 self.boxes == other.boxes and
-                self.goals == other.goals and
-                self.time == other.time)
+                self.goals == other.goals and self.t == other.t)
 
 
     def __hash__(self):

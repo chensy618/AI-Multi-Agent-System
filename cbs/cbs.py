@@ -11,7 +11,9 @@ from domain.constraint import Constraint
 from domain.position import Position
 from queue import PriorityQueue
 
+from domain.st_position import STPosition
 from domain.task import SubTask
+from htn.htn_helper import HTNHelper
 from pathfinding.astar import astar
 from pathfinding.st_astar import space_time_a_star
 from state import State
@@ -35,8 +37,8 @@ def conflict_based_search(current_state: State, round):
         #             goal.group = -goal.group
         #             for g in goals:
         #                 g.group = -g.group
-        for i in range(2 * agent_uid):
-            plan.insert(0, Action.NoOp)
+        # for i in range(2 * agent_uid):
+        #     plan.insert(0, Action.NoOp)
         root.solution[agent.value] = plan
 
     if(len(root.solution.values()) == 0):
@@ -55,9 +57,10 @@ def conflict_based_search(current_state: State, round):
     # Create a dictionary to store the number of conflicts for each agent pair
     conflict_counts = {}
 
+    # print("initial_solutions ->", initial_solutions, file=sys.stderr)
+
     while not frontier.empty():
         tiebreaker_value, node = frontier.get()
-        print("node.solution ->", node.solution, file=sys.stderr)
         conflict = find_first_conflict(node.solution, initial_positions, conflict_counts)
         if conflict is None:
             executable_plan = merge_plans(current_state, node.solution, round)
@@ -107,23 +110,26 @@ def conflict_based_search(current_state: State, round):
                         count_next = next(tiebreaker)
                         frontier.put((count_next, new_node))
                     continue
-            # else:
-                # # If meta agent cannot finish it's route, then it enters the communication mode to ask other agent's help
-                # new_node = meta_agent_block_communication(node, initial_solutions, initial_positions, conflict, current_state, round)
-                # new_conflict = find_first_conflict(new_node.solution, initial_positions, conflict_counts)
-                # if new_conflict is None:
-                #     executable_plan = merge_plans(current_state, new_node.solution, round)
-                #     print("executable_plan ->", executable_plan, file=sys.stderr)
-                #     return executable_plan
-                # else:
-                #     new_node.cost = cost(new_node.solution)
-                #     if new_node.cost < sys.maxsize:
-                #         count_next = next(tiebreaker)
-                #         frontier.put((count_next, new_node))
-                # continue
+            else:
+                # If meta agent cannot finish it's route, then it enters the communication mode to ask other agent's help
+                # print("Meta agent conflict", file=sys.stderr)
+                new_node = meta_agent_block_communication(node, initial_solutions, initial_positions, conflict, current_state, round)
+                new_conflict = find_first_conflict(new_node.solution, initial_positions, conflict_counts)
+                if new_conflict is None:
+                    executable_plan = merge_plans(current_state, new_node.solution, round)
+                    print("executable_plan ->", executable_plan, file=sys.stderr)
+                    return executable_plan
+                else:
+                    new_node.cost = cost(new_node.solution)
+                    if new_node.cost < sys.maxsize:
+                        count_next = next(tiebreaker)
+                        frontier.put((count_next, new_node))
+                continue
         else:
+            # Case for Conflict only
             ai_aj_pair = (conflict.ai, conflict.aj)
             conflict_counts[ai_aj_pair] = conflict_counts.get(ai_aj_pair, 0) + 1
+            # print(conflict_counts, file=sys.stderr)
             resolve_conflict(node, conflict, current_state, round, frontier)
 
     # print(f"CBS cannot resolve conflict", file=sys.stderr)
@@ -150,7 +156,12 @@ def resolve_conflict(node, conflict, current_state, round, frontier):
             if constraint not in m.constraints:
                 m.constraints.add(constraint)
         relaxed_state = current_state.from_agent_perspective(agent_uid, round)
-        st_solution = space_time_a_star(relaxed_state, m.constraints, round[agent_uid])
+
+        if(check_if_need_replan(conflict, node.solution, current_state, round)):
+            st_solution = astar(relaxed_state, round[agent_uid])
+        else:
+            st_solution = space_time_a_star(relaxed_state, m.constraints, round[agent_uid])
+        # print("st_solution ->", st_solution, file=sys.stderr)
         m.solution[agent_uid] = st_solution
         m.cost = cost(m.solution)
         if m.cost < sys.maxsize:
@@ -180,6 +191,48 @@ def initialize_initial_positions(current_state, round):
         }
     return initial_positions
 
+def check_if_need_replan(conflict: Conflict, solution, current_state: State, round):
+    ai = conflict.ai
+    aj = conflict.aj
+
+    if isinstance(ai, str):
+        for agent_uid, task in round.items():
+            if current_state.boxes[task.box_uid].value == ai:
+                ai = agent_uid
+
+    if isinstance(aj, str):
+        for agent_uid, task in round.items():
+            if current_state.boxes[task.box_uid].value == aj:
+                aj = agent_uid
+
+    ai_plan = solution[ai]
+    aj_plan = solution[aj]
+
+    initial_pos_ai = current_state.get_agent_by_uid(ai).pos
+    initial_pos_aj = current_state.get_agent_by_uid(aj).pos
+
+    positions_ai = HTNHelper.get_list_positions_time_from_actions(ai_plan, initial_pos_ai)
+    positions_aj = HTNHelper.get_list_positions_time_from_actions(aj_plan, initial_pos_aj)
+
+    # for t in range(len(positions_ai)):
+    #     print(f"t -> {t}, ai -> {positions_ai[t]}, aj -> {positions_aj[t]}", file=sys.stderr)
+    #     print(f"{positions_ai[t] == positions_aj[t]}", file=sys.stderr)
+    
+    
+
+    conflict_t = -1
+    for st_pos in positions_ai:
+        for st_pos_2 in positions_aj:
+            if st_pos.t == st_pos_2.t and st_pos == st_pos_2:
+                conflict_t = st_pos.t
+
+    if(positions_ai[conflict_t] == positions_aj[conflict_t]
+    and positions_ai[conflict_t+1] == positions_aj[conflict_t-1]
+    and positions_ai[conflict_t+2] == positions_aj[conflict_t-2]):
+        return True
+
+    return False
+
 def cost(solution):
     """
     Calculate the total cost of a solution, which is the sum of the lengths of all paths.
@@ -196,7 +249,7 @@ def cost(solution):
 def find_first_conflict(solution, initial_positions, conflict_counts):
     """
     Find the first conflict in the solution.
-
+ 
     :param solution: A dictionary mapping entity(agent/box) IDs to their respective paths (lists of actions).
     :return: A conflict object with details about the conflict, or None if no conflict is found.
     """
@@ -208,12 +261,12 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
     avoid_pos_list = {}
     # Find the maximum path length to know how many time steps to check
     max_path_length = max(len(path) for path in solution.values())
-
+ 
     # sort agent by their path length, so that we always start from short path
     sorted_agents = sorted(solution.items(), key=lambda item: len(item[1]))
-
+ 
     for agent_id, path in sorted_agents:
-
+ 
         # agent-agent conflict
         if initial_positions[agent_id]['box_id'] is None:
             current_position = initial_positions[agent_id]['agent_position']
@@ -255,18 +308,18 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
                 # Update the current position of the agent
                 current_position = resulting_position
                 time_step += 1
-
+ 
         # agent-box conflict
         # box-box conflict
         else:
             current_agent_position = initial_positions[agent_id]['agent_position']
             box_id = initial_positions[agent_id]['box_id']
             current_box_position = initial_positions[agent_id]['box_position']
-
+ 
             # Add initial positions to the positions dictionary as time step 0, and as resulting positions
             positions[(current_agent_position, 0)] = {'id': agent_id, 'tag': 'fixed'}
             positions[(current_box_position, 0)] = {'id': box_id, 'tag': 'fixed'}
-
+ 
             time_step = 1
             # Iterate for max_path_length steps
             for time_step in range(1, max_path_length + 1):
@@ -284,7 +337,7 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
                     # If the agent hasn't reached the goal, give the agent tag as 'fixed'
                     agent_tag = 'fixed'
                     box_tag = 'fixed'
-
+ 
                 # Agent has reached the goal, but still extend its path to avoid blocking other agents
                 else:
                     resulting_agent_position = current_agent_position
@@ -293,7 +346,7 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
                     agent_tag = 'movable'
                     # Box cannot move after reaching the goal
                     box_tag = 'fixed'
-
+ 
                 ### Judge Vertex conflict ###
                 if (resulting_agent_position, time_step) in positions:
                     value = positions.get((resulting_agent_position, time_step), None)
@@ -367,7 +420,7 @@ def find_first_conflict(solution, initial_positions, conflict_counts):
                 current_agent_position = resulting_agent_position
                 current_box_position = resulting_box_position
                 time_step += 1
-
+ 
     return None
 
 

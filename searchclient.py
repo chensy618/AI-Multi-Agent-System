@@ -204,8 +204,8 @@ class SearchClient:
         State.goals = goals
 
         box_map = {box.uid: box for box in boxes}
-        for row in walls:
-            print(row, file=sys.stderr)
+        # for row in walls:
+        #     print(row, file=sys.stderr)
         # print("Walls->\n", walls, file=sys.stderr)
         return State(agents, box_map, walls)
 
@@ -230,18 +230,18 @@ class SearchClient:
         current_state = initial_state
         while(resolver.has_any_task_left(current_state)):
             resolver.create_target(current_state)
-            print("TARGET ->", resolver.target, file=sys.stderr)
+            # print("TARGET ->", resolver.target, file=sys.stderr)
             resolver.create_sub_round(current_state)
             while(resolver.has_any_subtask_left()):
                 # print("Subround ->", resolver.sub_round_counter, file=sys.stderr)
                 resolver.create_round(current_state)
-                print("ROUND ->", resolver.round, file=sys.stderr)
+                # print("ROUND ->", resolver.round, file=sys.stderr)
                 plan = conflict_based_search(current_state, resolver.round)
                 for time_step in plan:
                     final_plan.append(time_step)
                     current_state = current_state.result(time_step, save_action=False)
 
-                print(current_state, file=sys.stderr)
+                # print(current_state, file=sys.stderr)
 
 
         if final_plan is None:
