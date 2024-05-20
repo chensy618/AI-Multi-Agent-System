@@ -167,20 +167,22 @@ class SearchClient:
 
         nrows = len(initial_layout)
         ncols = max(len(row) for row in initial_layout)
-        walls = [[False] * ncols for _ in range(nrows)]
-
+        walls = [[True] * ncols for _ in range(nrows)]
+        
         box_uid = 0
         for row_idx, row in enumerate(initial_layout):
             for col_idx, char in enumerate(row):
                 position = Position(col_idx, row_idx)
                 if char.isdigit():
                     agents.append(Agent(pos=position, value=int(char), color=agent_colors.get(int(char))))
+                    walls[row_idx][col_idx] = False
                 elif char.isupper():
                     boxes.append(Box(pos=position, value=char, uid=box_uid, color=box_colors.get(char)))
+                    walls[row_idx][col_idx] = False
                     box_uid += 1
                 else:
-                    if char == '+':
-                        walls[row_idx][col_idx] = True
+                    if char == ' ':
+                        walls[row_idx][col_idx] = False
 
         # read position of goals
         goal_uid = 0
@@ -202,6 +204,9 @@ class SearchClient:
         State.goals = goals
 
         box_map = {box.uid: box for box in boxes}
+        for row in walls:
+            print(row, file=sys.stderr)
+        # print("Walls->\n", walls, file=sys.stderr)
         return State(agents, box_map, walls)
 
     @staticmethod
@@ -210,6 +215,7 @@ class SearchClient:
 
         server_messages = io.TextIOWrapper(sys.stdin.buffer, encoding='ASCII')
         initial_state = SearchClient.parse_level(server_messages)
+        print(initial_state, file=sys.stderr)
         start = time.time()
         for goal in State.goals:
             State.goal_map[goal.uid] = State.initialize_goal_map(initial_state.walls, goal.pos)
@@ -230,13 +236,12 @@ class SearchClient:
                 # print("Subround ->", resolver.sub_round_counter, file=sys.stderr)
                 resolver.create_round(current_state)
                 print("ROUND ->", resolver.round, file=sys.stderr)
-                # time.sleep(100)
                 plan = conflict_based_search(current_state, resolver.round)
                 for time_step in plan:
                     final_plan.append(time_step)
                     current_state = current_state.result(time_step, save_action=False)
 
-            print(current_state, file=sys.stderr)
+                print(current_state, file=sys.stderr)
 
 
         if final_plan is None:

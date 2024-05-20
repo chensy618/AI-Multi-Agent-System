@@ -44,12 +44,15 @@ class PriorityResolver:
         
         # Check if the current cell is free
         if state.is_free(pos) and pos not in avoid_positions:
+            # print(f"We found a position {state.walls[pos.y][pos.x]} {pos}", file=sys.stderr)
             return pos
 
         # Explore the four possible neighboring cells (up, down, left, right)
         directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
         for dy, dx in directions:
             new_pos = Position(pos.x + dx, pos.y + dy)
+            if(state.walls[new_pos.y][new_pos.x]):
+                continue
             result = self.find_first_free_neighbour(state, new_pos, avoid_positions, visited)
             if result:
                 return result

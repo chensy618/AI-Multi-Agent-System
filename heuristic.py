@@ -67,19 +67,24 @@ class HeuristicSpaceTimeAStar(Heuristic):
         time_cost = 0
         agent = state.agents[0]
 
-        if task.box_uid is None:
-            raise RuntimeError("Box_uid or goal_uid is None, this should not be happening")
-
-        # Check if the task is a box-to-goal task or an agent-to-goal task
-        if task.box_uid == -1:
-            # Agent to goal task
-            distance = DistanceCalc.calculate_agent_task(agent, task.goal_uid)
-            time_cost = distance  # assume agent moves at 1 cell per time step
+        if(isinstance(task, SubTask)):
+            # print(f"Task.pos: {task.goal_pos}", file=sys.stderr)
+            # print(f"agent.pos: {agent.pos}", file=sys.stderr)
+            distance += DistanceCalc.manhatten_distance(task.goal_pos, agent.pos)
         else:
-            # Box to goal task
-            agent_box = state.boxes[task.box_uid]
-            distance = DistanceCalc.calculate_box_task(agent_box, agent, task.goal_uid)
-            time_cost = distance * 1.5  # assume box moves at 1.5 cell per time step
+            if task.box_uid is None:
+                raise RuntimeError("Box_uid or goal_uid is None, this should not be happening")
+
+            # Check if the task is a box-to-goal task or an agent-to-goal task
+            if task.box_uid == -1:
+                # Agent to goal task
+                distance = DistanceCalc.calculate_agent_task(agent, task.goal_uid)
+                time_cost = distance  # assume agent moves at 1 cell per time step
+            else:
+                # Box to goal task
+                agent_box = state.boxes[task.box_uid]
+                distance = DistanceCalc.calculate_box_task(agent_box, agent, task.goal_uid)
+                time_cost = distance * 1.5  # assume box moves at 1.5 cell per time step
 
         # return the sum of distance and time cost
         return distance + int(time_cost)

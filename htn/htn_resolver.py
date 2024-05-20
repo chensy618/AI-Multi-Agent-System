@@ -84,18 +84,17 @@ class HTNResolver:
         return len(self.target.keys()) > 0
 
     def create_round(self, current_state: State):
-        # print("self.sub_task_round", self.sub_task_round, file=sys.stderr)
+        # print("SELF.SUB_TASK_ROUND", self.sub_task_round, file=sys.stderr)
     
         for agent_value, target_task in list(self.target.items()):
                 agent = current_state.get_agent_by_uid(agent_value)
                 if target_task.box_uid != -1:
                     if(self.sub_task_round.get(agent_value) and len(self.sub_task_round[agent_value]) > 0):
                         self.round[agent_value] = self.sub_task_round[agent_value].pop(0)
-                        # print("Subtask -> Agent ->", agent_value, "Task ->", target_task, file=sys.stderr)
+                        # print(f"Subtask {agent_value} ->", target_task, file=sys.stderr)
 
                         # print(f"Subtask assigned to agent {agent_value} -> {self.round[agent_value]}", file=sys.stderr)
                         self.sub_round_counter += 1
-                        return 
                     else:
                         box = current_state.boxes[target_task.box_uid]
                         self.round[agent_value] = self.target[agent_value]
@@ -108,6 +107,8 @@ class HTNResolver:
                     self.round[agent_value] = self.target[agent_value]
 
                 del self.target[agent_value]
+
+        # print("ROUND", self.round)
 
     def create_sub_round(self, current_state: State):
         # print("\n\n===========SUBROUND===========", file=sys.stderr)
@@ -122,8 +123,8 @@ class HTNResolver:
             agent = current_state.get_agent_by_uid(agent_uid)
 
             box = current_state.boxes[task.box_uid]
-            print(f"{agent_uid} - BOX ->", box.pos, file=sys.stderr)
-            print(f"{agent_uid} - BOX ->", self.round_planned_positions[agent_uid], file=sys.stderr)
+            # print(f"{agent_uid} - BOX ->", box.pos, file=sys.stderr)
+            # print(f"{agent_uid} - BOX ->", self.round_planned_positions[agent_uid], file=sys.stderr)
             # if(box.pos in self.round_planned_positions[agent_uid]):
             #     self.round_planned_positions[agent_uid].remove(box.pos)
             avoid_positions = self.round_planned_positions[agent_uid]
@@ -133,7 +134,9 @@ class HTNResolver:
             # print(f"{agent_uid} - task ->", task, file=sys.stderr)
             # TODO: It only works for one agent now 
             for box in subtask_boxes:
+                # print(f"{agent_uid}:\n", current_state, file=sys.stderr)
                 new_temp_goal_pos = self.priority_resolver.find_first_free_neighbour(current_state, box.pos, avoid_positions)
+                # print("new_temp_goal_pos -> ", new_temp_goal_pos, file=sys.stderr)
                 avoid_positions.append(new_temp_goal_pos)
                 new_subtask = SubTask(box.uid, box.value, new_temp_goal_pos)
 

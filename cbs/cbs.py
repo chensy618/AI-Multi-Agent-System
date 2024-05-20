@@ -40,7 +40,7 @@ def conflict_based_search(current_state: State, round):
     if(len(root.solution.values()) == 0):
         raise RuntimeError("You shouldn't run CBS on empty solutions set")
     
-    print(f'Astar solution: ', root.solution, file=sys.stderr)
+    # print(f'Astar solution: ', root.solution, file=sys.stderr)
     root.cost = cost(root.solution)
     frontier = PriorityQueue()
     count_next = next(tiebreaker)
@@ -48,15 +48,18 @@ def conflict_based_search(current_state: State, round):
 
     # Store the initial solution to be used in the long corridor situation
     initial_solutions = root.solution.copy()
+    # print("INITAL ->", initial_solutions, file=sys.stderr)
     # print(f'"=============Initial solutions: =============\n{initial_solutions}', file=sys.stderr)
     # Create a dictionary to store the number of conflicts for each agent pair
     conflict_counts = {}
 
     while not frontier.empty():
         tiebreaker_value, node = frontier.get()
+        print("node.solution ->", node.solution, file=sys.stderr)
         conflict = find_first_conflict(node.solution, initial_positions, conflict_counts)
         if conflict is None:
             executable_plan = merge_plans(current_state, node.solution, round)
+            print("executable_plan ->", executable_plan, file=sys.stderr)
             return executable_plan
 
         elif  isinstance(conflict, MoveAwayConflict):
@@ -65,6 +68,7 @@ def conflict_based_search(current_state: State, round):
             new_conflict = find_first_conflict(new_node.solution, initial_positions, conflict_counts)
             if new_conflict is None:
                 executable_plan = merge_plans(current_state, new_node.solution, round)
+                print("executable_plan ->", executable_plan, file=sys.stderr)
                 return executable_plan
             else:
                 new_node.cost = cost(new_node.solution)
@@ -78,6 +82,7 @@ def conflict_based_search(current_state: State, round):
             new_conflict = find_first_conflict(new_node.solution, initial_positions, conflict_counts)
             if new_conflict is None:
                 executable_plan = merge_plans(current_state, new_node.solution, round)
+                print("executable_plan ->", executable_plan, file=sys.stderr)
                 return executable_plan
             else:
                 new_node.cost = cost(new_node.solution)
@@ -92,6 +97,7 @@ def conflict_based_search(current_state: State, round):
                 new_conflict = find_first_conflict(new_node.solution, initial_positions, conflict_counts)
                 if new_conflict is None:
                     executable_plan = merge_plans(current_state, new_node.solution, round)
+                    print("executable_plan ->", executable_plan, file=sys.stderr)
                     return executable_plan
                 else:
                     new_node.cost = cost(new_node.solution)
@@ -105,6 +111,7 @@ def conflict_based_search(current_state: State, round):
                 new_conflict = find_first_conflict(new_node.solution, initial_positions, conflict_counts)
                 if new_conflict is None:
                     executable_plan = merge_plans(current_state, new_node.solution, round)
+                    print("executable_plan ->", executable_plan, file=sys.stderr)
                     return executable_plan
                 else:
                     new_node.cost = cost(new_node.solution)
