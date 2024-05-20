@@ -49,13 +49,7 @@ class State:
             relaxed_walls[agent.pos.y][agent.pos.x] = True
 
         for box in boxes_not_in_round:
-            if(diffentiate_colors):
-                if(box.color == relaxed_agent.color):
-                    relaxed_walls[box.pos.y][box.pos.x] = False
-                else:
-                    relaxed_walls[box.pos.y][box.pos.x] = True
-            else:
-                relaxed_walls[box.pos.y][box.pos.x] = True
+            relaxed_walls[box.pos.y][box.pos.x] = True
             
         return State([relaxed_agent], agent_boxes, relaxed_walls)
     

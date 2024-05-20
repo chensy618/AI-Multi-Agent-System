@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 import heapq
+import sys
 
 from domain.task import SubTask
 from helper.distance_calc import DistanceCalc
@@ -21,6 +22,8 @@ class Heuristic(metaclass=ABCMeta):
         agent = state.agents[0]
 
         if(isinstance(task, SubTask)):
+            print(f"Task.pos: {task.goal_pos}", file=sys.stderr)
+            print(f"agent.pos: {agent.pos}", file=sys.stderr)
             distance += DistanceCalc.manhatten_distance(task.goal_pos, agent.pos)
         else:
 

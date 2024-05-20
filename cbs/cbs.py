@@ -27,7 +27,7 @@ def conflict_based_search(current_state: State, round):
     for agent_uid, task in round.items():
         agent = current_state.get_agent_by_uid(agent_uid)
         relaxed_state = current_state.from_agent_perspective(agent.value, round)
-        plan = astar(relaxed_state, round[agent.value])
+        plan = astar(relaxed_state, task)
         # if plan == None:
         #     for goal in current_state.goals:
         #         if goal.uid == round[agent.value].goal_uid:
