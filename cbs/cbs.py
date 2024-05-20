@@ -37,8 +37,8 @@ def conflict_based_search(current_state: State, round):
         #             goal.group = -goal.group
         #             for g in goals:
         #                 g.group = -g.group
-        # for i in range(2 * agent_uid):
-        #     plan.insert(0, Action.NoOp)
+        for i in range(2 * agent_uid):
+            plan.insert(0, Action.NoOp)
         root.solution[agent.value] = plan
 
     if(len(root.solution.values()) == 0):
