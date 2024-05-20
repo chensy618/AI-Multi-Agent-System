@@ -124,8 +124,8 @@ class HTNResolver:
             box = current_state.boxes[task.box_uid]
             print(f"{agent_uid} - BOX ->", box.pos, file=sys.stderr)
             print(f"{agent_uid} - BOX ->", self.round_planned_positions[agent_uid], file=sys.stderr)
-            if(box.pos in self.round_planned_positions[agent_uid]):
-                self.round_planned_positions[agent_uid].remove(box.pos)
+            # if(box.pos in self.round_planned_positions[agent_uid]):
+            #     self.round_planned_positions[agent_uid].remove(box.pos)
             avoid_positions = self.round_planned_positions[agent_uid]
             # print(f"{agent_uid} - AVOID POSITIONS ->", avoid_positions, file=sys.stderr)
             subtask_boxes = [box for box in current_state.boxes.values() if box.pos in avoid_positions and agent.color == box.color]

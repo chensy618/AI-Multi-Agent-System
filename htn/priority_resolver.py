@@ -49,7 +49,7 @@ class PriorityResolver:
         # Explore the four possible neighboring cells (up, down, left, right)
         directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
         for dy, dx in directions:
-            new_pos = Position(pos.y + dy, pos.x + dx)
+            new_pos = Position(pos.x + dx, pos.y + dy)
             result = self.find_first_free_neighbour(state, new_pos, avoid_positions, visited)
             if result:
                 return result
