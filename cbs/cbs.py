@@ -35,6 +35,8 @@ def conflict_based_search(current_state: State, round):
         #             goal.group = -goal.group
         #             for g in goals:
         #                 g.group = -g.group
+        for i in range(2 * agent_uid):
+            plan.insert(0, Action.NoOp)
         root.solution[agent.value] = plan
 
     if(len(root.solution.values()) == 0):
@@ -105,20 +107,20 @@ def conflict_based_search(current_state: State, round):
                         count_next = next(tiebreaker)
                         frontier.put((count_next, new_node))
                     continue
-            else:
-                # If meta agent cannot finish it's route, then it enters the communication mode to ask other agent's help
-                new_node = meta_agent_block_communication(node, initial_solutions, initial_positions, conflict, current_state, round)
-                new_conflict = find_first_conflict(new_node.solution, initial_positions, conflict_counts)
-                if new_conflict is None:
-                    executable_plan = merge_plans(current_state, new_node.solution, round)
-                    print("executable_plan ->", executable_plan, file=sys.stderr)
-                    return executable_plan
-                else:
-                    new_node.cost = cost(new_node.solution)
-                    if new_node.cost < sys.maxsize:
-                        count_next = next(tiebreaker)
-                        frontier.put((count_next, new_node))
-                continue
+            # else:
+                # # If meta agent cannot finish it's route, then it enters the communication mode to ask other agent's help
+                # new_node = meta_agent_block_communication(node, initial_solutions, initial_positions, conflict, current_state, round)
+                # new_conflict = find_first_conflict(new_node.solution, initial_positions, conflict_counts)
+                # if new_conflict is None:
+                #     executable_plan = merge_plans(current_state, new_node.solution, round)
+                #     print("executable_plan ->", executable_plan, file=sys.stderr)
+                #     return executable_plan
+                # else:
+                #     new_node.cost = cost(new_node.solution)
+                #     if new_node.cost < sys.maxsize:
+                #         count_next = next(tiebreaker)
+                #         frontier.put((count_next, new_node))
+                # continue
         else:
             ai_aj_pair = (conflict.ai, conflict.aj)
             conflict_counts[ai_aj_pair] = conflict_counts.get(ai_aj_pair, 0) + 1
@@ -385,7 +387,7 @@ def solve_moveaway_conflict(node, conflict, walls):
                 if 0 <= agent_destination.x < len(walls[0]) and 0 <= agent_destination.y < len(walls):
                     # Check if agent_destination is a wall or in avoid_positions
                     is_destination_occupied = walls[agent_destination.y][agent_destination.x] or \
-                                              any(pos == agent_destination for pos, _ in avoid_positions.keys())
+                                            any(pos == agent_destination for pos, _ in avoid_positions.keys())
                     if not is_destination_occupied:
                         return action
         return None

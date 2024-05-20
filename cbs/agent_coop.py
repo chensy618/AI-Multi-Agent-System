@@ -125,6 +125,8 @@ def meta_agent_block_communication(node, initial_solutions, initial_positions, c
             break
 
     # Update the current state goal map and goal position to use the temp goal
+    print("non ->", round[non_meta_agent_id], file=sys.stderr)
+    print("meta ->", round[meta_agent_id], file=sys.stderr)
     goal_uid = round[non_meta_agent_id].goal_uid
     current_state.goals[goal_uid].pos = temp_goal
     current_state.goal_map[goal_uid][temp_goal.y][temp_goal.x] = 0
