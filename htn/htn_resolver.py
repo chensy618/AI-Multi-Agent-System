@@ -89,13 +89,13 @@ class HTNResolver:
                 if target_task.box_uid is not None:
                     if(self.sub_task_round.get(agent_value) and len(self.sub_task_round[agent_value]) > 0):
                         self.round[agent_value] = self.sub_task_round[agent_value].pop(0)
-                        print(f"Subtask assigned to agent {agent_value} -> {self.round[agent_value]}", file=sys.stderr)
+                        # print(f"Subtask assigned to agent {agent_value} -> {self.round[agent_value]}", file=sys.stderr)
                         self.sub_round_counter += 1
                         return 
                     else:
                         box = current_state.boxes[target_task.box_uid]
                         self.round[agent_value] = self.target[agent_value]
-                        print(f"Task assigned to agent {agent_value} -> {self.round[agent_value]}", file=sys.stderr)
+                        # print(f"Task assigned to agent {agent_value} -> {self.round[agent_value]}", file=sys.stderr)
                         self.boxes_by_color[agent.color].remove(box)
                         del self.target[agent_value]
 
@@ -112,9 +112,9 @@ class HTNResolver:
 
             agent = current_state.get_agent_by_uid(agent_uid)
             avoid_positions = self.round_planned_positions[agent_uid]
-            print("AVOID POSITIONS ->", avoid_positions, file=sys.stderr)
+            # print("AVOID POSITIONS ->", avoid_positions, file=sys.stderr)
             subtask_boxes = [box for box in current_state.boxes.values() if box.pos in avoid_positions and agent.color == box.color]
-            print("SUBTASK BOXES ->", subtask_boxes, file=sys.stderr)
+            # print("SUBTASK BOXES ->", subtask_boxes, file=sys.stderr)
             # TODO: It only works for one agent now 
             for box in subtask_boxes:
                 new_temp_goal_pos = self.priority_resolver.find_first_free_neighbour(current_state, box.pos, avoid_positions)
